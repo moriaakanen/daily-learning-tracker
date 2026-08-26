@@ -7,15 +7,7 @@ import {
   X,
   Plus,
   Trash2,
-  Code2,
-  Eye,
-  Edit3,
-  Calendar,
-  Clock,
   Star,
-  CheckCircle2,
-  Tag,
-  Sparkles,
 } from 'lucide-react';
 import { LearningLog } from '@/types';
 
@@ -137,41 +129,36 @@ export function LogFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
       <div
-        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-2xl max-h-[92vh] flex flex-col rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">
-                {initialLog ? 'Edit Catatan Belajar' : 'Catat Materi Baru (TIL)'}
-              </h2>
-              <p className="text-xs text-slate-400">
-                Dokumentasikan apa yang kamu pahami hari ini
-              </p>
-            </div>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-950/50">
+          <div>
+            <h2 className="text-sm font-semibold text-zinc-100">
+              {initialLog ? 'Edit Catatan' : 'Catatan Baru'}
+            </h2>
+            <p className="text-[11px] text-zinc-400">
+              Dokumentasikan apa yang kamu pelajari hari ini
+            </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Scrollable Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* Title & Favorite */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Judul Topik / Materi Belajar <span className="text-rose-400">*</span>
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          {/* Title */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-300">
+              Judul Materi <span className="text-rose-400">*</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -179,36 +166,36 @@ export function LogFormModal({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Contoh: Memahami Arsitektur Event-Driven dengan Kafka"
-                className="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                placeholder="Contoh: Memahami Arsitektur Event-Driven dengan Redis"
+                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
               />
               <button
                 type="button"
                 onClick={() => setIsFavorite(!isFavorite)}
-                className={`p-2.5 rounded-xl border transition-all ${
+                className={`p-2 rounded-lg border transition-colors ${
                   isFavorite
-                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                    : 'bg-slate-950/90 border-slate-800 text-slate-500 hover:text-slate-300'
+                    ? 'bg-amber-950/40 border-amber-800/60 text-amber-300'
+                    : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300'
                 }`}
-                title="Tandai Favorit"
+                title="Favorit"
               >
-                <Star className={`w-4 h-4 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+                <Star className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
               </button>
             </div>
           </div>
 
-          {/* Meta Grid: Category, Date, Duration */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Meta Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {/* Category */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Kategori</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-300">Kategori</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 cursor-pointer"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-600 cursor-pointer"
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat} className="bg-slate-900 text-slate-200">
+                  <option key={cat} value={cat} className="bg-zinc-900">
                     {cat}
                   </option>
                 ))}
@@ -216,54 +203,49 @@ export function LogFormModal({
             </div>
 
             {/* Date */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" /> Tanggal Belajar
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-300">Tanggal</label>
               <input
                 type="date"
                 value={studyDate}
                 onChange={(e) => setStudyDate(e.target.value)}
-                className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-600"
               />
             </div>
 
             {/* Duration */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-slate-400" /> Durasi (Menit)
-              </label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-zinc-300">Durasi (Menit)</label>
               <input
                 type="number"
                 min="5"
                 step="5"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-600"
               />
             </div>
           </div>
 
-          {/* Key Takeaways (Poin-poin penting) */}
-          <div className="space-y-2">
+          {/* Key Takeaways */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                Key Takeaways / Kesimpulan Inti (1-3 Poin)
+              <label className="text-xs font-medium text-zinc-300">
+                Poin Kunci / Kesimpulan Inti
               </label>
               <button
                 type="button"
                 onClick={handleAddTakeaway}
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1"
               >
                 <Plus className="w-3 h-3" /> Tambah Poin
               </button>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {takeaways.map((point, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-500 w-4 text-center">
+                  <span className="text-xs text-zinc-500 w-4 text-center font-mono">
                     {index + 1}.
                   </span>
                   <input
@@ -271,87 +253,84 @@ export function LogFormModal({
                     value={point}
                     onChange={(e) => handleUpdateTakeaway(index, e.target.value)}
                     placeholder={`Poin penting ke-${index + 1}...`}
-                    className="flex-1 bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
                   />
                   <button
                     type="button"
                     onClick={() => handleRemoveTakeaway(index)}
-                    className="p-2 text-slate-500 hover:text-rose-400 transition-colors"
+                    className="p-1.5 text-zinc-500 hover:text-rose-400 transition-colors"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Markdown Content Editor / Preview */}
-          <div className="space-y-2">
+          {/* Markdown Content Editor */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300">
-                Deskripsi / Catatan Lengkap (Markdown didukung)
+              <label className="text-xs font-medium text-zinc-300">
+                Catatan Lengkap (Markdown)
               </label>
 
               {/* Tabs */}
-              <div className="flex items-center bg-slate-950 rounded-lg p-0.5 border border-slate-800">
+              <div className="flex items-center bg-zinc-950 rounded-md p-0.5 border border-zinc-800">
                 <button
                   type="button"
                   onClick={() => setActiveTab('write')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                     activeTab === 'write'
-                      ? 'bg-slate-800 text-indigo-400 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-zinc-800 text-zinc-100'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
-                  <Edit3 className="w-3 h-3" />
-                  <span>Tulis</span>
+                  Tulis
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('preview')}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                     activeTab === 'preview'
-                      ? 'bg-slate-800 text-indigo-400 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-zinc-800 text-zinc-100'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
-                  <Eye className="w-3 h-3" />
-                  <span>Preview</span>
+                  Preview
                 </button>
               </div>
             </div>
 
             {activeTab === 'write' ? (
               <textarea
-                rows={6}
+                rows={5}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Tuliskan catatan, penjelasan konsep, atau referensi belajar menggunakan Markdown..."
-                className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs sm:text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono leading-relaxed resize-y"
+                placeholder="Tuliskan penjelasan, rangkuman konsep, atau referensi materi..."
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 font-mono leading-relaxed"
               />
             ) : (
-              <div className="min-h-[140px] max-h-[250px] overflow-y-auto bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-xs sm:text-sm text-slate-200 prose prose-invert max-w-none">
+              <div className="min-h-[120px] max-h-[220px] overflow-y-auto bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs prose">
                 {content ? (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                 ) : (
-                  <p className="text-slate-500 italic">Belum ada konten untuk dipratinjau.</p>
+                  <p className="text-zinc-500 italic">Belum ada konten untuk dipratinjau.</p>
                 )}
               </div>
             )}
           </div>
 
-          {/* Optional Code Snippet */}
-          <div className="space-y-2">
+          {/* Code Snippet */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Code2 className="w-3.5 h-3.5 text-indigo-400" />
+              <label className="text-xs font-medium text-zinc-300">
                 Code Snippet (Opsional)
               </label>
 
               <select
                 value={codeLanguage}
                 onChange={(e) => setCodeLanguage(e.target.value)}
-                className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
+                className="bg-zinc-950 border border-zinc-800 text-zinc-400 text-[11px] rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
               >
                 <option value="javascript">JavaScript / TypeScript</option>
                 <option value="python">Python</option>
@@ -360,7 +339,6 @@ export function LogFormModal({
                 <option value="bash">Bash / Shell</option>
                 <option value="json">JSON</option>
                 <option value="go">Go</option>
-                <option value="rust">Rust</option>
               </select>
             </div>
 
@@ -368,21 +346,21 @@ export function LogFormModal({
               rows={3}
               value={codeSnippet}
               onChange={(e) => setCodeSnippet(e.target.value)}
-              placeholder="// Tulis kode atau snippet penting di sini..."
-              className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-3 text-xs font-mono text-indigo-300/90 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-y"
+              placeholder="// Masukkan kode atau command di sini..."
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
             />
           </div>
 
           {/* Tags */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-              <Tag className="w-3.5 h-3.5 text-slate-400" /> Tags (Tekan Enter atau Koma untuk menambah)
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-zinc-300">
+              Tags (Tekan Enter atau Koma)
             </label>
-            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-slate-950/90 border border-slate-800 rounded-xl min-h-[42px]">
+            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-zinc-950 border border-zinc-800 rounded-lg min-h-[38px]">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="flex items-center gap-1 text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-lg"
+                  className="flex items-center gap-1 text-[11px] bg-zinc-800 text-zinc-200 px-2 py-0.5 rounded"
                 >
                   #{tag}
                   <button
@@ -399,24 +377,24 @@ export function LogFormModal({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
-                placeholder={tags.length === 0 ? "Ketik tag lalu tekan Enter (misal: react, sql, nextjs)..." : ""}
-                className="flex-1 bg-transparent border-none text-xs text-slate-100 placeholder-slate-600 focus:outline-none min-w-[150px]"
+                placeholder={tags.length === 0 ? "Ketik tag lalu tekan Enter (misal: react, postgresql)..." : ""}
+                className="flex-1 bg-transparent border-none text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none min-w-[120px]"
               />
             </div>
           </div>
 
-          {/* Footer Submit Actions */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+          {/* Footer Submit */}
+          <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-cyan-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="px-4 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold transition-all active:scale-[0.98]"
             >
               {initialLog ? 'Simpan Perubahan' : 'Simpan Catatan'}
             </button>

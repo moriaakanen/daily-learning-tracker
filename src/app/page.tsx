@@ -4,16 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   BookOpen,
-  Sparkles,
-  Layers,
-  Tag,
-  Search,
-  Filter,
-  Flame,
-  CheckCircle2,
-  Calendar,
-  AlertCircle,
-  HelpCircle,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { StatsOverview } from '@/components/StatsOverview';
@@ -79,14 +69,14 @@ export default function Home() {
     loadData();
   }, []);
 
-  // Compute Categories from logs and defaults
+  // Compute Categories
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
     const customNames = logs.map((l) => l.category).filter(Boolean);
     return Array.from(new Set([...defaultNames, ...customNames]));
   }, [logs]);
 
-  // Compute all available tags
+  // Compute Tags
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     logs.forEach((log) => {
@@ -100,12 +90,12 @@ export default function Home() {
     return Array.from(tagSet).sort();
   }, [logs]);
 
-  // Compute filtered logs
+  // Filtered logs
   const filteredLogs = useMemo(() => {
     return filterLogs(logs, filter);
   }, [logs, filter]);
 
-  // Compute stats
+  // Stats
   const stats = useMemo(() => {
     return calculateStats(logs);
   }, [logs]);
@@ -158,8 +148,8 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
-      {/* Top Navigation */}
+    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-zinc-100">
+      {/* Top Header */}
       <Header
         onOpenNewLog={() => {
           setEditingLog(null);
@@ -176,9 +166,9 @@ export default function Home() {
         totalLogsCount={logs.length}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Streak & Stats Header if toggled */}
+      {/* Main Area */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-7">
+        {/* Metric Bar if toggled */}
         {showStats && <StatsOverview stats={stats} />}
 
         {/* Filter Bar */}
@@ -190,22 +180,22 @@ export default function Home() {
           totalResultsCount={filteredLogs.length}
         />
 
-        {/* Tag Cloud Shortcut (when tags available) */}
+        {/* Minimal Tag Strip */}
         {allTags.length > 0 && (
-          <div className="mb-6 flex items-center gap-1.5 flex-wrap text-xs text-slate-400">
-            <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1">
-              <Tag className="w-3 h-3" /> Topik Populer:
+          <div className="mb-4 flex items-center gap-1.5 flex-wrap text-xs">
+            <span className="text-[11px] text-zinc-500 font-medium mr-1">
+              Topik:
             </span>
-            {allTags.slice(0, 10).map((tag) => {
+            {allTags.slice(0, 8).map((tag) => {
               const isSelected = filter.selectedTag === tag;
               return (
                 <button
                   key={tag}
                   onClick={() => handleTagClick(tag)}
-                  className={`px-2.5 py-0.5 rounded-full text-xs transition-all ${
+                  className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
                     isSelected
-                      ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-                      : 'bg-slate-900/90 text-slate-400 hover:text-slate-200 border border-slate-800 hover:border-slate-700'
+                      ? 'bg-zinc-200 text-zinc-950 font-medium'
+                      : 'text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800'
                   }`}
                 >
                   #{tag}
@@ -215,25 +205,25 @@ export default function Home() {
           </div>
         )}
 
-        {/* Content List Area */}
+        {/* Log Entries View */}
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
-            <p className="text-sm text-slate-400">Memuat catatan belajarmu...</p>
+          <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
+            <div className="w-5 h-5 rounded-full border-2 border-zinc-500 border-t-transparent animate-spin" />
+            <p className="text-xs text-zinc-500">Memuat catatan...</p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="py-16 px-4 rounded-3xl bg-slate-900/40 border border-slate-800/80 text-center flex flex-col items-center justify-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <BookOpen className="w-7 h-7" />
+          <div className="py-16 px-4 rounded-xl bg-zinc-900/30 border border-zinc-800 text-center flex flex-col items-center justify-center space-y-3">
+            <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+              <BookOpen className="w-5 h-5" />
             </div>
-            <div className="max-w-md space-y-1">
-              <h3 className="text-base font-bold text-slate-100">
-                Tidak ada catatan yang sesuai
+            <div className="max-w-xs space-y-1">
+              <h3 className="text-sm font-semibold text-zinc-200">
+                Tidak ada catatan
               </h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-zinc-500">
                 {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
-                  ? 'Coba sesuaikan filter atau kata kunci pencarianmu untuk menemukan catatan lain.'
-                  : 'Belum ada catatan belajar yang disimpan. Mulai catat hal berharga yang kamu pelajari hari ini!'}
+                  ? 'Tidak ada hasil untuk filter ini.'
+                  : 'Belum ada catatan belajar yang dibuat.'}
               </p>
             </div>
             <button
@@ -252,13 +242,13 @@ export default function Home() {
                   setIsFormOpen(true);
                 }
               }}
-              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition-all"
+              className="flex items-center gap-1.5 bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>
                 {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
                   ? 'Reset Filter'
-                  : 'Buat Catatan Pertama'}
+                  : 'Tulis Catatan Pertama'}
               </span>
             </button>
           </div>
@@ -275,7 +265,7 @@ export default function Home() {
             onTagClick={handleTagClick}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {filteredLogs.map((log) => (
               <LogCard
                 key={log.id}
@@ -294,26 +284,17 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-6 mt-12 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>Daily LearnLog &copy; {new Date().getFullYear()} — Built with Next.js & Supabase</p>
-          <div className="flex items-center gap-4 text-slate-400">
+      {/* Subtle Footer */}
+      <footer className="border-t border-zinc-800/60 py-5 text-center text-xs text-zinc-500 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>Daily LearnLog • Developer Learning Journal</span>
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="hover:text-indigo-300 transition-colors"
+              className="hover:text-zinc-300 transition-colors"
             >
-              Konfigurasi Database
+              Pengaturan Database
             </button>
-            <span>&bull;</span>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-indigo-300 transition-colors"
-            >
-              GitHub Ready
-            </a>
           </div>
         </div>
       </footer>

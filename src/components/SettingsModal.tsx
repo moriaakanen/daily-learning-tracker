@@ -3,16 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   X,
-  Database,
   Check,
   AlertCircle,
-  Copy,
   Download,
   Upload,
   RefreshCw,
   ExternalLink,
-  ShieldCheck,
-  FileCode2,
+  Copy,
 } from 'lucide-react';
 import {
   getSupabaseCredentials,
@@ -60,7 +57,7 @@ export function SettingsModal({
       resetSupabaseClient('', '');
       setTestResult({
         success: false,
-        message: 'Kredensial dikosongkan. Aplikasi berjalan dalam mode LocalStorage (Offline).',
+        message: 'Kredensial dikosongkan. Menggunakan penyimpanan lokal browser (LocalStorage).',
       });
       onSupabaseStatusChange();
       return;
@@ -82,7 +79,6 @@ export function SettingsModal({
   const handleCopySql = () => {
     const sql = `-- ================================================================
 -- Daily Learning Journal - Supabase Database Schema
--- Run this SQL in your Supabase Project -> SQL Editor
 -- ================================================================
 
 CREATE TABLE IF NOT EXISTS public.categories (
@@ -160,99 +156,88 @@ CREATE POLICY "Allow public all on categories" ON public.categories FOR ALL USIN
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
       <div
-        className="relative w-full max-w-2xl rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-lg rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <Database className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-100">
-                Pengaturan Database & Backup
-              </h2>
-              <p className="text-xs text-slate-400">
-                Integrasi Supabase Cloud & Sinkronisasi Data
-              </p>
-            </div>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-950/50">
+          <div>
+            <h2 className="text-sm font-semibold text-zinc-100">
+              Pengaturan & Database
+            </h2>
+            <p className="text-[11px] text-zinc-400">
+              Koneksi Supabase & Manajemen Data
+            </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
-          {/* Section 1: Supabase Configuration */}
-          <div className="space-y-4">
+        <div className="p-5 space-y-5 max-h-[80vh] overflow-y-auto text-xs">
+          {/* Section: Supabase Config */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-indigo-400" />
-                  Kredensial Supabase (PostgreSQL)
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Dapatkan URL & Anon Key dari Dashboard Supabase Anda (Project Settings &rarr; API)
-                </p>
-              </div>
+              <span className="font-semibold text-zinc-200">
+                Supabase (PostgreSQL)
+              </span>
               <a
                 href="https://supabase.com/dashboard"
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                className="text-zinc-400 hover:text-zinc-200 flex items-center gap-1 text-[11px]"
               >
-                <span>Buka Supabase</span>
+                <span>Dashboard</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">
-                  Supabase Project URL
+                <label className="text-[11px] text-zinc-400">
+                  Project URL
                 </label>
                 <input
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://xyzabcdef.supabase.co"
-                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-300">
-                  Supabase Anon Key (Public)
+                <label className="text-[11px] text-zinc-400">
+                  Anon Public Key
                 </label>
                 <input
                   type="password"
                   value={anonKey}
                   onChange={(e) => setAnonKey(e.target.value)}
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-                  className="w-full bg-slate-950/90 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono"
+                  placeholder="sb_publishable_..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 font-mono"
                 />
               </div>
 
               {testResult && (
                 <div
-                  className={`p-3 rounded-xl text-xs flex items-start gap-2 ${
+                  className={`p-2.5 rounded-lg text-xs flex items-start gap-2 ${
                     testResult.success
-                      ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                      : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
+                      ? 'bg-emerald-950/40 border border-emerald-800/60 text-emerald-300'
+                      : 'bg-rose-950/40 border border-rose-800/60 text-rose-300'
                   }`}
                 >
                   {testResult.success ? (
-                    <Check className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
+                    <Check className="w-3.5 h-3.5 shrink-0 text-emerald-400 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-400 mt-0.5" />
                   )}
                   <span>{testResult.message}</span>
                 </div>
@@ -262,47 +247,43 @@ CREATE POLICY "Allow public all on categories" ON public.categories FOR ALL USIN
                 <button
                   type="button"
                   onClick={handleCopySql}
-                  className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-300 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60 transition-colors"
+                  className="text-zinc-400 hover:text-zinc-200 bg-zinc-800 px-2.5 py-1 rounded text-[11px] transition-colors flex items-center gap-1"
                 >
-                  <FileCode2 className="w-3.5 h-3.5" />
-                  <span>{copiedSql ? 'SQL Schema Tersalin!' : 'Salin SQL Schema Table'}</span>
+                  <Copy className="w-3 h-3" />
+                  <span>{copiedSql ? 'Tersalin' : 'Salin SQL Schema'}</span>
                 </button>
 
                 <button
                   type="button"
                   disabled={testing}
                   onClick={handleTestAndSave}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-medium transition-all disabled:opacity-50"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${testing ? 'animate-spin' : ''}`} />
-                  <span>{testing ? 'Menguji...' : 'Simpan & Uji Koneksi'}</span>
+                  <RefreshCw className={`w-3 h-3 ${testing ? 'animate-spin' : ''}`} />
+                  <span>{testing ? 'Menguji...' : 'Uji & Simpan'}</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Section 2: Backup & Export */}
-          <div className="pt-4 border-t border-slate-800 space-y-3">
-            <h3 className="text-sm font-bold text-slate-100">
-              Backup & Export Data
-            </h3>
-            <p className="text-xs text-slate-400">
-              Unduh arsip catatan belajarmu dalam format JSON untuk backup mandiri.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-3">
+          {/* Section: Backup */}
+          <div className="pt-4 border-t border-zinc-800 space-y-2">
+            <span className="font-semibold text-zinc-200">
+              Backup Data
+            </span>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleExportJSON}
-                className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-medium border border-slate-700 transition-colors"
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
               >
-                <Download className="w-4 h-4 text-cyan-400" />
-                <span>Export Backup ({logs.length} Catatan)</span>
+                <Download className="w-3.5 h-3.5" />
+                <span>Export JSON ({logs.length})</span>
               </button>
 
-              <label className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-medium border border-slate-700 transition-colors cursor-pointer">
-                <Upload className="w-4 h-4 text-indigo-400" />
-                <span>Import Data JSON</span>
+              <label className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Import JSON</span>
                 <input
                   type="file"
                   accept=".json"
@@ -313,27 +294,20 @@ CREATE POLICY "Allow public all on categories" ON public.categories FOR ALL USIN
             </div>
           </div>
 
-          {/* Section 3: Reset */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-semibold text-slate-300">
-                Data Sample
-              </h4>
-              <p className="text-[11px] text-slate-500">
-                Kembalikan catatan bawaan jika ingin memulai dari awal
-              </p>
-            </div>
+          {/* Section: Reset */}
+          <div className="pt-3 border-t border-zinc-800 flex items-center justify-between text-zinc-400">
+            <span>Reset ke data contoh awal:</span>
             <button
               type="button"
               onClick={() => {
-                if (confirm('Kembalikan sample catatan awal? Catatan saat ini akan ditimpa sample.')) {
+                if (confirm('Kembalikan ke data contoh awal?')) {
                   onResetSampleData();
                   onClose();
                 }
               }}
-              className="text-xs text-slate-400 hover:text-rose-400 transition-colors"
+              className="text-zinc-400 hover:text-rose-400 transition-colors"
             >
-              Reset ke Sample Awal
+              Reset
             </button>
           </div>
         </div>
