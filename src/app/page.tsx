@@ -7,6 +7,8 @@ import {
   GitPullRequest,
   Tag,
   PenSquare,
+  Users,
+  User as UserIcon,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { StatsOverview } from '@/components/StatsOverview';
@@ -15,20 +17,28 @@ import { LogCard } from '@/components/LogCard';
 import { TimelineView } from '@/components/TimelineView';
 import { LogDetailModal } from '@/components/LogDetailModal';
 import { FullPageEditor } from '@/components/FullPageEditor';
+import { UserLoginModal } from '@/components/UserLoginModal';
 import { SettingsModal } from '@/components/SettingsModal';
 import {
   getAllLogs,
   createLog,
   updateLog,
   deleteLog,
+  addFeedback,
   calculateStats,
   filterLogs,
   DEFAULT_CATEGORIES,
   INITIAL_LOGS,
   saveLocalLogs,
 } from '@/lib/storage';
+import {
+  getCurrentUser,
+  setCurrentUser,
+  getTeamUsers,
+  saveTeamUsers,
+} from '@/lib/auth';
 import { getSupabaseClient } from '@/lib/supabase';
-import { LearningLog, FilterState, ViewMode } from '@/types';
+import { LearningLog, FilterState, ViewMode, User } from '@/types';
 
 type ActiveTab = 'overview' | 'logs' | 'editor';
 
@@ -37,6 +47,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+
+  // User Auth State
+  const [currentUser, setCurrentUserState] = useState<User>(getCurrentUser());
+  const [teamUsers, setTeamUsers] = useState<User[]>(getTeamUsers());
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   // Navigation tab
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
@@ -52,6 +67,7 @@ export default function Home() {
     selectedCategory: 'All',
     selectedTag: null,
     dateFilter: 'all',
+    userScope: 'all',
     onlyFavorites: false,
     sortBy: 'date-desc',
   });
@@ -72,7 +88,21 @@ export default function Home() {
 
   useEffect(() => {
     loadData();
+    setCurrentUserState(getCurrentUser());
+    setTeamUsers(getTeamUsers());
   }, []);
+
+  const handleSelectUser = (user: User) => {
+    setCurrentUserState(user);
+    setCurrentUser(user);
+  };
+
+  const handleUserCreated = (newUser: User) => {
+    const updated = [...teamUsers, newUser];
+    setTeamUsers(updated);
+    saveTeamUsers(updated);
+    setCurrentUserState(newUser);
+  };
 
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
@@ -94,8 +124,8 @@ export default function Home() {
   }, [logs]);
 
   const filteredLogs = useMemo(() => {
-    return filterLogs(logs, filter);
-  }, [logs, filter]);
+    return filterLogs(logs, filter, currentUser.id);
+  }, [logs, filter, currentUser]);
 
   const stats = useMemo(() => {
     return calculateStats(logs);
@@ -141,6 +171,22 @@ export default function Home() {
     if (selectedLog?.id === id) setSelectedLog(updated);
   };
 
+  const handleAddFeedback = async (logId: string, content: string) => {
+    const newFb = await addFeedback(logId, currentUser, content);
+    setLogs((prev) =>
+      prev.map((log) => {
+        if (log.id === logId) {
+          const existing = log.feedback || [];
+          return { ...log, feedback: [...existing, newFb] };
+        }
+        return log;
+      })
+    );
+    if (selectedLog && selectedLog.id === logId) {
+      setSelectedLog((prev) => (prev ? { ...prev, feedback: [...(prev.feedback || []), newFb] } : null));
+    }
+  };
+
   const handleTagClick = (tag: string) => {
     setFilter((prev) => ({
       ...prev,
@@ -167,8 +213,10 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-[var(--gh-bg)] text-[var(--gh-text-primary)] transition-colors">
       {/* GitHub Top Header */}
       <Header
+        currentUser={currentUser}
         onOpenNewLog={handleOpenNewEntry}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenUserModal={() => setIsUserModalOpen(true)}
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         searchQuery={filter.searchQuery}
@@ -196,17 +244,38 @@ export default function Home() {
           </button>
 
           <button
-            onClick={() => setActiveTab('logs')}
+            onClick={() => {
+              setFilter((prev) => ({ ...prev, userScope: 'all' }));
+              setActiveTab('logs');
+            }}
             className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
-              activeTab === 'logs'
+              activeTab === 'logs' && filter.userScope === 'all'
                 ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
                 : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
             }`}
           >
-            <GitPullRequest className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>Semua Catatan</span>
+            <Users className="w-4 h-4 text-[var(--gh-text-secondary)]" />
+            <span>Feed Seluruh Tim</span>
             <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
               {logs.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setFilter((prev) => ({ ...prev, userScope: 'mine' }));
+              setActiveTab('logs');
+            }}
+            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
+              activeTab === 'logs' && filter.userScope === 'mine'
+                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
+                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+            }`}
+          >
+            <UserIcon className="w-4 h-4 text-[var(--gh-text-secondary)]" />
+            <span>Catatan Saya</span>
+            <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
+              {logs.filter((l) => l.author_id === currentUser.id).length}
             </span>
           </button>
 
@@ -236,6 +305,7 @@ export default function Home() {
         {/* Full Page Editor Tab */}
         {activeTab === 'editor' ? (
           <FullPageEditor
+            currentUser={currentUser}
             initialLog={editingLog}
             categories={categoriesList}
             onSave={handleCreateOrUpdateLog}
@@ -254,6 +324,8 @@ export default function Home() {
               onFilterChange={handleFilterUpdates}
               categories={categoriesList}
               allTags={allTags}
+              teamUsers={teamUsers}
+              currentUser={currentUser}
               totalResultsCount={filteredLogs.length}
             />
 
@@ -298,19 +370,20 @@ export default function Home() {
                     Tidak ada catatan yang cocok
                   </h3>
                   <p className="text-xs text-[var(--gh-text-secondary)]">
-                    {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
-                      ? 'Coba bersihkan kata kunci atau filter untuk melihat semua catatan.'
+                    {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag || filter.userScope !== 'all'
+                      ? 'Coba bersihkan kata kunci atau sesuaikan filter untuk melihat catatan lain.'
                       : 'Mulai tulis hal bermanfaat yang kamu pelajari hari ini.'}
                   </p>
                 </div>
                 <button
                   onClick={() => {
-                    if (filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag) {
+                    if (filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag || filter.userScope !== 'all') {
                       setFilter({
                         searchQuery: '',
                         selectedCategory: 'All',
                         selectedTag: null,
                         dateFilter: 'all',
+                        userScope: 'all',
                         onlyFavorites: false,
                         sortBy: 'date-desc',
                       });
@@ -322,7 +395,7 @@ export default function Home() {
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>
-                    {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
+                    {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag || filter.userScope !== 'all'
                       ? 'Reset Filter'
                       : 'Tulis Catatan Baru'}
                   </span>
@@ -343,6 +416,7 @@ export default function Home() {
                   <LogCard
                     key={log.id}
                     log={log}
+                    currentUser={currentUser}
                     onSelect={setSelectedLog}
                     onEdit={handleEditEntry}
                     onDelete={handleDeleteLog}
@@ -364,6 +438,13 @@ export default function Home() {
             <span>&copy; {new Date().getFullYear()} Daily LearnLog • GitHub Primer Style</span>
           </div>
           <div className="flex items-center gap-4 text-[var(--gh-accent)]">
+            <button
+              onClick={() => setIsUserModalOpen(true)}
+              className="hover:underline"
+            >
+              Akun: {currentUser.name}
+            </button>
+            <span>•</span>
             <a
               href="https://github.com/moriaakanen/daily-learning-tracker"
               target="_blank"
@@ -372,6 +453,7 @@ export default function Home() {
             >
               GitHub Repository
             </a>
+            <span>•</span>
             <button
               onClick={() => setIsSettingsOpen(true)}
               className="hover:underline"
@@ -382,14 +464,26 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Reading Modal */}
+      {/* Reading & Feedback Modal */}
       <LogDetailModal
         log={selectedLog}
+        currentUser={currentUser}
         onClose={() => setSelectedLog(null)}
         onEdit={handleEditEntry}
         onDelete={handleDeleteLog}
         onToggleFavorite={handleToggleFavorite}
         onTagClick={handleTagClick}
+        onAddFeedback={handleAddFeedback}
+      />
+
+      {/* User Login & Switch Modal */}
+      <UserLoginModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        currentUser={currentUser}
+        teamUsers={teamUsers}
+        onSelectUser={handleSelectUser}
+        onUserCreated={handleUserCreated}
       />
 
       {/* Settings Modal */}

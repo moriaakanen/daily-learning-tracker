@@ -1,14 +1,16 @@
 'use client';
 
 import React from 'react';
-import { Star, X, Tag, ArrowUpDown, Filter } from 'lucide-react';
-import { FilterState, DateFilter } from '@/types';
+import { Star, X, Tag, ArrowUpDown, Users, User as UserIcon } from 'lucide-react';
+import { FilterState, DateFilter, UserScopeFilter, User } from '@/types';
 
 interface FilterBarProps {
   filter: FilterState;
   onFilterChange: (updates: Partial<FilterState>) => void;
   categories: string[];
   allTags: string[];
+  teamUsers: User[];
+  currentUser: User;
   totalResultsCount: number;
 }
 
@@ -17,18 +19,20 @@ export function FilterBar({
   onFilterChange,
   categories,
   allTags,
+  teamUsers,
+  currentUser,
   totalResultsCount,
 }: FilterBarProps) {
   const dateOptions: { label: string; value: DateFilter }[] = [
-    { label: 'All Time', value: 'all' },
-    { label: 'Today', value: 'today' },
-    { label: 'This Week', value: 'this-week' },
-    { label: 'This Month', value: 'this-month' },
+    { label: 'Semua Waktu', value: 'all' },
+    { label: 'Hari Ini', value: 'today' },
+    { label: '7 Hari Terakhir', value: 'this-week' },
+    { label: 'Bulan Ini', value: 'this-month' },
   ];
 
   return (
     <div className="mb-4 space-y-2.5">
-      {/* Category Labels bar (GitHub issue labels style) */}
+      {/* Category Labels bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => onFilterChange({ selectedCategory: 'All' })}
@@ -38,7 +42,7 @@ export function FilterBar({
               : 'bg-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-transparent hover:border-[var(--gh-border)]'
           }`}
         >
-          All Categories ({totalResultsCount})
+          Semua Kategori ({totalResultsCount})
         </button>
 
         {categories.map((cat) => {
@@ -59,9 +63,36 @@ export function FilterBar({
         })}
       </div>
 
-      {/* Control row: Subnav + Favorites + Tags + Sort */}
+      {/* Control row: Team Scope + Date + Favorites + Tags + Sort */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-[var(--gh-border-subtle)] text-xs">
         <div className="flex items-center gap-2 flex-wrap">
+          {/* User Scope Filter (All Team vs Mine vs Specific Member) */}
+          <div className="flex items-center bg-[var(--gh-surface)] rounded-md p-0.5 border border-[var(--gh-border)]">
+            <button
+              onClick={() => onFilterChange({ userScope: 'all' })}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs transition-colors ${
+                filter.userScope === 'all'
+                  ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-semibold shadow-xs'
+                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+              }`}
+            >
+              <Users className="w-3 h-3" />
+              <span>Feed Tim</span>
+            </button>
+
+            <button
+              onClick={() => onFilterChange({ userScope: 'mine' })}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs transition-colors ${
+                filter.userScope === 'mine'
+                  ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-semibold shadow-xs'
+                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+              }`}
+            >
+              <UserIcon className="w-3 h-3" />
+              <span>Catatan Saya</span>
+            </button>
+          </div>
+
           {/* Date Segmented Control */}
           <div className="flex items-center bg-[var(--gh-surface)] rounded-md p-0.5 border border-[var(--gh-border)]">
             {dateOptions.map((opt) => (
@@ -89,7 +120,7 @@ export function FilterBar({
             }`}
           >
             <Star className={`w-3.5 h-3.5 ${filter.onlyFavorites ? 'fill-amber-400 text-amber-400' : ''}`} />
-            <span>Starred</span>
+            <span>Favorit</span>
           </button>
         </div>
 
@@ -120,10 +151,10 @@ export function FilterBar({
               }
               className="bg-transparent border-none text-[var(--gh-text-primary)] focus:outline-none cursor-pointer text-xs"
             >
-              <option value="date-desc" className="bg-[var(--gh-surface)]">Sort: Newest date</option>
-              <option value="date-asc" className="bg-[var(--gh-surface)]">Sort: Oldest date</option>
-              <option value="duration-desc" className="bg-[var(--gh-surface)]">Sort: Longest duration</option>
-              <option value="title-asc" className="bg-[var(--gh-surface)]">Sort: Title (A-Z)</option>
+              <option value="date-desc" className="bg-[var(--gh-surface)]">Terbaru (Tanggal)</option>
+              <option value="date-asc" className="bg-[var(--gh-surface)]">Terlama (Tanggal)</option>
+              <option value="duration-desc" className="bg-[var(--gh-surface)]">Durasi Belajar</option>
+              <option value="title-asc" className="bg-[var(--gh-surface)]">Judul (A-Z)</option>
             </select>
           </div>
         </div>

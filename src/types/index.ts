@@ -1,3 +1,21 @@
+export interface User {
+  id: string;
+  username: string;
+  name: string;
+  role?: string;
+  avatar: string;
+}
+
+export interface FeedbackItem {
+  id: string;
+  log_id: string;
+  author_id: string;
+  author_name: string;
+  author_avatar: string;
+  content: string;
+  created_at: string;
+}
+
 export interface LearningLog {
   id: string;
   title: string;
@@ -10,7 +28,12 @@ export interface LearningLog {
   study_date: string; // YYYY-MM-DD
   duration_minutes: number;
   resource_urls?: string[];
+  image_urls?: string[];
   is_favorite?: boolean;
+  author_id?: string;
+  author_name?: string;
+  author_avatar?: string;
+  feedback?: FeedbackItem[];
   created_at?: string;
   updated_at?: string;
 }
@@ -26,11 +49,14 @@ export type ViewMode = 'grid' | 'timeline' | 'compact';
 
 export type DateFilter = 'all' | 'today' | 'this-week' | 'this-month' | 'custom';
 
+export type UserScopeFilter = 'all' | 'mine' | string; // 'all' | 'mine' | author_id
+
 export interface FilterState {
   searchQuery: string;
   selectedCategory: string;
   selectedTag: string | null;
   dateFilter: DateFilter;
+  userScope: UserScopeFilter;
   startDate?: string;
   endDate?: string;
   onlyFavorites: boolean;

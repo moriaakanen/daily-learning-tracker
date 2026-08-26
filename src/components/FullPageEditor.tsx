@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -17,11 +17,14 @@ import {
   Edit3,
   Check,
   X,
-  Sparkles,
+  Image as ImageIcon,
+  Upload,
+  Link as LinkIcon,
 } from 'lucide-react';
-import { LearningLog } from '@/types';
+import { LearningLog, User } from '@/types';
 
 interface FullPageEditorProps {
+  currentUser: User;
   initialLog?: LearningLog | null;
   categories: string[];
   onSave: (log: Omit<LearningLog, 'id' | 'created_at' | 'updated_at'>, existingId?: string) => void;
@@ -29,6 +32,7 @@ interface FullPageEditorProps {
 }
 
 export function FullPageEditor({
+  currentUser,
   initialLog,
   categories,
   onSave,
@@ -45,7 +49,12 @@ export function FullPageEditor({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [customImageUrl, setCustomImageUrl] = useState('');
+  const [showImageInput, setShowImageInput] = useState(false);
   const [activeTab, setActiveTab] = useState<'write' | 'preview' | 'split'>('split');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialLog) {
@@ -59,6 +68,7 @@ export function FullPageEditor({
       setCodeLanguage(initialLog.code_language || 'javascript');
       setTags(initialLog.tags || []);
       setIsFavorite(!!initialLog.is_favorite);
+      setImageUrls(initialLog.image_urls || []);
     } else {
       setTitle('');
       setCategory('Teknologi & Coding');
@@ -70,6 +80,7 @@ export function FullPageEditor({
       setCodeLanguage('javascript');
       setTags([]);
       setIsFavorite(false);
+      setImageUrls([]);
     }
   }, [initialLog]);
 
@@ -106,6 +117,49 @@ export function FullPageEditor({
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
+  // Image Upload Handler (Base64 file converter)
+  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      if (!file.type.startsWith('image/')) {
+        alert('File harus berupa gambar (PNG, JPG, GIF, WebP).');
+        return;
+      }
+
+      // Max 3MB warning
+      if (file.size > 3 * 1024 * 1024) {
+        alert('Ukuran gambar maksimal 3MB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        if (base64) {
+          setImageUrls((prev) => [...prev, base64]);
+          // Also append to markdown content for seamless inline rendering
+          setContent((prev) => prev + `\n\n![${file.name.replace(/\.[^/.]+$/, '')}](${base64})\n`);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddImageUrl = () => {
+    const trimmed = customImageUrl.trim();
+    if (!trimmed) return;
+    setImageUrls((prev) => [...prev, trimmed]);
+    setContent((prev) => prev + `\n\n![Gambar](${trimmed})\n`);
+    setCustomImageUrl('');
+    setShowImageInput(false);
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setImageUrls(imageUrls.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -126,7 +180,11 @@ export function FullPageEditor({
         code_snippet: codeSnippet.trim() || undefined,
         code_language: codeLanguage,
         tags,
+        image_urls: imageUrls,
         is_favorite: isFavorite,
+        author_id: initialLog?.author_id || currentUser.id,
+        author_name: initialLog?.author_name || currentUser.name,
+        author_avatar: initialLog?.author_avatar || currentUser.avatar,
       },
       initialLog?.id
     );
@@ -150,9 +208,17 @@ export function FullPageEditor({
               <BookOpen className="w-4 h-4 text-[var(--gh-accent)]" />
               <span>{initialLog ? 'Edit Catatan Belajar' : 'Tulis Catatan Pembelajaran Baru'}</span>
             </h1>
-            <p className="text-xs text-[var(--gh-text-secondary)]">
-              Dokumentasikan materi, wawasan buku, kebiasaan, sains, atau hal baru apapun yang kamu pelajari hari ini
-            </p>
+            <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
+              <span>Penulis:</span>
+              <img
+                src={initialLog?.author_avatar || currentUser.avatar}
+                alt={currentUser.name}
+                className="w-4 h-4 rounded-full object-cover border border-[var(--gh-border)]"
+              />
+              <span className="font-semibold text-[var(--gh-text-primary)]">
+                {initialLog?.author_name || currentUser.name}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -182,7 +248,7 @@ export function FullPageEditor({
         <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[var(--gh-text-primary)]">
-              Judul Topik / Materi yang Dipelajari <span className="text-rose-500">*</span>
+              Judul Materi / Topik <span className="text-rose-500">*</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -190,7 +256,7 @@ export function FullPageEditor({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Contoh: Prinsip Pareto 80/20, Struktur Organisasi Sel, atau Memahami Index PostgreSQL"
+                placeholder="Contoh: Prinsip Pareto 80/20, Struktur DNA & Genetik, atau Memahami Index PostgreSQL"
                 className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3.5 py-2 text-sm text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] focus:ring-1 focus:ring-[var(--gh-accent)] font-medium"
               />
               <button
@@ -239,7 +305,7 @@ export function FullPageEditor({
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[var(--gh-text-primary)] flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-[var(--gh-text-secondary)]" /> Durasi (Menit)
+                <Clock className="w-3.5 h-3.5 text-[var(--gh-text-secondary)]" /> Durasi Belajar (Menit)
               </label>
               <input
                 type="number"
@@ -253,7 +319,7 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Key Takeaways (Poin-poin Penting) */}
+        {/* Key Takeaways */}
         <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -299,55 +365,139 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Spacious Markdown Editor (Write / Preview / Split View) */}
+        {/* Spacious Markdown Editor with Image Upload Toolbar */}
         <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--gh-border)] pb-2">
-            <div>
-              <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
-                Catatan Lengkap & Penjelasan Konsep
-              </h3>
-              <p className="text-[11px] text-[var(--gh-text-secondary)]">
-                Tulis bebas menggunakan format Markdown (tabel, link, kutipan buku, daftar, dsb.)
-              </p>
+            <div className="flex items-center gap-2">
+              <div>
+                <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
+                  Catatan Lengkap & Penjelasan Konsep (Markdown)
+                </h3>
+              </div>
             </div>
 
-            {/* View switcher */}
-            <div className="flex items-center bg-[var(--gh-bg)] rounded-md p-0.5 border border-[var(--gh-border)] text-xs">
+            {/* Toolbar Buttons: Upload Image & View Switcher */}
+            <div className="flex items-center gap-2">
+              {/* Add Image Buttons */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                multiple
+                onChange={handleImageFileUpload}
+                className="hidden"
+              />
               <button
                 type="button"
-                onClick={() => setActiveTab('write')}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  activeTab === 'write'
-                    ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
-                    : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                }`}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+                title="Upload gambar dari komputer"
               >
-                <Edit3 className="w-3 h-3 inline mr-1" /> Tulis Saja
+                <Upload className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
+                <span>Upload Gambar</span>
               </button>
+
               <button
                 type="button"
-                onClick={() => setActiveTab('split')}
-                className={`hidden md:inline px-2.5 py-1 rounded transition-colors ${
-                  activeTab === 'split'
-                    ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
-                    : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                }`}
+                onClick={() => setShowImageInput(!showImageInput)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+                title="Sisipkan URL Gambar Web"
               >
-                Side-by-side (Split)
+                <LinkIcon className="w-3.5 h-3.5" />
+                <span>URL Gambar</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('preview')}
-                className={`px-2.5 py-1 rounded transition-colors ${
-                  activeTab === 'preview'
-                    ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
-                    : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                }`}
-              >
-                <Eye className="w-3 h-3 inline mr-1" /> Preview
-              </button>
+
+              {/* View switcher */}
+              <div className="flex items-center bg-[var(--gh-bg)] rounded-md p-0.5 border border-[var(--gh-border)] text-xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('write')}
+                  className={`px-2.5 py-0.5 rounded transition-colors ${
+                    activeTab === 'write'
+                      ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
+                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+                  }`}
+                >
+                  <Edit3 className="w-3 h-3 inline mr-1" /> Tulis
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('split')}
+                  className={`hidden md:inline px-2.5 py-0.5 rounded transition-colors ${
+                    activeTab === 'split'
+                      ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
+                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+                  }`}
+                >
+                  Split
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('preview')}
+                  className={`px-2.5 py-0.5 rounded transition-colors ${
+                    activeTab === 'preview'
+                      ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
+                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+                  }`}
+                >
+                  <Eye className="w-3 h-3 inline mr-1" /> Preview
+                </button>
+              </div>
             </div>
           </div>
+
+          {/* Quick URL Image Input Dropdown */}
+          {showImageInput && (
+            <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md flex items-center gap-2 animate-in fade-in duration-150">
+              <ImageIcon className="w-4 h-4 text-[var(--gh-accent)] shrink-0" />
+              <input
+                type="url"
+                value={customImageUrl}
+                onChange={(e) => setCustomImageUrl(e.target.value)}
+                placeholder="Tempel link URL gambar (https://example.com/image.png)..."
+                className="flex-1 bg-transparent text-xs text-[var(--gh-text-primary)] focus:outline-none placeholder-[var(--gh-text-tertiary)]"
+              />
+              <button
+                type="button"
+                onClick={handleAddImageUrl}
+                className="px-3 py-1 rounded bg-[var(--gh-accent)] hover:opacity-90 text-white text-xs font-semibold"
+              >
+                Sisipkan
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowImageInput(false)}
+                className="p-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Attached Images Thumbnail Gallery */}
+          {imageUrls.length > 0 && (
+            <div className="space-y-1.5 p-2 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md">
+              <div className="text-[11px] font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1">
+                <ImageIcon className="w-3.5 h-3.5" />
+                <span>Gambar Terlampir ({imageUrls.length}):</span>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                {imageUrls.map((imgUrl, i) => (
+                  <div key={i} className="relative group shrink-0 w-20 h-16 rounded border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)]">
+                    <img src={imgUrl} alt={`Attached ${i}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(i)}
+                      className="absolute top-1 right-1 p-0.5 rounded bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Hapus gambar"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Editor Body */}
           {activeTab === 'split' ? (
@@ -392,10 +542,10 @@ export function FullPageEditor({
             <div>
               <h3 className="text-xs font-semibold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <Code2 className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
-                <span>Code Snippet / Formula / Kutipan Penting (Opsional)</span>
+                <span>Code Snippet / Rumus / Kutipan (Opsional)</span>
               </h3>
               <p className="text-[11px] text-[var(--gh-text-secondary)]">
-                Bila materi memiliki kode, rumus matematika, atau kutipan kalimat kunci
+                Bila materi memiliki kode pemrograman, rumus matematika, atau kutipan kalimat kunci
               </p>
             </div>
 

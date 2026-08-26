@@ -1,9 +1,10 @@
-import { LearningLog, Category, StatsSummary, FilterState } from '@/types';
+import { LearningLog, Category, StatsSummary, FilterState, FeedbackItem, User } from '@/types';
 import {
   fetchRemoteLogs,
   insertRemoteLog,
   updateRemoteLog,
   deleteRemoteLog,
+  insertRemoteFeedback,
   getSupabaseClient,
 } from './supabase';
 
@@ -43,6 +44,20 @@ Dalam konteks belajar dan rutinitas harian, seringkali kita menghabiskan 80% ene
     study_date: new Date().toISOString().split('T')[0],
     duration_minutes: 45,
     is_favorite: true,
+    author_id: 'user-1',
+    author_name: 'Moria Akanen',
+    author_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    feedback: [
+      {
+        id: 'fb-1',
+        log_id: 'sample-1',
+        author_id: 'user-2',
+        author_name: 'Alex Pratama',
+        author_avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+        content: 'Konsep yang sangat relevan! Terutama bagian audit aktivitas harian untuk menghindari kesibukan semu.',
+        created_at: new Date().toISOString(),
+      },
+    ],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -60,6 +75,10 @@ Dalam konteks belajar dan rutinitas harian, seringkali kita menghabiskan 80% ene
     study_date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
     duration_minutes: 30,
     is_favorite: true,
+    author_id: 'user-3',
+    author_name: 'Siti Rahma',
+    author_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    feedback: [],
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString(),
   },
@@ -77,6 +96,10 @@ Dalam konteks belajar dan rutinitas harian, seringkali kita menghabiskan 80% ene
     study_date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
     duration_minutes: 40,
     is_favorite: false,
+    author_id: 'user-4',
+    author_name: 'Budi Santoso',
+    author_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    feedback: [],
     created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
     updated_at: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
@@ -109,31 +132,6 @@ export function saveLocalLogs(logs: LearningLog[]) {
   }
 }
 
-export function getLocalCategories(): Category[] {
-  if (typeof window === 'undefined') return DEFAULT_CATEGORIES;
-  try {
-    const raw = localStorage.getItem(CATEGORIES_KEY);
-    if (!raw) {
-      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(DEFAULT_CATEGORIES));
-      return DEFAULT_CATEGORIES;
-    }
-    return JSON.parse(raw);
-  } catch (e) {
-    console.error('Error reading categories from localStorage', e);
-    return DEFAULT_CATEGORIES;
-  }
-}
-
-export function saveLocalCategories(categories: Category[]) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories));
-  } catch (e) {
-    console.error('Error saving categories to localStorage', e);
-  }
-}
-
-// Unified Service Layer (Supabase + Local fallback)
 export async function getAllLogs(): Promise<LearningLog[]> {
   const supabase = getSupabaseClient();
   if (supabase) {
@@ -170,6 +168,7 @@ export async function createLog(newLog: Omit<LearningLog, 'id' | 'created_at' | 
   const fallbackLog: LearningLog = {
     ...newLog,
     id: 'local-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 6),
+    feedback: [],
     created_at: now,
     updated_at: now,
   };
@@ -189,7 +188,7 @@ export async function updateLog(id: string, updates: Partial<LearningLog>): Prom
       const remoteUpdated = await updateRemoteLog(id, updates);
       if (remoteUpdated) {
         const local = getLocalLogs();
-        const nextLogs = local.map((l) => (l.id === id ? remoteUpdated : l));
+        const nextLogs = local.map((l) => (l.id === id ? { ...l, ...remoteUpdated } : l));
         saveLocalLogs(nextLogs);
         return remoteUpdated;
       }
@@ -229,7 +228,53 @@ export async function deleteLog(id: string): Promise<boolean> {
   return true;
 }
 
-// Analytics and Streaks
+// Add Feedback to a log
+export async function addFeedback(
+  logId: string,
+  user: User,
+  content: string
+): Promise<FeedbackItem> {
+  const now = new Date().toISOString();
+  const newFeedback: FeedbackItem = {
+    id: 'fb-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 6),
+    log_id: logId,
+    author_id: user.id,
+    author_name: user.name,
+    author_avatar: user.avatar,
+    content: content.trim(),
+    created_at: now,
+  };
+
+  const supabase = getSupabaseClient();
+  if (supabase && !logId.startsWith('local-') && !logId.startsWith('sample-')) {
+    try {
+      await insertRemoteFeedback({
+        log_id: logId,
+        author_id: user.id,
+        author_name: user.name,
+        author_avatar: user.avatar,
+        content: content.trim(),
+      });
+    } catch (err) {
+      console.warn('Could not insert feedback to remote Supabase', err);
+    }
+  }
+
+  // Update local
+  const local = getLocalLogs();
+  const updatedLogs = local.map((log) => {
+    if (log.id === logId) {
+      const existing = log.feedback || [];
+      return { ...log, feedback: [...existing, newFeedback] };
+    }
+    return log;
+  });
+  saveLocalLogs(updatedLogs);
+
+  return newFeedback;
+}
+
+// Analytics
 export function calculateStats(logs: LearningLog[]): StatsSummary {
   const totalLogs = logs.length;
   let totalMinutes = 0;
@@ -242,11 +287,9 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
     const mins = Number(log.duration_minutes) || 30;
     totalMinutes += mins;
 
-    // Categories
     const cat = log.category || 'General';
     categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
 
-    // Tags
     if (Array.isArray(log.tags)) {
       log.tags.forEach((tag) => {
         const t = tag.trim();
@@ -254,7 +297,6 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
       });
     }
 
-    // Monthly hours
     if (log.study_date) {
       dateSet.add(log.study_date);
       const monthKey = log.study_date.substring(0, 7);
@@ -262,7 +304,6 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
     }
   });
 
-  // Calculate Streak
   const sortedDates = Array.from(dateSet).sort().reverse();
   let currentStreak = 0;
   let bestStreak = 0;
@@ -287,7 +328,6 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
     }
   }
 
-  // Max streak calculation
   const allAscending = Array.from(dateSet).sort();
   for (let i = 0; i < allAscending.length; i++) {
     if (i === 0) {
@@ -306,7 +346,6 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
   }
   bestStreak = Math.max(bestStreak, currentStreak);
 
-  // 7 days weekly activity
   const weeklyActivity: { date: string; count: number; hours: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000).toISOString().split('T')[0];
@@ -332,9 +371,20 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
 }
 
 // Filter and Search Logic
-export function filterLogs(logs: LearningLog[], filter: FilterState): LearningLog[] {
+export function filterLogs(logs: LearningLog[], filter: FilterState, currentUserId?: string): LearningLog[] {
   return logs
     .filter((log) => {
+      // User Scope Filter
+      if (filter.userScope === 'mine') {
+        if (currentUserId && log.author_id && log.author_id !== currentUserId) {
+          return false;
+        }
+      } else if (filter.userScope !== 'all') {
+        if (log.author_id !== filter.userScope) {
+          return false;
+        }
+      }
+
       if (filter.onlyFavorites && !log.is_favorite) return false;
 
       if (filter.selectedCategory && filter.selectedCategory !== 'All' && log.category !== filter.selectedCategory) {
@@ -368,10 +418,11 @@ export function filterLogs(logs: LearningLog[], filter: FilterState): LearningLo
         const matchTitle = log.title?.toLowerCase().includes(query);
         const matchContent = log.content?.toLowerCase().includes(query);
         const matchCategory = log.category?.toLowerCase().includes(query);
+        const matchAuthor = log.author_name?.toLowerCase().includes(query);
         const matchTags = log.tags?.some((t) => t.toLowerCase().includes(query));
         const matchTakeaways = log.takeaways?.some((tw) => tw.toLowerCase().includes(query));
 
-        if (!matchTitle && !matchContent && !matchCategory && !matchTags && !matchTakeaways) {
+        if (!matchTitle && !matchContent && !matchCategory && !matchTags && !matchTakeaways && !matchAuthor) {
           return false;
         }
       }

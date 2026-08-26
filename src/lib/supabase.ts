@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { LearningLog, Category } from '@/types';
+import { LearningLog, Category, FeedbackItem } from '@/types';
 
 let cachedClient: SupabaseClient | null = null;
 
@@ -59,7 +59,7 @@ export async function testSupabaseConnection(url: string, anonKey: string): Prom
       if (error.code === 'PGRST116' || error.message.includes('relation "public.learning_logs" does not exist')) {
         return {
           success: true,
-          message: 'Terkoneksi ke Supabase! Catatan: Tabel learning_logs belum dibuat, silakan jalankan SQL Schema di SQL Editor Supabase.'
+          message: 'Terkoneksi ke Supabase! Catatan: Jalankan SQL Schema di SQL Editor Supabase untuk membuat tabel.'
         };
       }
       return { success: false, message: `Error Supabase: ${error.message}` };
@@ -77,17 +77,42 @@ export async function fetchRemoteLogs(): Promise<LearningLog[] | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from('learning_logs')
-    .select('*')
-    .order('study_date', { ascending: false });
+  try {
+    const { data: logsData, error: logsError } = await supabase
+      .from('learning_logs')
+      .select('*')
+      .order('study_date', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching logs from Supabase:', error);
+    if (logsError) {
+      console.error('Error fetching logs from Supabase:', logsError);
+      return null;
+    }
+
+    // Try fetching feedbacks
+    const { data: feedbacksData } = await supabase
+      .from('learning_feedback')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    const feedbackMap = new Map<string, FeedbackItem[]>();
+    if (feedbacksData) {
+      feedbacksData.forEach((fb: FeedbackItem) => {
+        const list = feedbackMap.get(fb.log_id) || [];
+        list.push(fb);
+        feedbackMap.set(fb.log_id, list);
+      });
+    }
+
+    const merged = logsData.map((log: LearningLog) => ({
+      ...log,
+      feedback: feedbackMap.get(log.id) || log.feedback || [],
+    }));
+
+    return merged as LearningLog[];
+  } catch (err) {
+    console.error('Error in fetchRemoteLogs:', err);
     return null;
   }
-
-  return data as LearningLog[];
 }
 
 export async function insertRemoteLog(log: Omit<LearningLog, 'id' | 'created_at' | 'updated_at'>): Promise<LearningLog | null> {
@@ -144,19 +169,24 @@ export async function deleteRemoteLog(id: string): Promise<boolean> {
   return true;
 }
 
-export async function fetchRemoteCategories(): Promise<Category[] | null> {
+export async function insertRemoteFeedback(feedback: Omit<FeedbackItem, 'id' | 'created_at'>): Promise<FeedbackItem | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
+  try {
+    const { data, error } = await supabase
+      .from('learning_feedback')
+      .insert([feedback])
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Error fetching categories from Supabase:', error);
+    if (error) {
+      console.warn('Error inserting feedback to Supabase, will save locally:', error);
+      return null;
+    }
+    return data as FeedbackItem;
+  } catch (err) {
+    console.warn('Feedback table might not exist yet:', err);
     return null;
   }
-
-  return data as Category[];
 }

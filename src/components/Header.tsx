@@ -8,18 +8,17 @@ import {
   Search,
   LayoutGrid,
   GitCommit,
-  Database,
   X,
-  Star,
-  GitFork,
-  ExternalLink,
+  User as UserIcon,
 } from 'lucide-react';
-import { ViewMode } from '@/types';
+import { ViewMode, User } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
+  currentUser: User;
   onOpenNewLog: () => void;
   onOpenSettings: () => void;
+  onOpenUserModal: () => void;
   viewMode: ViewMode;
   onChangeViewMode: (mode: ViewMode) => void;
   searchQuery: string;
@@ -29,8 +28,10 @@ interface HeaderProps {
 }
 
 export function Header({
+  currentUser,
   onOpenNewLog,
   onOpenSettings,
+  onOpenUserModal,
   viewMode,
   onChangeViewMode,
   searchQuery,
@@ -67,15 +68,15 @@ export function Header({
                 daily-learning-tracker
               </a>
               <span className="ml-1 text-[11px] font-medium text-[var(--gh-text-secondary)] border border-[var(--gh-border)] px-1.5 py-0.2 rounded-full">
-                Public
+                Team Public
               </span>
             </div>
           </div>
 
-          {/* Right Tools: Search, Theme Toggle, Settings, New Entry */}
+          {/* Right Tools: Search, Theme Toggle, User Profile, Settings, New Entry */}
           <div className="flex items-center gap-2">
-            {/* Search Input (GitHub style) */}
-            <div className="relative hidden md:block w-52">
+            {/* Search Input */}
+            <div className="relative hidden md:block w-48">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--gh-text-tertiary)]" />
               <input
                 type="text"
@@ -97,7 +98,7 @@ export function Header({
             {/* Supabase Status Pill */}
             <button
               onClick={onOpenSettings}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] transition-colors"
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] transition-colors"
               title={isSupabaseConnected ? 'Database PostgreSQL Supabase Terhubung' : 'Penyimpanan Lokal'}
             >
               <div className={`w-2 h-2 rounded-full ${isSupabaseConnected ? 'bg-emerald-500' : 'bg-zinc-400'}`} />
@@ -107,8 +108,8 @@ export function Header({
             {/* Theme Toggle Button */}
             <ThemeToggle />
 
-            {/* View Mode */}
-            <div className="flex items-center border border-[var(--gh-border)] rounded-md bg-[var(--gh-bg)] p-0.5">
+            {/* View Mode Grid/Timeline */}
+            <div className="hidden sm:flex items-center border border-[var(--gh-border)] rounded-md bg-[var(--gh-bg)] p-0.5">
               <button
                 onClick={() => onChangeViewMode('grid')}
                 className={`p-1 rounded text-xs transition-colors ${
@@ -142,13 +143,29 @@ export function Header({
               <Settings className="w-4 h-4" />
             </button>
 
-            {/* Primary Action: New Note (GitHub Green Button) */}
+            {/* User Profile Login / Switch Button */}
+            <button
+              onClick={onOpenUserModal}
+              className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-primary)] transition-colors"
+              title={`Sedang masuk sebagai ${currentUser.name} (@${currentUser.username}). Klik untuk ganti akun.`}
+            >
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name}
+                className="w-5 h-5 rounded-full object-cover border border-[var(--gh-border)]"
+              />
+              <span className="hidden sm:inline font-semibold text-xs truncate max-w-[90px]">
+                {currentUser.name.split(' ')[0]}
+              </span>
+            </button>
+
+            {/* Primary Action: New Entry (GitHub Green Button) */}
             <button
               onClick={onOpenNewLog}
-              className="flex items-center gap-1.5 bg-[#1f883d] hover:bg-[#1a7f37] text-white px-3 py-1 rounded-md text-xs font-semibold shadow-sm transition-all"
+              className="flex items-center gap-1.5 bg-[#1f883d] hover:bg-[#1a7f37] text-white px-3 py-1 rounded-md text-xs font-semibold shadow-sm transition-all shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>New Entry</span>
+              <span className="hidden sm:inline">New Entry</span>
             </button>
           </div>
         </div>
