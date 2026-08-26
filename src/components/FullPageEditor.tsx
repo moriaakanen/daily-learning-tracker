@@ -17,6 +17,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
+import { compressImage } from '@/lib/imageUtils';
 
 interface FullPageEditorProps {
   currentUser: User | null;
@@ -46,6 +47,7 @@ export function FullPageEditor({
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -111,37 +113,36 @@ export function FullPageEditor({
     );
   }
 
-  const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Optimized Image Upload Handler (Automatic Compression, No Text Pollution)
+  const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith('image/')) {
-        alert('File harus berupa gambar (PNG, JPG, GIF, WebP).');
-        return;
-      }
-      if (file.size > 3 * 1024 * 1024) {
-        alert('Ukuran gambar maksimal 3MB.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target?.result as string;
-        if (base64) {
-          setImageUrls((prev) => [...prev, base64]);
-          setContent((prev) => prev + `\n\n![${file.name.replace(/\.[^/.]+$/, '')}](${base64})\n`);
+    setIsCompressing(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) {
+          alert('File harus berupa gambar (PNG, JPG, GIF, WebP).');
+          continue;
         }
-      };
-      reader.readAsDataURL(file);
-    });
+
+        // Compress image to lightweight optimized format
+        const compressedBase64 = await compressImage(file, 1200, 1200, 0.78);
+        setImageUrls((prev) => [...prev, compressedBase64]);
+      }
+    } catch (err) {
+      console.error('Error compressing image', err);
+      alert('Gagal memproses gambar.');
+    } finally {
+      setIsCompressing(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleAddImageUrl = () => {
     const trimmed = customImageUrl.trim();
     if (!trimmed) return;
     setImageUrls((prev) => [...prev, trimmed]);
-    setContent((prev) => prev + `\n\n![Gambar](${trimmed})\n`);
     setCustomImageUrl('');
     setShowImageInput(false);
   };
@@ -179,7 +180,7 @@ export function FullPageEditor({
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-200">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
       {/* Top action header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--gh-border)]">
         <div className="flex items-center gap-3">
@@ -307,19 +308,35 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Clean, Full-Width Writing Area (Markdown with Image Upload Toolbar) */}
+        {/* Card Catatan Lengkap with Upload Buttons at the Bottom Right */}
         <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--gh-border)] pb-2">
-            <div>
-              <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
-                Catatan Lengkap
-              </h3>
-              <p className="text-[11px] text-[var(--gh-text-secondary)]">
-                Tuliskan semua hal yang Anda pelajari hari ini (mendukung teks, paragraf, list, atau gambar)
-              </p>
+          {/* Card Header */}
+          <div className="border-b border-[var(--gh-border)] pb-2">
+            <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
+              Catatan Lengkap
+            </h3>
+            <p className="text-[11px] text-[var(--gh-text-secondary)]">
+              Tuliskan semua hal yang Anda pelajari hari ini (teks bersih dan terstruktur)
+            </p>
+          </div>
+
+          {/* Clean Writing Textarea */}
+          <textarea
+            rows={14}
+            required
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
+            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[260px]"
+          />
+
+          {/* Toolbar on Bottom Right of Card */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <div className="text-[11px] text-[var(--gh-text-tertiary)]">
+              {isCompressing ? 'Mengompresi gambar otomatis...' : `${imageUrls.length} gambar dilampirkan`}
             </div>
 
-            {/* Toolbar Buttons: Upload Image & URL Image */}
+            {/* Upload & URL Buttons on Bottom Right */}
             <div className="flex items-center gap-2">
               <input
                 type="file"
@@ -331,9 +348,10 @@ export function FullPageEditor({
               />
               <button
                 type="button"
+                disabled={isCompressing}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
-                title="Upload gambar dari komputer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-medium"
+                title="Upload gambar dari komputer (otomatis dikompres)"
               >
                 <Upload className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
                 <span>Upload Gambar</span>
@@ -342,7 +360,7 @@ export function FullPageEditor({
               <button
                 type="button"
                 onClick={() => setShowImageInput(!showImageInput)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-medium"
                 title="Sisipkan URL Gambar Web"
               >
                 <LinkIcon className="w-3.5 h-3.5" />
@@ -351,7 +369,7 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Quick URL Image Input */}
+          {/* Quick URL Image Input Popup */}
           {showImageInput && (
             <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md flex items-center gap-2 animate-in fade-in duration-150">
               <ImageIcon className="w-4 h-4 text-[var(--gh-accent)] shrink-0" />
@@ -379,19 +397,9 @@ export function FullPageEditor({
             </div>
           )}
 
-          {/* Spacious Writing Area */}
-          <textarea
-            rows={14}
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
-            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[260px]"
-          />
-
-          {/* Attached Images Thumbnail Gallery (Placed below/after Catatan Lengkap) */}
+          {/* Attached Images Thumbnail Preview (Clean below writing area) */}
           {imageUrls.length > 0 && (
-            <div className="space-y-1.5 p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md">
+            <div className="space-y-1.5 p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md mt-2">
               <div className="text-[11px] font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1">
                 <ImageIcon className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
                 <span>Lampiran Gambar ({imageUrls.length}):</span>

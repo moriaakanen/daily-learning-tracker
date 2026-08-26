@@ -129,9 +129,19 @@ export default function Home() {
     return Array.from(tagSet).sort();
   }, [logs]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const filteredLogs = useMemo(() => {
     return filterLogs(logs, filter, currentUser?.id);
   }, [logs, filter, currentUser]);
+
+  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredLogs.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredLogs, currentPage]);
 
   const stats = useMemo(() => {
     return calculateStats(logs);
@@ -215,6 +225,7 @@ export default function Home() {
 
   const handleFilterUpdates = (updates: Partial<FilterState>) => {
     setFilter((prev) => ({ ...prev, ...updates }));
+    setCurrentPage(1);
   };
 
   const handleImportLogs = (imported: LearningLog[]) => {
@@ -432,18 +443,74 @@ export default function Home() {
                 onToggleFavorite={handleToggleFavorite}
               />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredLogs.map((log) => (
-                  <LogCard
-                    key={log.id}
-                    log={log}
-                    currentUser={currentUser}
-                    onSelect={setSelectedLog}
-                    onEdit={handleEditEntry}
-                    onDelete={handleDeleteLog}
-                    onToggleFavorite={handleToggleFavorite}
-                  />
-                ))}
+              <div className="space-y-4">
+                {/* Single Column Vertical Feed */}
+                <div className="grid grid-cols-1 gap-3 max-w-4xl mx-auto">
+                  {paginatedLogs.map((log) => (
+                    <LogCard
+                      key={log.id}
+                      log={log}
+                      currentUser={currentUser}
+                      onSelect={setSelectedLog}
+                      onEdit={handleEditEntry}
+                      onDelete={handleDeleteLog}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination Controls (1 Page = 10 Catatan) */}
+                {totalPages > 1 && (
+                  <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--gh-border)] text-xs">
+                    <div className="text-[var(--gh-text-secondary)]">
+                      Menampilkan <span className="font-semibold text-[var(--gh-text-primary)]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="font-semibold text-[var(--gh-text-primary)]">{Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)}</span> dari <span className="font-semibold text-[var(--gh-text-primary)]">{filteredLogs.length}</span> catatan
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={currentPage === 1}
+                        onClick={() => {
+                          setCurrentPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="px-3 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-[var(--gh-text-primary)] font-medium transition-colors cursor-pointer"
+                      >
+                        Sebelumnya
+                      </button>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          type="button"
+                          onClick={() => {
+                            setCurrentPage(page);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className={`w-7 h-7 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                            currentPage === page
+                              ? 'bg-[var(--gh-accent)] text-white'
+                              : 'border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)]'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        disabled={currentPage === totalPages}
+                        onClick={() => {
+                          setCurrentPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="px-3 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-[var(--gh-text-primary)] font-medium transition-colors cursor-pointer"
+                      >
+                        Selanjutnya
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

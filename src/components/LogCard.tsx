@@ -55,19 +55,21 @@ export function LogCard({
   };
 
   const commentCount = log.feedback ? log.feedback.length : 0;
-  const hasImages = log.image_urls && log.image_urls.length > 0;
+  const imageCount = log.image_urls ? log.image_urls.length : 0;
 
-  // Clean snippet content preview (removes markdown headers for clean preview)
-  const contentPreview = log.content
-    ?.replace(/!\[.*?\]\(.*?\)/g, '') // remove markdown inline image tags from text preview
+  // Clean snippet content preview (removes markdown image tags and raw markers)
+  const cleanContent = (log.content || '')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
     .replace(/^#+\s+/gm, '')
     .trim();
 
+  const isLongContent = cleanContent.length > 120;
+
   return (
-    <div className="group relative flex flex-col justify-between rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] p-4 transition-all duration-150 shadow-xs">
+    <div className="group relative flex flex-col justify-between rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] p-4 transition-all duration-150 shadow-xs min-h-[170px]">
       <div>
         {/* Top: Topik Label + Duration + Actions */}
-        <div className="flex items-center justify-between gap-2 mb-2.5">
+        <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span
               className="text-[11px] font-semibold px-2 py-0.5 rounded-full border"
@@ -84,6 +86,17 @@ export function LogCard({
               <span className="text-[11px] text-[var(--gh-text-secondary)] flex items-center gap-1">
                 <Clock className="w-3 h-3 text-[var(--gh-text-tertiary)]" />
                 {log.duration_minutes}m
+              </span>
+            )}
+
+            {imageCount > 0 && (
+              <span
+                onClick={() => onSelect(log)}
+                className="text-[11px] font-medium text-[var(--gh-accent)] bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] px-2 py-0.2 rounded-full flex items-center gap-1 cursor-pointer hover:underline"
+                title={`${imageCount} gambar terlampir`}
+              >
+                <ImageIcon className="w-3 h-3" />
+                <span>{imageCount} gambar terlampir</span>
               </span>
             )}
           </div>
@@ -134,69 +147,39 @@ export function LogCard({
           </div>
         </div>
 
-        {/* 1. Title */}
+        {/* 1. Judul Catatan */}
         <h3
           onClick={() => onSelect(log)}
-          className="text-sm font-semibold text-[var(--gh-text-primary)] group-hover:text-[var(--gh-accent)] transition-colors cursor-pointer leading-snug line-clamp-2"
+          className="text-sm font-semibold text-[var(--gh-text-primary)] group-hover:text-[var(--gh-accent)] transition-colors cursor-pointer leading-snug line-clamp-1"
         >
           {log.title}
         </h3>
 
-        {/* 2. Catatan Lengkap Text Excerpt */}
-        {contentPreview ? (
-          <div
-            onClick={() => onSelect(log)}
-            className="mt-2 text-xs text-[var(--gh-text-secondary)] line-clamp-4 leading-relaxed cursor-pointer whitespace-pre-wrap"
-          >
-            {contentPreview}
-          </div>
-        ) : (
-          <div
-            onClick={() => onSelect(log)}
-            className="mt-2 text-xs text-[var(--gh-text-tertiary)] italic cursor-pointer"
-          >
-            Klik untuk membaca detail catatan...
-          </div>
-        )}
+        {/* 2. Catatan Lengkap Text dengan "baca selengkapnya..." */}
+        <div
+          onClick={() => onSelect(log)}
+          className="mt-1.5 text-xs text-[var(--gh-text-secondary)] leading-relaxed cursor-pointer"
+        >
+          {cleanContent ? (
+            <p className="line-clamp-2">
+              {cleanContent}
+            </p>
+          ) : (
+            <p className="text-[var(--gh-text-tertiary)] italic">
+              Tidak ada catatan tambahan.
+            </p>
+          )}
 
-        {/* 3. Lampiran Gambar Berada di Bawah Teks (Like X / Facebook Post) */}
-        {hasImages && log.image_urls && (
-          <div
-            onClick={() => onSelect(log)}
-            className="mt-3 cursor-pointer"
-          >
-            {log.image_urls.length === 1 ? (
-              <div className="rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-bg)] max-h-56">
-                <img
-                  src={log.image_urls[0]}
-                  alt={log.title}
-                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-bg)] p-1">
-                {log.image_urls.slice(0, 2).map((imgUrl, i) => (
-                  <div key={i} className="h-28 rounded overflow-hidden relative">
-                    <img
-                      src={imgUrl}
-                      alt={`${log.title} ${i + 1}`}
-                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
-                    />
-                    {i === 1 && log.image_urls && log.image_urls.length > 2 && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-xs">
-                        +{log.image_urls.length - 2} Gambar
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          {isLongContent && (
+            <span className="text-[11px] text-[var(--gh-accent)] hover:underline font-semibold inline-block mt-0.5">
+              baca selengkapnya...
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* 4. Footer: Author + Comments + Date */}
-      <div className="mt-4 pt-2.5 border-t border-[var(--gh-border-subtle)] flex items-center justify-between text-xs gap-2">
+      {/* 3. Footer: Author + Comments + Date */}
+      <div className="mt-3 pt-2.5 border-t border-[var(--gh-border-subtle)] flex items-center justify-between text-xs gap-2">
         <div className="flex items-center gap-2">
           {/* Author avatar & name */}
           <div className="flex items-center gap-1.5" title={`Ditulis oleh ${log.author_name || 'Tim'}`}>
@@ -205,7 +188,7 @@ export function LogCard({
               alt={log.author_name || 'Author'}
               className="w-4 h-4 rounded-full object-cover border border-[var(--gh-border)]"
             />
-            <span className="text-[11px] text-[var(--gh-text-secondary)] truncate max-w-[90px]">
+            <span className="text-[11px] text-[var(--gh-text-secondary)] truncate max-w-[100px]">
               {log.author_name?.split(' ')[0] || 'User'}
             </span>
           </div>
