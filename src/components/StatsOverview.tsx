@@ -19,6 +19,7 @@ import {
   Target,
 } from 'lucide-react';
 import { StatsSummary, LearningLog } from '@/types';
+import { getTopicTheme } from '@/lib/topicTheme';
 
 interface StatsOverviewProps {
   stats: StatsSummary;
@@ -450,39 +451,39 @@ export function StatsOverview({ stats, logs }: StatsOverviewProps) {
                 Belum ada data pembelajaran.
               </p>
             ) : (
-              <div className="space-y-2">
-                {topCategories.slice(0, 4).map((cat) => (
-                  <div key={cat.name} className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <span className="font-semibold text-[var(--gh-text-primary)] truncate max-w-[180px]">
-                          {cat.name}
-                        </span>
-                        <span className="text-[10px] text-[var(--gh-text-tertiary)]">
-                          ({cat.count} entri • {cat.hours} jam)
+              <div className="space-y-2.5">
+                {topCategories.slice(0, 4).map((cat) => {
+                  const tTheme = getTopicTheme(cat.name);
+                  return (
+                    <div key={cat.name} className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs">{tTheme.emoji}</span>
+                          <span className="font-bold text-[var(--gh-text-primary)] truncate max-w-[180px]">
+                            {cat.name}
+                          </span>
+                          <span className="text-[10px] text-[var(--gh-text-tertiary)]">
+                            ({cat.count} entri • {cat.hours} jam)
+                          </span>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-[var(--gh-text-primary)]">
+                          {cat.percentage}%
                         </span>
                       </div>
-                      <span className="font-mono text-xs font-bold text-[var(--gh-text-primary)]">
-                        {cat.percentage}%
-                      </span>
-                    </div>
 
-                    {/* Progress bar */}
-                    <div className="h-1.5 w-full bg-[var(--gh-bg)] rounded-full overflow-hidden border border-[var(--gh-border-subtle)]">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${cat.percentage}%`,
-                          backgroundColor: cat.color,
-                        }}
-                      />
+                      {/* Progress bar */}
+                      <div className="h-2 w-full bg-[var(--gh-bg)] rounded-full overflow-hidden border border-[var(--gh-border-subtle)]">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${cat.percentage}%`,
+                            backgroundColor: tTheme.color || cat.color,
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

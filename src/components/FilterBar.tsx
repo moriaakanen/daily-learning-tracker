@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Star, ArrowUpDown, Users, User as UserIcon, Plus, X, Check } from 'lucide-react';
 import { FilterState, DateFilter, User } from '@/types';
+import { getTopicTheme } from '@/lib/topicTheme';
 
 interface FilterBarProps {
   filter: FilterState;
@@ -27,11 +28,11 @@ export function FilterBar({
   const [showAddTopic, setShowAddTopic] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
 
-  const dateOptions: { label: string; value: DateFilter }[] = [
-    { label: 'Semua Waktu', value: 'all' },
-    { label: 'Hari Ini', value: 'today' },
-    { label: '7 Hari Terakhir', value: 'this-week' },
-    { label: 'Bulan Ini', value: 'this-month' },
+  const dateOptions: { label: string; value: DateFilter; emoji: string }[] = [
+    { label: 'Semua Waktu', value: 'all', emoji: '🗓️' },
+    { label: 'Hari Ini', value: 'today', emoji: '⚡' },
+    { label: '7 Hari Terakhir', value: 'this-week', emoji: '📅' },
+    { label: 'Bulan Ini', value: 'this-month', emoji: '📆' },
   ];
 
   const handleMineClick = () => {
@@ -56,32 +57,41 @@ export function FilterBar({
 
   return (
     <div className="mb-4 space-y-2.5 w-full">
-      {/* Topik Labels bar + Tambah Topik */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
+      {/* Topik Labels bar with Emojis + Tambah Topik */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none w-full">
         <button
           onClick={() => onFilterChange({ selectedCategory: 'All' })}
-          className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+          className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 cursor-pointer ${
             filter.selectedCategory === 'All'
-              ? 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-primary)] border-[var(--gh-border)] font-semibold'
-              : 'bg-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-transparent hover:border-[var(--gh-border)]'
+              ? 'bg-[var(--gh-accent)] text-white border-[var(--gh-accent)] shadow-xs'
+              : 'bg-[var(--gh-surface)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-border)]'
           }`}
         >
-          Semua Topik ({totalResultsCount})
+          <span>🌟</span>
+          <span>Semua Topik ({totalResultsCount})</span>
         </button>
 
         {categories.map((cat) => {
           const isSelected = filter.selectedCategory === cat;
+          const theme = getTopicTheme(cat);
+
           return (
             <button
               key={cat}
               onClick={() => onFilterChange({ selectedCategory: cat })}
-              className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap border transition-colors ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border transition-all flex items-center gap-1.5 cursor-pointer ${
                 isSelected
-                  ? 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-primary)] border-[var(--gh-border)] font-semibold'
-                  : 'bg-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-transparent hover:border-[var(--gh-border)]'
+                  ? 'shadow-xs font-bold'
+                  : 'hover:opacity-90'
               }`}
+              style={{
+                backgroundColor: isSelected ? theme.color : theme.badgeBg,
+                color: isSelected ? '#ffffff' : theme.badgeText,
+                borderColor: isSelected ? theme.color : theme.badgeBorder,
+              }}
             >
-              {cat}
+              <span>{theme.emoji}</span>
+              <span>{cat}</span>
             </button>
           );
         })}
@@ -90,11 +100,11 @@ export function FilterBar({
         {onAddCategory && (
           <button
             onClick={() => setShowAddTopic(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap border border-dashed border-[var(--gh-border)] text-[var(--gh-accent)] hover:bg-[var(--gh-badge-bg)] transition-colors shrink-0"
+            className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border border-dashed border-[var(--gh-border)] bg-[var(--gh-surface)] text-[var(--gh-accent)] hover:bg-[var(--gh-badge-bg)] transition-colors shrink-0 cursor-pointer"
             title="Tambah Topik Kustom Baru"
           >
-            <Plus className="w-3 h-3" />
-            <span>Tambah Topik</span>
+            <span>✨</span>
+            <span>+ Tambah Topik</span>
           </button>
         )}
       </div>
@@ -103,10 +113,10 @@ export function FilterBar({
       {showAddTopic && (
         <form
           onSubmit={handleSaveNewTopic}
-          className="flex items-center gap-2 p-2.5 rounded-md border border-[var(--gh-accent)] bg-[var(--gh-surface)] animate-in fade-in duration-150 max-w-md"
+          className="flex items-center gap-2 p-2.5 rounded-lg border border-[var(--gh-accent)] bg-[var(--gh-surface)] shadow-md animate-in fade-in duration-150 max-w-md"
         >
-          <span className="text-xs font-semibold text-[var(--gh-text-primary)] shrink-0">
-            Topik Baru:
+          <span className="text-xs font-bold text-[var(--gh-text-primary)] shrink-0 flex items-center gap-1">
+            <span>🏷️</span> Topik Baru:
           </span>
           <input
             type="text"
@@ -119,7 +129,7 @@ export function FilterBar({
           />
           <button
             type="submit"
-            className="flex items-center gap-1 px-3 py-1 rounded bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shrink-0"
+            className="flex items-center gap-1 px-3 py-1 rounded bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold shrink-0 cursor-pointer"
           >
             <Check className="w-3.5 h-3.5" />
             <span>Simpan</span>
@@ -130,7 +140,7 @@ export function FilterBar({
               setNewTopicName('');
               setShowAddTopic(false);
             }}
-            className="p-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]"
+            className="p-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -144,25 +154,25 @@ export function FilterBar({
           <div className="flex items-center bg-[var(--gh-surface)] rounded-md p-0.5 border border-[var(--gh-border)]">
             <button
               onClick={() => onFilterChange({ userScope: 'all' })}
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs transition-colors ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
                 filter.userScope === 'all'
-                  ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-semibold shadow-xs'
+                  ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-bold shadow-xs'
                   : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
               }`}
             >
-              <Users className="w-3 h-3" />
+              <span>👥</span>
               <span>Feed Tim</span>
             </button>
 
             <button
               onClick={handleMineClick}
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs transition-colors ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
                 filter.userScope === 'mine'
-                  ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-semibold shadow-xs'
+                  ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-bold shadow-xs'
                   : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
               }`}
             >
-              <UserIcon className="w-3 h-3" />
+              <span>👤</span>
               <span>Catatan Saya</span>
             </button>
           </div>
@@ -173,13 +183,14 @@ export function FilterBar({
               <button
                 key={opt.value}
                 onClick={() => onFilterChange({ dateFilter: opt.value })}
-                className={`px-2.5 py-0.5 rounded text-xs transition-colors ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
                   filter.dateFilter === opt.value
-                    ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-medium shadow-xs'
+                    ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-bold shadow-xs'
                     : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
                 }`}
               >
-                {opt.label}
+                <span>{opt.emoji}</span>
+                <span>{opt.label}</span>
               </button>
             ))}
           </div>
@@ -187,21 +198,21 @@ export function FilterBar({
           {/* Favorites Star Filter */}
           <button
             onClick={() => onFilterChange({ onlyFavorites: !filter.onlyFavorites })}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-md border text-xs transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-md border text-xs transition-colors cursor-pointer ${
               filter.onlyFavorites
-                ? 'bg-[var(--gh-surface-hover)] border-[var(--gh-border)] text-amber-500 font-medium'
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 font-bold'
                 : 'bg-[var(--gh-surface)] border-[var(--gh-border)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
             }`}
           >
-            <Star className={`w-3.5 h-3.5 ${filter.onlyFavorites ? 'fill-amber-400 text-amber-400' : ''}`} />
+            <span>⭐</span>
             <span>Favorit</span>
           </button>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Sort By Dropdown */}
-          <div className="flex items-center gap-1 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-md px-2 py-1 text-[var(--gh-text-secondary)] text-xs">
-            <ArrowUpDown className="w-3 h-3" />
+          <div className="flex items-center gap-1 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-md px-2.5 py-1 text-[var(--gh-text-secondary)] text-xs">
+            <ArrowUpDown className="w-3 h-3 text-[var(--gh-accent)]" />
             <select
               value={filter.sortBy}
               onChange={(e) =>
@@ -209,12 +220,12 @@ export function FilterBar({
                   sortBy: e.target.value as FilterState['sortBy'],
                 })
               }
-              className="bg-transparent border-none text-[var(--gh-text-primary)] focus:outline-none cursor-pointer text-xs"
+              className="bg-transparent border-none text-[var(--gh-text-primary)] font-medium focus:outline-none cursor-pointer text-xs"
             >
-              <option value="date-desc" className="bg-[var(--gh-surface)]">Terbaru (Tanggal)</option>
-              <option value="date-asc" className="bg-[var(--gh-surface)]">Terlama (Tanggal)</option>
-              <option value="duration-desc" className="bg-[var(--gh-surface)]">Durasi Belajar</option>
-              <option value="title-asc" className="bg-[var(--gh-surface)]">Judul (A-Z)</option>
+              <option value="date-desc" className="bg-[var(--gh-surface)]">🕒 Terbaru (Tanggal)</option>
+              <option value="date-asc" className="bg-[var(--gh-surface)]">📅 Terlama (Tanggal)</option>
+              <option value="duration-desc" className="bg-[var(--gh-surface)]">⏱️ Durasi Belajar</option>
+              <option value="title-asc" className="bg-[var(--gh-surface)]">🔤 Judul (A-Z)</option>
             </select>
           </div>
         </div>

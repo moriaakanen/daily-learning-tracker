@@ -11,14 +11,12 @@ import {
   Edit2,
   Trash2,
   Share2,
-  Clock,
-  Calendar,
   MessageSquare,
   Send,
-  Image as ImageIcon,
   LogIn,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
+import { getTopicTheme } from '@/lib/topicTheme';
 
 interface LogDetailModalProps {
   log: LearningLog | null;
@@ -28,7 +26,6 @@ interface LogDetailModalProps {
   onEdit: (log: LearningLog) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string, current: boolean) => void;
-  onTagClick?: (tag: string) => void;
   onAddFeedback: (logId: string, content: string) => Promise<void>;
 }
 
@@ -50,6 +47,7 @@ export function LogDetailModal({
   if (!log) return null;
 
   const isAuthor = currentUser && (!log.author_id || log.author_id === currentUser.id);
+  const theme = getTopicTheme(log.category);
 
   const handleCopyCode = () => {
     if (log.code_snippet) {
@@ -60,7 +58,7 @@ export function LogDetailModal({
   };
 
   const handleShare = () => {
-    const text = `💡 ${log.title}\n\nTopik: ${log.category}\nOleh: ${log.author_name || 'Tim'}\n\n${log.content}`;
+    const text = `💡 ${log.title}\n\nTopik: ${theme.emoji} ${log.category}\nOleh: ${log.author_name || 'Tim'}\n\n${log.content}`;
     navigator.clipboard.writeText(text);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -97,7 +95,11 @@ export function LogDetailModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] shadow-2xl overflow-hidden"
+        className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-lg border border-[var(--gh-border)] bg-[var(--gh-bg)] shadow-2xl overflow-hidden"
+        style={{
+          borderTopWidth: '4px',
+          borderTopColor: theme.color,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header bar */}
@@ -109,28 +111,38 @@ export function LogDetailModal({
                 alt={log.author_name || 'Author'}
                 className="w-5 h-5 rounded-full object-cover border border-[var(--gh-border)]"
               />
-              <span className="font-semibold text-[var(--gh-text-primary)]">
+              <span className="font-bold text-[var(--gh-text-primary)]">
                 {log.author_name || 'Moria Akanen'}
               </span>
             </div>
 
             <span>•</span>
-            <span className="font-medium text-[var(--gh-text-primary)] border border-[var(--gh-border)] bg-[var(--gh-badge-bg)] px-2 py-0.2 rounded-full text-[11px]">
-              {log.category}
+
+            {/* Topic Badge */}
+            <span
+              className="font-bold px-2.5 py-0.5 rounded-full text-[11px] border flex items-center gap-1 shadow-2xs"
+              style={{
+                backgroundColor: theme.badgeBg,
+                color: theme.badgeText,
+                borderColor: theme.badgeBorder,
+              }}
+            >
+              <span>{theme.emoji}</span>
+              <span>{log.category}</span>
             </span>
 
             <span>•</span>
             <span className="hidden sm:flex items-center gap-1 text-[11px]">
-              <Calendar className="w-3.5 h-3.5" />
-              {formattedDate}
+              <span>📅</span>
+              <span>{formattedDate}</span>
             </span>
 
             {log.duration_minutes && (
               <>
                 <span className="hidden sm:inline">•</span>
                 <span className="hidden sm:flex items-center gap-1 text-[11px]">
-                  <Clock className="w-3.5 h-3.5" />
-                  {log.duration_minutes}m
+                  <span>⏱️</span>
+                  <span>{log.duration_minutes}m</span>
                 </span>
               </>
             )}
@@ -139,7 +151,7 @@ export function LogDetailModal({
           <div className="flex items-center gap-1">
             <button
               onClick={() => onToggleFavorite(log.id, !!log.is_favorite)}
-              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-amber-500 transition-colors"
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-amber-500 transition-colors cursor-pointer"
               title="Star"
             >
               <Star
@@ -151,8 +163,8 @@ export function LogDetailModal({
 
             <button
               onClick={handleShare}
-              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
-              title="Share Summary"
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+              title="Bagikan Ringkasan"
             >
               {copiedLink ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
             </button>
@@ -164,8 +176,8 @@ export function LogDetailModal({
                     onClose();
                     onEdit(log);
                   }}
-                  className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
-                  title="Edit"
+                  className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                  title="Edit Catatan"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
@@ -177,8 +189,8 @@ export function LogDetailModal({
                       onClose();
                     }
                   }}
-                  className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-rose-500 transition-colors"
-                  title="Hapus"
+                  className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-rose-500 transition-colors cursor-pointer"
+                  title="Hapus Catatan"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -189,7 +201,7 @@ export function LogDetailModal({
 
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -199,23 +211,22 @@ export function LogDetailModal({
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Title */}
-          <h1 className="text-xl font-semibold text-[var(--gh-text-primary)] tracking-tight leading-snug">
+          <h1 className="text-xl font-bold text-[var(--gh-text-primary)] tracking-tight leading-snug">
             {log.title}
           </h1>
 
-          {/* Catatan Lengkap (Markdown Content - Always First) */}
+          {/* Catatan Lengkap */}
           <div className="prose max-w-none text-xs leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {log.content || '_Tidak ada deskripsi catatan._'}
             </ReactMarkdown>
           </div>
 
-          {/* Lampiran Gambar Berada di Bawah Catatan Lengkap (Like X / Facebook) */}
+          {/* Lampiran Gambar */}
           {log.image_urls && log.image_urls.length > 0 && (
             <div className="pt-2 space-y-2">
-              <div className="text-xs font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1.5">
-                <ImageIcon className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
-                <span>Lampiran Gambar ({log.image_urls.length})</span>
+              <div className="text-xs font-bold text-[var(--gh-text-secondary)] flex items-center gap-1.5">
+                <span>🖼️ Lampiran Gambar ({log.image_urls.length})</span>
               </div>
               <div className={`grid gap-2.5 ${
                 log.image_urls.length === 1
@@ -240,24 +251,24 @@ export function LogDetailModal({
             </div>
           )}
 
-          {/* Code Snippet Box (If present) */}
+          {/* Code Snippet Box */}
           {log.code_snippet && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-[var(--gh-text-secondary)]">
-                <span className="font-mono">{log.code_language || 'code'}</span>
+                <span className="font-mono font-semibold">💻 {log.code_language || 'code'}</span>
                 <button
                   onClick={handleCopyCode}
-                  className="flex items-center gap-1 hover:text-[var(--gh-text-primary)] transition-colors"
+                  className="flex items-center gap-1 hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
                 >
                   {copiedCode ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-emerald-500" />
-                      <span className="text-emerald-500">Copied</span>
+                      <span className="text-emerald-500 font-bold">Tersalin!</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>Copy</span>
+                      <span>Salin Kode</span>
                     </>
                   )}
                 </button>
@@ -271,24 +282,23 @@ export function LogDetailModal({
           {/* Feedback & Comments Section */}
           <div className="pt-6 border-t border-[var(--gh-border)] space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-[var(--gh-text-primary)] flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-[var(--gh-accent)]" />
-                <span>Feedback & Diskusi Tim ({feedbackList.length})</span>
+              <h3 className="text-sm font-bold text-[var(--gh-text-primary)] flex items-center gap-2">
+                <span>💬 Feedback & Diskusi Tim ({feedbackList.length})</span>
               </h3>
               <span className="text-[11px] text-[var(--gh-text-secondary)]">
-                Tinggalkan tanggapan atau masukan
+                Tinggalkan tanggapan atau apresiasi
               </span>
             </div>
 
             {/* Comment List */}
             <div className="space-y-3">
               {feedbackList.length === 0 ? (
-                <div className="p-3 text-center rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-xs text-[var(--gh-text-secondary)]">
-                  Belum ada feedback. Jadilah yang pertama memberikan masukan atau tanggapan!
+                <div className="p-4 text-center rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] text-xs text-[var(--gh-text-secondary)]">
+                  💭 Belum ada feedback. Jadilah yang pertama memberikan masukan atau tanggapan!
                 </div>
               ) : (
                 feedbackList.map((item) => (
-                  <div key={item.id} className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] overflow-hidden">
+                  <div key={item.id} className="rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] overflow-hidden shadow-2xs">
                     <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--gh-surface-subtle)] border-b border-[var(--gh-border-subtle)] text-xs">
                       <div className="flex items-center gap-2">
                         <img
@@ -296,10 +306,10 @@ export function LogDetailModal({
                           alt={item.author_name}
                           className="w-4 h-4 rounded-full object-cover border border-[var(--gh-border)]"
                         />
-                        <span className="font-semibold text-[var(--gh-text-primary)]">{item.author_name}</span>
+                        <span className="font-bold text-[var(--gh-text-primary)]">{item.author_name}</span>
                         {item.author_id === log.author_id && (
-                          <span className="text-[10px] bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] text-[var(--gh-text-secondary)] px-1.5 py-0.2 rounded-full">
-                            Penulis
+                          <span className="text-[10px] bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] text-[var(--gh-text-secondary)] px-1.5 py-0.2 rounded-full font-semibold">
+                            ✍️ Penulis
                           </span>
                         )}
                       </div>
@@ -343,7 +353,7 @@ export function LogDetailModal({
                   <button
                     type="submit"
                     disabled={submittingFeedback || !feedbackInput.trim()}
-                    className="flex items-center gap-1 px-3.5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50 shrink-0"
+                    className="flex items-center gap-1 px-3.5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50 shrink-0 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>Kirim</span>
@@ -351,14 +361,14 @@ export function LogDetailModal({
                 </div>
               </form>
             ) : (
-              <div className="p-3 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] flex items-center justify-between gap-3 text-xs">
+              <div className="p-3 rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] flex items-center justify-between gap-3 text-xs">
                 <span className="text-[var(--gh-text-secondary)]">
                   Silakan masuk terlebih dahulu untuk meninggalkan komentar atau feedback.
                 </span>
                 <button
                   type="button"
                   onClick={onOpenLogin}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-semibold transition-all shrink-0"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-bold transition-all shrink-0 cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>Masuk Akun</span>
