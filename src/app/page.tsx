@@ -285,80 +285,90 @@ export default function Home() {
         totalLogsCount={logs.length}
       />
 
-      {/* GitHub Subnav Navigation Bar */}
-      <div className="border-b border-[var(--gh-border)] bg-[var(--gh-surface)] px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex items-center gap-3 sm:gap-6 text-xs font-semibold overflow-x-auto scrollbar-none">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
-              activeTab === 'overview'
-                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
-                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-            }`}
-          >
-            <BookOpen className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>Overview & Heatmap</span>
-          </button>
+      {/* Cheerful Navigation Bar */}
+      <div className="border-b border-[var(--gh-border)] bg-[var(--gh-surface)] px-4 sm:px-6 shadow-2xs">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 text-xs font-bold py-2 overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                activeTab === 'overview'
+                  ? 'bg-emerald-500 text-white shadow-xs'
+                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
+              }`}
+            >
+              <span>📊</span>
+              <span>Overview & Kalender</span>
+            </button>
 
-          <button
-            onClick={() => {
-              setFilter((prev) => ({ ...prev, userScope: 'all' }));
-              setActiveTab('logs');
-            }}
-            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
-              activeTab === 'logs' && filter.userScope === 'all'
-                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
-                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-            }`}
-          >
-            <Users className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>Feed Seluruh Tim</span>
-            <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
-              {logs.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              if (!currentUser) {
-                setIsUserModalOpen(true);
-                return;
-              }
-              setFilter((prev) => ({ ...prev, userScope: 'mine' }));
-              setActiveTab('logs');
-            }}
-            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
-              activeTab === 'logs' && filter.userScope === 'mine'
-                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
-                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-            }`}
-          >
-            <UserIcon className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>Catatan Saya</span>
-            {currentUser && (
-              <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
-                {logs.filter((l) => l.author_id === currentUser.id).length}
+            <button
+              onClick={() => {
+                setFilter((prev) => ({ ...prev, userScope: 'all' }));
+                setActiveTab('logs');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                activeTab === 'logs' && filter.userScope === 'all'
+                  ? 'bg-indigo-500 text-white shadow-xs'
+                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
+              }`}
+            >
+              <span>👥</span>
+              <span>Feed Tim</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                activeTab === 'logs' && filter.userScope === 'all'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)]'
+              }`}>
+                {logs.length}
               </span>
-            )}
-          </button>
+            </button>
 
-          <button
-            onClick={handleOpenNewEntry}
-            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
-              activeTab === 'editor'
-                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
-                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-            }`}
-          >
-            <PenSquare className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>{editingLog ? 'Edit Catatan' : 'Tulis Catatan Baru'}</span>
-          </button>
+            <button
+              onClick={() => {
+                if (!currentUser) {
+                  setIsUserModalOpen(true);
+                  return;
+                }
+                setFilter((prev) => ({ ...prev, userScope: 'mine' }));
+                setActiveTab('logs');
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                activeTab === 'logs' && filter.userScope === 'mine'
+                  ? 'bg-purple-500 text-white shadow-xs'
+                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
+              }`}
+            >
+              <span>👤</span>
+              <span>Catatan Saya</span>
+              {currentUser && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  activeTab === 'logs' && filter.userScope === 'mine'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)]'
+                }`}>
+                  {logs.filter((l) => l.author_id === currentUser.id).length}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={handleOpenNewEntry}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                activeTab === 'editor'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
+              }`}
+            >
+              <span>✍️</span>
+              <span>{editingLog ? 'Edit Catatan' : 'Tulis Baru'}</span>
+            </button>
+          </div>
 
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-1.5 py-3 border-b-2 border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors ml-auto"
+            className="flex items-center gap-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] px-2.5 py-1 rounded-full hover:bg-[var(--gh-bg)] transition-colors cursor-pointer text-xs font-semibold shrink-0"
           >
-            <span>Database</span>
+            <span>⚙️ Database</span>
           </button>
         </div>
       </div>
@@ -378,29 +388,56 @@ export default function Home() {
           />
         ) : (
           <>
+            {/* Cheerful Greeting & Motivation Banner */}
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-[var(--gh-border)] bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-indigo-500/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-base sm:text-lg font-extrabold text-[var(--gh-text-primary)]">
+                    ✨ Semangat {new Date().getHours() < 12 ? 'Pagi' : new Date().getHours() < 18 ? 'Siang' : 'Malam'}, {currentUser ? currentUser.name.split(' ')[0] : 'Sahabat Pembelajar'}!
+                  </span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
+                    🔥 {stats.currentStreak} Hari Streak
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--gh-text-secondary)] font-medium leading-relaxed max-w-xl">
+                  &ldquo;Setiap hal kecil yang kamu pelajari hari ini membuatmu 1% lebih bijak dari kemarin. Terus eksplorasi ya! 🌱&rdquo;
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handleOpenNewEntry}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Catat Hasil Belajar</span>
+                </button>
+              </div>
+            </div>
+
             {/* Guest Banner if not logged in */}
             {!currentUser && (
-              <div className="mb-6 p-4 rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
+              <div className="mb-6 p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center text-[var(--gh-accent)] shrink-0">
-                    <Lock className="w-4 h-4" />
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-lg shrink-0">
+                    🔑
                   </div>
                   <div>
-                    <div className="font-semibold text-xs text-[var(--gh-text-primary)]">
-                      Portal Pembelajaran Tim (Mode Tamu)
+                    <div className="font-bold text-xs text-[var(--gh-text-primary)]">
+                      Portal Pembelajaran Tim (Mode Baca)
                     </div>
-                    <div className="text-[11px] text-[var(--gh-text-secondary)] mt-0.5">
-                      Silakan masuk dengan akun username dan password Anda untuk menulis catatan baru, upload gambar, dan memberi feedback.
+                    <div className="text-[11px] text-[var(--gh-text-secondary)] mt-0.5 font-medium">
+                      Masuk dengan username dan password Anda untuk mulai mencatat materi harian, upload foto, dan diskusi seru!
                     </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsUserModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-bold transition-all shadow-sm shrink-0 text-xs"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-sm shrink-0 text-xs cursor-pointer"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Masuk ke Akun Anda</span>
+                  <span>Masuk Sekarang</span>
                 </button>
               </div>
             )}
@@ -424,18 +461,18 @@ export default function Home() {
                 <p className="text-xs text-[var(--gh-text-secondary)]">Memuat catatan...</p>
               </div>
             ) : filteredLogs.length === 0 ? (
-              <div className="py-16 px-4 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center flex flex-col items-center justify-center space-y-3">
-                <div className="w-10 h-10 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center text-[var(--gh-text-secondary)]">
-                  <BookOpen className="w-5 h-5" />
+              <div className="py-16 px-4 rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center flex flex-col items-center justify-center space-y-3 shadow-xs">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-2xl animate-bounce">
+                  🌱
                 </div>
                 <div className="max-w-xs space-y-1">
-                  <h3 className="text-sm font-semibold text-[var(--gh-text-primary)]">
-                    Tidak ada catatan yang cocok
+                  <h3 className="text-sm font-bold text-[var(--gh-text-primary)]">
+                    Belum ada catatan yang cocok
                   </h3>
-                  <p className="text-xs text-[var(--gh-text-secondary)]">
+                  <p className="text-xs text-[var(--gh-text-secondary)] font-medium">
                     {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag || filter.userScope !== 'all'
                       ? 'Coba bersihkan kata kunci atau sesuaikan filter untuk melihat catatan lain.'
-                      : 'Mulai tulis hal bermanfaat yang kamu pelajari hari ini.'}
+                      : 'Mari mulai tanam benih kebaikan dan catat hal bermanfaat yang kamu pelajari hari ini! ✨'}
                   </p>
                 </div>
                 <button
@@ -454,13 +491,13 @@ export default function Home() {
                       handleOpenNewEntry();
                     }
                   }}
-                  className="flex items-center gap-1.5 bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold px-3.5 py-1.5 rounded-md shadow-sm transition-all"
+                  className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm transition-all cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>
                     {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag || filter.userScope !== 'all'
                       ? 'Reset Filter'
-                      : 'Tulis Catatan Baru'}
+                      : 'Tulis Catatan Pertama ✨'}
                   </span>
                 </button>
               </div>
@@ -489,14 +526,14 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* Pagination Controls (1 Page = 10 Catatan) - Fully Proportional */}
+                {/* Pagination Controls (1 Page = 10 Catatan) - Fully Proportional & Cheerful */}
                 {totalPages > 1 && (
-                  <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--gh-border)] text-xs">
-                    <div className="text-[var(--gh-text-secondary)]">
-                      Menampilkan <span className="font-semibold text-[var(--gh-text-primary)]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="font-semibold text-[var(--gh-text-primary)]">{Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)}</span> dari <span className="font-semibold text-[var(--gh-text-primary)]">{filteredLogs.length}</span> catatan
+                  <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-5 border-t border-[var(--gh-border)] text-xs">
+                    <div className="text-[var(--gh-text-secondary)] font-medium">
+                      Menampilkan <span className="font-bold text-[var(--gh-text-primary)]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="font-bold text-[var(--gh-text-primary)]">{Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)}</span> dari <span className="font-bold text-[var(--gh-text-primary)]">{filteredLogs.length}</span> catatan
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         disabled={currentPage === 1}
@@ -504,9 +541,9 @@ export default function Home() {
                           setCurrentPage((p) => Math.max(1, p - 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="px-3 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-[var(--gh-text-primary)] font-medium transition-colors cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--gh-text-primary)] font-bold transition-all shadow-2xs cursor-pointer"
                       >
-                        Sebelumnya
+                        ← Sebelumnya
                       </button>
 
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -517,9 +554,9 @@ export default function Home() {
                             setCurrentPage(page);
                             window.scrollTo({ top: 0, behavior: 'smooth' });
                           }}
-                          className={`w-7 h-7 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                          className={`w-8 h-8 rounded-full text-xs font-bold transition-all cursor-pointer shadow-2xs ${
                             currentPage === page
-                              ? 'bg-[var(--gh-accent)] text-white'
+                              ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-xs scale-105'
                               : 'border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)]'
                           }`}
                         >
@@ -534,9 +571,9 @@ export default function Home() {
                           setCurrentPage((p) => Math.min(totalPages, p + 1));
                           window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
-                        className="px-3 py-1 rounded border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] disabled:opacity-40 disabled:cursor-not-allowed text-[var(--gh-text-primary)] font-medium transition-colors cursor-pointer"
+                        className="px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--gh-text-primary)] font-bold transition-all shadow-2xs cursor-pointer"
                       >
-                        Selanjutnya
+                        Selanjutnya →
                       </button>
                     </div>
                   </div>
