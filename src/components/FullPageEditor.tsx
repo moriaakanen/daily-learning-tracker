@@ -15,6 +15,7 @@ import {
   Link as LinkIcon,
   LogIn,
   Lock,
+  Plus,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
@@ -26,6 +27,7 @@ interface FullPageEditorProps {
   onOpenLogin: () => void;
   onSave: (log: Omit<LearningLog, 'id' | 'created_at' | 'updated_at'>, existingId?: string) => void;
   onCancel: () => void;
+  onAddCategory?: (newCategory: string) => void;
 }
 
 export function FullPageEditor({
@@ -35,6 +37,7 @@ export function FullPageEditor({
   onOpenLogin,
   onSave,
   onCancel,
+  onAddCategory,
 }: FullPageEditorProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Teknologi & Coding');
@@ -48,6 +51,10 @@ export function FullPageEditor({
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+
+  // New Custom Topic modal inside editor
+  const [showCustomTopicInput, setShowCustomTopicInput] = useState(false);
+  const [customTopicName, setCustomTopicName] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +120,7 @@ export function FullPageEditor({
     );
   }
 
-  // Optimized Image Upload Handler (Automatic Compression, No Text Pollution)
+  // Optimized Image Upload Handler (Automatic Compression)
   const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -126,7 +133,6 @@ export function FullPageEditor({
           continue;
         }
 
-        // Compress image to lightweight optimized format
         const compressedBase64 = await compressImage(file, 1200, 1200, 0.78);
         setImageUrls((prev) => [...prev, compressedBase64]);
       }
@@ -149,6 +155,18 @@ export function FullPageEditor({
 
   const handleRemoveImage = (index: number) => {
     setImageUrls(imageUrls.filter((_, i) => i !== index));
+  };
+
+  const handleCreateCustomTopic = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = customTopicName.trim();
+    if (!trimmed) return;
+    if (onAddCategory) {
+      onAddCategory(trimmed);
+    }
+    setCategory(trimmed);
+    setCustomTopicName('');
+    setShowCustomTopicInput(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -180,7 +198,7 @@ export function FullPageEditor({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
+    <div className="w-full space-y-6 animate-in fade-in duration-200">
       {/* Top action header */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[var(--gh-border)]">
         <div className="flex items-center gap-3">
@@ -263,21 +281,69 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Meta Grid: Topik, Date, Duration */}
+          {/* Meta Grid: Topik with Custom Addition, Date, Duration */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[var(--gh-text-primary)]">Topik</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)] cursor-pointer"
-              >
-                {categories.map((cat) => (
-                  <option key={cat} value={cat} className="bg-[var(--gh-bg)]">
-                    {cat}
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[var(--gh-text-primary)]">Topik</label>
+                <button
+                  type="button"
+                  onClick={() => setShowCustomTopicInput(true)}
+                  className="text-[11px] text-[var(--gh-accent)] hover:underline flex items-center gap-0.5"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Tambah Topik</span>
+                </button>
+              </div>
+
+              {showCustomTopicInput ? (
+                <div className="flex items-center gap-1.5 pt-0.5 animate-in fade-in duration-150">
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={customTopicName}
+                    onChange={(e) => setCustomTopicName(e.target.value)}
+                    placeholder="Nama topik baru..."
+                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-1 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateCustomTopic}
+                    className="px-2 py-1 rounded bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold"
+                  >
+                    OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomTopicInput(false)}
+                    className="p-1 text-[var(--gh-text-secondary)]"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    if (e.target.value === '__add_new__') {
+                      setShowCustomTopicInput(true);
+                    } else {
+                      setCategory(e.target.value);
+                    }
+                  }}
+                  className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)] cursor-pointer"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} className="bg-[var(--gh-bg)]">
+                      {cat}
+                    </option>
+                  ))}
+                  <option value="__add_new__" className="font-semibold text-[var(--gh-accent)]">
+                    + Tambah Topik Baru...
                   </option>
-                ))}
-              </select>
+                </select>
+              )}
             </div>
 
             <div className="space-y-1">

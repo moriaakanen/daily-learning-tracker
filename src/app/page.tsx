@@ -110,11 +110,39 @@ export default function Home() {
     }
   };
 
+  // Custom Topics State (Persisted in localStorage)
+  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('daily_learning_custom_categories');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
+
+  const handleAddCustomCategory = (newCat: string) => {
+    const clean = newCat.trim();
+    if (!clean) return;
+    setCustomCategories((prev) => {
+      if (prev.includes(clean)) return prev;
+      const updated = [...prev, clean];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('daily_learning_custom_categories', JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
     const customNames = logs.map((l) => l.category).filter(Boolean);
-    return Array.from(new Set([...defaultNames, ...customNames]));
-  }, [logs]);
+    return Array.from(new Set([...defaultNames, ...customNames, ...customCategories]));
+  }, [logs, customCategories]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -346,6 +374,7 @@ export default function Home() {
             onOpenLogin={() => setIsUserModalOpen(true)}
             onSave={handleCreateOrUpdateLog}
             onCancel={() => setActiveTab('overview')}
+            onAddCategory={handleAddCustomCategory}
           />
         ) : (
           <>
@@ -385,6 +414,7 @@ export default function Home() {
               currentUser={currentUser}
               onOpenLogin={() => setIsUserModalOpen(true)}
               totalResultsCount={filteredLogs.length}
+              onAddCategory={handleAddCustomCategory}
             />
 
             {/* Logs View */}
@@ -443,9 +473,9 @@ export default function Home() {
                 onToggleFavorite={handleToggleFavorite}
               />
             ) : (
-              <div className="space-y-4">
-                {/* Single Column Vertical Feed */}
-                <div className="grid grid-cols-1 gap-3 max-w-4xl mx-auto">
+              <div className="space-y-4 w-full">
+                {/* Single Column Vertical Feed - Fully Proportional with Container */}
+                <div className="grid grid-cols-1 gap-3 w-full">
                   {paginatedLogs.map((log) => (
                     <LogCard
                       key={log.id}
@@ -459,9 +489,9 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* Pagination Controls (1 Page = 10 Catatan) */}
+                {/* Pagination Controls (1 Page = 10 Catatan) - Fully Proportional */}
                 {totalPages > 1 && (
-                  <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--gh-border)] text-xs">
+                  <div className="w-full flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-[var(--gh-border)] text-xs">
                     <div className="text-[var(--gh-text-secondary)]">
                       Menampilkan <span className="font-semibold text-[var(--gh-text-primary)]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> - <span className="font-semibold text-[var(--gh-text-primary)]">{Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)}</span> dari <span className="font-semibold text-[var(--gh-text-primary)]">{filteredLogs.length}</span> catatan
                     </div>
