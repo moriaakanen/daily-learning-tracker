@@ -154,19 +154,18 @@ export function LogCard({
                             key={preset.id}
                             type="button"
                             onClick={() => handleSelectColor(preset.id)}
-                            className={`w-7 h-7 rounded-full flex items-center justify-center border transition-all cursor-pointer ${
-                              isSelected ? 'ring-2 ring-indigo-500 scale-110' : 'hover:scale-105'
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs ${
+                              isSelected ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 scale-110 shadow-sm' : 'hover:scale-105 opacity-90 hover:opacity-100'
                             }`}
                             style={{
-                              backgroundColor: preset.id === 'auto' ? '#f1f5f9' : preset.color,
-                              borderColor: isSelected ? '#ffffff' : 'rgba(0,0,0,0.15)',
+                              background: preset.id === 'auto' ? 'linear-gradient(135deg, #38bdf8, #818cf8, #f472b6, #fbbf24)' : preset.color,
                             }}
                             title={preset.name}
                           >
-                            {preset.id === 'auto' ? (
-                              <span className="text-[10px]">🌈</span>
-                            ) : isSelected ? (
-                              <Check className="w-3 h-3 text-white stroke-[3]" />
+                            {isSelected ? (
+                              <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-xs animate-in zoom-in-75 duration-150" />
+                            ) : preset.id === 'auto' ? (
+                              <span className="text-[10px] drop-shadow-xs">🌈</span>
                             ) : null}
                           </button>
                         );

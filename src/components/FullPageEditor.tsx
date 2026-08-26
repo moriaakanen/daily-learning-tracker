@@ -393,19 +393,19 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Section: Custom Card Color Swatch Picker */}
-          <div className="pt-2 border-t border-[var(--gh-border-subtle)] space-y-2">
+          {/* Section: Custom Card Color Swatch Picker (Circular Shapes with Checkmark) */}
+          <div className="pt-2.5 border-t border-[var(--gh-border-subtle)] space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <Palette className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Warna Kartu & Aksen (Kostumisasi):</span>
+                <span>Pilih Warna Kartu:</span>
               </label>
-              <span className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
-                {CARD_COLOR_PRESETS.find((p) => p.id === cardColor)?.name || 'Kustom'}
+              <span className="text-[11px] font-semibold text-[var(--gh-text-secondary)]">
+                {CARD_COLOR_PRESETS.find((p) => p.id === cardColor)?.name || 'Otomatis Sesuai Topik'}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none">
               {CARD_COLOR_PRESETS.map((preset) => {
                 const isSelected = cardColor === preset.id;
                 return (
@@ -413,20 +413,24 @@ export function FullPageEditor({
                     key={preset.id}
                     type="button"
                     onClick={() => setCardColor(preset.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs ${
                       isSelected
-                        ? 'ring-2 ring-indigo-500 shadow-xs scale-105'
-                        : 'hover:opacity-90'
+                        ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 scale-110 shadow-sm'
+                        : 'hover:scale-110 hover:shadow-xs opacity-90 hover:opacity-100'
                     }`}
                     style={{
-                      backgroundColor: preset.id === 'auto' ? 'var(--gh-bg)' : `${preset.color}20`,
-                      color: preset.id === 'auto' ? 'var(--gh-text-primary)' : preset.color,
-                      borderColor: preset.id === 'auto' ? 'var(--gh-border)' : `${preset.color}50`,
+                      background:
+                        preset.id === 'auto'
+                          ? 'linear-gradient(135deg, #38bdf8, #818cf8, #f472b6, #fbbf24)'
+                          : preset.color,
                     }}
+                    title={preset.name}
                   >
-                    <span>{preset.emoji}</span>
-                    <span>{preset.name}</span>
-                    {isSelected && <Check className="w-3 h-3 ml-0.5" />}
+                    {isSelected ? (
+                      <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-xs animate-in zoom-in-75 duration-150" />
+                    ) : preset.id === 'auto' ? (
+                      <span className="text-[10px] drop-shadow-xs">🌈</span>
+                    ) : null}
                   </button>
                 );
               })}
