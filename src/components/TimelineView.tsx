@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { GitCommit, Clock, Tag } from 'lucide-react';
+import { GitCommit, Clock, Image as ImageIcon } from 'lucide-react';
 import { LearningLog } from '@/types';
 
 interface TimelineViewProps {
@@ -10,7 +10,6 @@ interface TimelineViewProps {
   onEdit: (log: LearningLog) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string, current: boolean) => void;
-  onTagClick: (tag: string) => void;
 }
 
 export function TimelineView({
@@ -19,7 +18,6 @@ export function TimelineView({
   onEdit,
   onDelete,
   onToggleFavorite,
-  onTagClick,
 }: TimelineViewProps) {
   const groupedByDate: Record<string, LearningLog[]> = {};
   logs.forEach((log) => {
@@ -34,7 +32,7 @@ export function TimelineView({
     <div className="relative pl-6 border-l-2 border-[var(--gh-border)] space-y-6 my-4">
       {dates.map((dateStr) => {
         const dayLogs = groupedByDate[dateStr];
-        const formatted = new Date(dateStr).toLocaleDateString('en-US', {
+        const formatted = new Date(dateStr).toLocaleDateString('id-ID', {
           weekday: 'short',
           month: 'short',
           day: 'numeric',
@@ -51,10 +49,10 @@ export function TimelineView({
             {/* Date Header */}
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-[var(--gh-text-primary)]">
-                Commits on {formatted}
+                Catatan pada {formatted}
               </span>
               <span className="text-[11px] text-[var(--gh-text-tertiary)] font-mono">
-                ({dayLogs.length} entries)
+                ({dayLogs.length} entri)
               </span>
             </div>
 
@@ -62,6 +60,7 @@ export function TimelineView({
             <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] divide-y divide-[var(--gh-border-subtle)] overflow-hidden">
               {dayLogs.map((log) => {
                 const fakeHash = (log.id.replace(/[^a-f0-9]/gi, '') + 'abcdef012345').substring(0, 7);
+                const hasImages = log.image_urls && log.image_urls.length > 0;
 
                 return (
                   <div
@@ -77,11 +76,17 @@ export function TimelineView({
                         <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full border border-[var(--gh-border)] bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)]">
                           {log.category}
                         </span>
+                        {hasImages && (
+                          <span className="text-[10px] text-[var(--gh-text-secondary)] flex items-center gap-0.5">
+                            <ImageIcon className="w-3 h-3 text-[var(--gh-accent)]" />
+                            <span>{log.image_urls?.length}</span>
+                          </span>
+                        )}
                       </div>
 
-                      {log.takeaways && log.takeaways.length > 0 && (
+                      {log.content && (
                         <p className="text-xs text-[var(--gh-text-secondary)] line-clamp-1">
-                          • {log.takeaways[0]}
+                          {log.content.replace(/^#+\s+/gm, '')}
                         </p>
                       )}
                     </div>

@@ -60,7 +60,7 @@ export function LogDetailModal({
   };
 
   const handleShare = () => {
-    const text = `💡 TIL: ${log.title}\n\nTopik: ${log.category}\nOleh: ${log.author_name || 'Tim'}\n\n${log.content}`;
+    const text = `💡 ${log.title}\n\nTopik: ${log.category}\nOleh: ${log.author_name || 'Tim'}\n\n${log.content}`;
     navigator.clipboard.writeText(text);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -203,31 +203,44 @@ export function LogDetailModal({
             {log.title}
           </h1>
 
-          {/* Attached Images */}
-          {log.image_urls && log.image_urls.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-[var(--gh-accent)]" />
-                <span>Lampiran Gambar ({log.image_urls.length})</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {log.image_urls.map((img, idx) => (
-                  <div key={idx} className="rounded-md border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)]">
-                    <img src={img} alt={`Attached ${idx}`} className="w-full max-h-64 object-contain bg-black/10" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Catatan Lengkap (Markdown Content) */}
+          {/* Catatan Lengkap (Markdown Content - Always First) */}
           <div className="prose max-w-none text-xs leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {log.content || '_Tidak ada deskripsi catatan._'}
             </ReactMarkdown>
           </div>
 
-          {/* Code Snippet Box */}
+          {/* Lampiran Gambar Berada di Bawah Catatan Lengkap (Like X / Facebook) */}
+          {log.image_urls && log.image_urls.length > 0 && (
+            <div className="pt-2 space-y-2">
+              <div className="text-xs font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1.5">
+                <ImageIcon className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
+                <span>Lampiran Gambar ({log.image_urls.length})</span>
+              </div>
+              <div className={`grid gap-2.5 ${
+                log.image_urls.length === 1
+                  ? 'grid-cols-1'
+                  : log.image_urls.length === 2
+                  ? 'grid-cols-2'
+                  : 'grid-cols-2 sm:grid-cols-3'
+              }`}>
+                {log.image_urls.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)] shadow-xs"
+                  >
+                    <img
+                      src={img}
+                      alt={`Lampiran ${idx + 1}`}
+                      className="w-full max-h-96 object-contain bg-black/5 hover:scale-[1.01] transition-transform duration-200"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Code Snippet Box (If present) */}
           {log.code_snippet && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-[var(--gh-text-secondary)]">
@@ -255,7 +268,7 @@ export function LogDetailModal({
             </div>
           )}
 
-          {/* Feedback Section */}
+          {/* Feedback & Comments Section */}
           <div className="pt-6 border-t border-[var(--gh-border)] space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[var(--gh-text-primary)] flex items-center gap-2">
@@ -307,7 +320,7 @@ export function LogDetailModal({
               )}
             </div>
 
-            {/* Comment Input or Login Prompt */}
+            {/* Comment Input */}
             {currentUser ? (
               <form onSubmit={handleSendFeedback} className="space-y-2 pt-2">
                 <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">

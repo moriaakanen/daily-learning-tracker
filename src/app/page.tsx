@@ -430,7 +430,6 @@ export default function Home() {
                 onEdit={handleEditEntry}
                 onDelete={handleDeleteLog}
                 onToggleFavorite={handleToggleFavorite}
-                onTagClick={handleTagClick}
               />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -443,7 +442,6 @@ export default function Home() {
                     onEdit={handleEditEntry}
                     onDelete={handleDeleteLog}
                     onToggleFavorite={handleToggleFavorite}
-                    onTagClick={handleTagClick}
                   />
                 ))}
               </div>
@@ -511,7 +509,6 @@ export default function Home() {
         onEdit={handleEditEntry}
         onDelete={handleDeleteLog}
         onToggleFavorite={handleToggleFavorite}
-        onTagClick={handleTagClick}
         onAddFeedback={handleAddFeedback}
       />
 

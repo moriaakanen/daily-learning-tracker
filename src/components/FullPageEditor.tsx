@@ -379,40 +379,40 @@ export function FullPageEditor({
             </div>
           )}
 
-          {/* Attached Images Thumbnail Gallery */}
+          {/* Spacious Writing Area */}
+          <textarea
+            rows={14}
+            required
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
+            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[260px]"
+          />
+
+          {/* Attached Images Thumbnail Gallery (Placed below/after Catatan Lengkap) */}
           {imageUrls.length > 0 && (
-            <div className="space-y-1.5 p-2 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md">
+            <div className="space-y-1.5 p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md">
               <div className="text-[11px] font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1">
-                <ImageIcon className="w-3.5 h-3.5" />
-                <span>Gambar Terlampir ({imageUrls.length}):</span>
+                <ImageIcon className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
+                <span>Lampiran Gambar ({imageUrls.length}):</span>
               </div>
-              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                 {imageUrls.map((imgUrl, i) => (
-                  <div key={i} className="relative group shrink-0 w-20 h-16 rounded border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)]">
-                    <img src={imgUrl} alt={`Attached ${i}`} className="w-full h-full object-cover" />
+                  <div key={i} className="relative group rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)] h-28">
+                    <img src={imgUrl} alt={`Lampiran ${i + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(i)}
-                      className="absolute top-1 right-1 p-0.5 rounded bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-black/90 text-white transition-opacity"
                       title="Hapus gambar"
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Spacious Writing Area */}
-          <textarea
-            rows={16}
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
-            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[350px]"
-          />
         </div>
 
         {/* Optional Snippet / Quote Box */}

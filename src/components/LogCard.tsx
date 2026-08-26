@@ -1,8 +1,6 @@
 'use client';
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import {
   Star,
   Edit2,
@@ -20,7 +18,6 @@ interface LogCardProps {
   onEdit: (log: LearningLog) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string, current: boolean) => void;
-  onTagClick?: (tag: string) => void;
 }
 
 const TOPIK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -60,14 +57,17 @@ export function LogCard({
   const commentCount = log.feedback ? log.feedback.length : 0;
   const hasImages = log.image_urls && log.image_urls.length > 0;
 
-  // Clean snippet content preview
-  const contentPreview = log.content?.replace(/^#+\s+/gm, '').trim();
+  // Clean snippet content preview (removes markdown headers for clean preview)
+  const contentPreview = log.content
+    ?.replace(/!\[.*?\]\(.*?\)/g, '') // remove markdown inline image tags from text preview
+    .replace(/^#+\s+/gm, '')
+    .trim();
 
   return (
-    <div className="group relative flex flex-col justify-between rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] p-4 transition-all duration-150 shadow-xs">
+    <div className="group relative flex flex-col justify-between rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] p-4 transition-all duration-150 shadow-xs">
       <div>
-        {/* Top: Topik Label + Actions */}
-        <div className="flex items-center justify-between gap-2 mb-2">
+        {/* Top: Topik Label + Duration + Actions */}
+        <div className="flex items-center justify-between gap-2 mb-2.5">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span
               className="text-[11px] font-semibold px-2 py-0.5 rounded-full border"
@@ -84,13 +84,6 @@ export function LogCard({
               <span className="text-[11px] text-[var(--gh-text-secondary)] flex items-center gap-1">
                 <Clock className="w-3 h-3 text-[var(--gh-text-tertiary)]" />
                 {log.duration_minutes}m
-              </span>
-            )}
-
-            {hasImages && (
-              <span className="text-[11px] text-[var(--gh-text-secondary)] flex items-center gap-0.5" title="Memiliki lampiran gambar">
-                <ImageIcon className="w-3 h-3 text-[var(--gh-accent)]" />
-                <span>{log.image_urls?.length}</span>
               </span>
             )}
           </div>
@@ -141,7 +134,7 @@ export function LogCard({
           </div>
         </div>
 
-        {/* Title */}
+        {/* 1. Title */}
         <h3
           onClick={() => onSelect(log)}
           className="text-sm font-semibold text-[var(--gh-text-primary)] group-hover:text-[var(--gh-accent)] transition-colors cursor-pointer leading-snug line-clamp-2"
@@ -149,32 +142,60 @@ export function LogCard({
           {log.title}
         </h3>
 
-        {/* Catatan Lengkap Preview */}
-        {contentPreview && (
+        {/* 2. Catatan Lengkap Text Excerpt */}
+        {contentPreview ? (
           <div
             onClick={() => onSelect(log)}
-            className="mt-2 text-xs text-[var(--gh-text-secondary)] line-clamp-4 leading-relaxed cursor-pointer"
+            className="mt-2 text-xs text-[var(--gh-text-secondary)] line-clamp-4 leading-relaxed cursor-pointer whitespace-pre-wrap"
           >
             {contentPreview}
           </div>
-        )}
-
-        {/* First Image Thumbnail if attached */}
-        {hasImages && log.image_urls?.[0] && (
+        ) : (
           <div
             onClick={() => onSelect(log)}
-            className="mt-2.5 h-28 rounded border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-bg)] cursor-pointer"
+            className="mt-2 text-xs text-[var(--gh-text-tertiary)] italic cursor-pointer"
           >
-            <img
-              src={log.image_urls[0]}
-              alt={log.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            />
+            Klik untuk membaca detail catatan...
+          </div>
+        )}
+
+        {/* 3. Lampiran Gambar Berada di Bawah Teks (Like X / Facebook Post) */}
+        {hasImages && log.image_urls && (
+          <div
+            onClick={() => onSelect(log)}
+            className="mt-3 cursor-pointer"
+          >
+            {log.image_urls.length === 1 ? (
+              <div className="rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-bg)] max-h-56">
+                <img
+                  src={log.image_urls[0]}
+                  alt={log.title}
+                  className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-1.5 rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-bg)] p-1">
+                {log.image_urls.slice(0, 2).map((imgUrl, i) => (
+                  <div key={i} className="h-28 rounded overflow-hidden relative">
+                    <img
+                      src={imgUrl}
+                      alt={`${log.title} ${i + 1}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
+                    />
+                    {i === 1 && log.image_urls && log.image_urls.length > 2 && (
+                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-xs">
+                        +{log.image_urls.length - 2} Gambar
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Footer: Author info + Comments + Date */}
+      {/* 4. Footer: Author + Comments + Date */}
       <div className="mt-4 pt-2.5 border-t border-[var(--gh-border-subtle)] flex items-center justify-between text-xs gap-2">
         <div className="flex items-center gap-2">
           {/* Author avatar & name */}
