@@ -16,6 +16,18 @@ import {
   LogIn,
   Lock,
   Plus,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  CheckSquare,
+  Heading1,
+  Heading2,
+  Quote,
+  Smile,
+  FileText,
+  Sparkles,
+  Layers,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
@@ -30,6 +42,80 @@ interface FullPageEditorProps {
   onAddCategory?: (newCategory: string) => void;
 }
 
+const NOTION_EMOJIS = ['💡', '🧠', '💻', '📚', '⚡', '🚀', '🎯', '📖', '📝', '🎨', '🔬', '🌟', '🛠️', '📈', '🧩'];
+
+const JOURNAL_TEMPLATES = [
+  {
+    name: '📔 Daily Learning Reflection',
+    icon: '📔',
+    desc: 'Format refleksi harian komprehensif',
+    content: `## 🎯 Fokus Utama Hari Ini
+- Topik yang dipelajari: 
+- Durasi & sumber belajar: 
+
+## 💡 Poin-Poin Penting
+1. 
+2. 
+3. 
+
+## 🧗‍♂️ Tantangan & Cara Mengatasinya
+> 
+
+## 🚀 Rencana Tindak Lanjut / Implementasi
+- [ ] 
+- [ ] 
+`,
+  },
+  {
+    name: '💻 Tech & Code Breakdown',
+    icon: '💻',
+    desc: 'Dokumentasi konsep pemrograman & bug solving',
+    content: `## 📌 Konsep / Fitur
+Penjelasan ringkas tentang apa yang dipelajari:
+
+## ⚙️ Cara Kerja & Implementasi
+- Langkah 1:
+- Langkah 2:
+
+> 💡 **Best Practice:** 
+
+## 🐛 Kendala yang Ditemui & Solusi
+- **Issue:** 
+- **Fix:** 
+`,
+  },
+  {
+    name: '📖 Book & Literature Summary',
+    icon: '📖',
+    desc: 'Catatan bedah buku & intisari literatur',
+    content: `## 📚 Informasi Buku / Artikel
+- **Judul & Penulis:** 
+- **Tema Utama:** 
+
+## 🧠 3 Gagasan Kunci
+1. 
+2. 
+3. 
+
+> *"Kutipan paling berkesan dari bacaan hari ini..."*
+
+## 🎯 Relevansi & Penerapan Nyata
+- 
+`,
+  },
+  {
+    name: '⚡ Quick Brain Dump',
+    icon: '⚡',
+    desc: 'Catatan kilat ide dan poin penting',
+    content: `> 💡 **Quick Note:** 
+
+- 
+- 
+- 
+`,
+  },
+];
+
 export function FullPageEditor({
   currentUser,
   initialLog,
@@ -39,6 +125,8 @@ export function FullPageEditor({
   onCancel,
   onAddCategory,
 }: FullPageEditorProps) {
+  const [selectedEmoji, setSelectedEmoji] = useState('💡');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Teknologi & Coding');
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
@@ -52,15 +140,25 @@ export function FullPageEditor({
   const [showImageInput, setShowImageInput] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
 
-  // New Custom Topic modal inside editor
+  // Custom Topic inline modal
   const [showCustomTopicInput, setShowCustomTopicInput] = useState(false);
   const [customTopicName, setCustomTopicName] = useState('');
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (initialLog) {
-      setTitle(initialLog.title || '');
+      // Check if title has emoji prefix
+      const matchEmoji = initialLog.title?.match(/^(\p{Extended_Pictographic}|\uD83C[\uDF00-\uDFFF]|\uD83D[\uDC00-\uDE4F]|\uD83D[\uDE80-\uDEFF])/u);
+      if (matchEmoji) {
+        setSelectedEmoji(matchEmoji[0]);
+        setTitle(initialLog.title.replace(matchEmoji[0], '').trim());
+      } else {
+        setSelectedEmoji('💡');
+        setTitle(initialLog.title || '');
+      }
+
       setCategory(initialLog.category || 'Teknologi & Coding');
       setStudyDate(initialLog.study_date || new Date().toISOString().split('T')[0]);
       setDuration(initialLog.duration_minutes || 30);
@@ -70,6 +168,7 @@ export function FullPageEditor({
       setIsFavorite(!!initialLog.is_favorite);
       setImageUrls(initialLog.image_urls || []);
     } else {
+      setSelectedEmoji('💡');
       setTitle('');
       setCategory('Teknologi & Coding');
       setStudyDate(new Date().toISOString().split('T')[0]);
@@ -82,7 +181,32 @@ export function FullPageEditor({
     }
   }, [initialLog]);
 
-  // If user is not logged in, enforce login screen
+  // Insert markdown helper at cursor
+  const insertFormatting = (prefix: string, suffix = '') => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const prevText = content;
+    const selected = prevText.substring(start, end);
+
+    const replacement = prefix + (selected || '') + suffix;
+    const updated = prevText.substring(0, start) + replacement + prevText.substring(end);
+    setContent(updated);
+
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + prefix.length, start + prefix.length + (selected?.length || 0));
+    }, 50);
+  };
+
+  const applyTemplate = (tplContent: string) => {
+    if (content.trim() && !confirm('Ganti teks catatan dengan template ini?')) return;
+    setContent(tplContent);
+  };
+
+  // Login Gate
   if (!currentUser) {
     return (
       <div className="max-w-md mx-auto my-12 p-6 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center space-y-4 animate-in fade-in duration-200">
@@ -94,7 +218,7 @@ export function FullPageEditor({
             Login Diperlukan
           </h2>
           <p className="text-xs text-[var(--gh-text-secondary)] leading-relaxed">
-            Sebelum dapat menulis atau memperbarui catatan pembelajaran harian, Anda harus masuk ke akun pengguna terlebih dahulu.
+            Sebelum dapat menulis atau memperbarui catatan jurnal pembelajaran, Anda harus masuk ke akun pengguna terlebih dahulu.
           </p>
         </div>
 
@@ -120,7 +244,6 @@ export function FullPageEditor({
     );
   }
 
-  // Optimized Image Upload Handler (Automatic Compression)
   const handleImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -176,9 +299,11 @@ export function FullPageEditor({
       return;
     }
 
+    const fullTitle = `${selectedEmoji} ${title.trim()}`;
+
     onSave(
       {
-        title: title.trim(),
+        title: fullTitle,
         category,
         study_date: studyDate,
         duration_minutes: Number(duration) || 30,
@@ -210,21 +335,23 @@ export function FullPageEditor({
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Kembali</span>
           </button>
-          <div>
-            <h1 className="text-base font-semibold text-[var(--gh-text-primary)] flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-[var(--gh-accent)]" />
-              <span>{initialLog ? 'Edit Catatan Belajar' : 'Tulis Catatan Pembelajaran Baru'}</span>
-            </h1>
-            <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
-              <span>Penulis:</span>
-              <img
-                src={initialLog?.author_avatar || currentUser.avatar}
-                alt={currentUser.name}
-                className="w-4 h-4 rounded-full object-cover border border-[var(--gh-border)]"
-              />
-              <span className="font-semibold text-[var(--gh-text-primary)]">
-                {initialLog?.author_name || currentUser.name}
-              </span>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{selectedEmoji}</span>
+            <div>
+              <h1 className="text-base font-semibold text-[var(--gh-text-primary)]">
+                {initialLog ? 'Edit Catatan Jurnal' : 'Halaman Jurnal Baru'}
+              </h1>
+              <div className="flex items-center gap-1.5 text-xs text-[var(--gh-text-secondary)]">
+                <span>Penulis:</span>
+                <img
+                  src={initialLog?.author_avatar || currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-3.5 h-3.5 rounded-full object-cover border border-[var(--gh-border)]"
+                />
+                <span className="font-semibold text-[var(--gh-text-primary)]">
+                  {initialLog?.author_name || currentUser.name}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -244,249 +371,388 @@ export function FullPageEditor({
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan'}</span>
+            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Jurnal'}</span>
           </button>
         </div>
       </div>
 
-      {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title & Topik */}
-        <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[var(--gh-text-primary)]">
-              Judul Materi / Catatan <span className="text-rose-500">*</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                required
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Contoh: Prinsip Pareto 80/20, Struktur DNA & Genetik, atau Memahami Index PostgreSQL"
-                className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3.5 py-2 text-sm text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] focus:ring-1 focus:ring-[var(--gh-accent)] font-medium"
-              />
+      {/* Notion Quick Templates Selector */}
+      <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-3 space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-[var(--gh-text-primary)] flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Pilih Template Jurnal Notion (Opsional):</span>
+          </span>
+          <span className="text-[11px] text-[var(--gh-text-secondary)]">Klik untuk mengisi struktur otomatis</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {JOURNAL_TEMPLATES.map((tpl) => (
+            <button
+              key={tpl.name}
+              type="button"
+              onClick={() => applyTemplate(tpl.content)}
+              className="p-2.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] hover:border-[var(--gh-accent)] text-left transition-all group"
+            >
+              <div className="flex items-center gap-1.5 font-semibold text-xs text-[var(--gh-text-primary)] group-hover:text-[var(--gh-accent)]">
+                <span>{tpl.icon}</span>
+                <span className="truncate">{tpl.name.replace(/^[^\s]+\s*/, '')}</span>
+              </div>
+              <p className="text-[10px] text-[var(--gh-text-secondary)] mt-0.5 line-clamp-1">
+                {tpl.desc}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Notion Document Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Document Title & Properties Table (Notion Properties Style) */}
+        <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-5 space-y-4">
+          {/* Notion Emoji & Big Title */}
+          <div className="flex items-center gap-3">
+            {/* Emoji Selector */}
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => setIsFavorite(!isFavorite)}
-                className={`p-2.5 rounded-md border border-[var(--gh-border)] transition-colors ${
-                  isFavorite
-                    ? 'bg-[var(--gh-surface-hover)] text-amber-500'
-                    : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)]'
-                }`}
-                title={isFavorite ? 'Starred' : 'Tandai Favorit'}
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="w-10 h-10 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] flex items-center justify-center text-xl transition-all shadow-xs"
+                title="Pilih Ikon Emoji"
               >
-                <Star className={`w-4 h-4 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+                {selectedEmoji}
               </button>
-            </div>
-          </div>
 
-          {/* Meta Grid: Topik with Custom Addition, Date, Duration */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-[var(--gh-text-primary)]">Topik</label>
-                <button
-                  type="button"
-                  onClick={() => setShowCustomTopicInput(true)}
-                  className="text-[11px] text-[var(--gh-accent)] hover:underline flex items-center gap-0.5"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Tambah Topik</span>
-                </button>
-              </div>
-
-              {showCustomTopicInput ? (
-                <div className="flex items-center gap-1.5 pt-0.5 animate-in fade-in duration-150">
-                  <input
-                    type="text"
-                    required
-                    autoFocus
-                    value={customTopicName}
-                    onChange={(e) => setCustomTopicName(e.target.value)}
-                    placeholder="Nama topik baru..."
-                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-1 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCreateCustomTopic}
-                    className="px-2 py-1 rounded bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold"
-                  >
-                    OK
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomTopicInput(false)}
-                    className="p-1 text-[var(--gh-text-secondary)]"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ) : (
-                <select
-                  value={category}
-                  onChange={(e) => {
-                    if (e.target.value === '__add_new__') {
-                      setShowCustomTopicInput(true);
-                    } else {
-                      setCategory(e.target.value);
-                    }
-                  }}
-                  className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)] cursor-pointer"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat} className="bg-[var(--gh-bg)]">
-                      {cat}
-                    </option>
+              {showEmojiPicker && (
+                <div className="absolute top-12 left-0 z-30 p-2 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-md shadow-xl grid grid-cols-5 gap-1 animate-in fade-in duration-150">
+                  {NOTION_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => {
+                        setSelectedEmoji(emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                      className="w-8 h-8 rounded hover:bg-[var(--gh-surface-hover)] text-lg flex items-center justify-center transition-colors"
+                    >
+                      {emoji}
+                    </button>
                   ))}
-                  <option value="__add_new__" className="font-semibold text-[var(--gh-accent)]">
-                    + Tambah Topik Baru...
-                  </option>
-                </select>
+                </div>
               )}
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[var(--gh-text-primary)] flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-[var(--gh-text-secondary)]" /> Tanggal Belajar
-              </label>
+            {/* Big Page Title Input */}
+            <input
+              type="text"
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Judul Jurnal / Catatan Belajar..."
+              className="flex-1 bg-transparent text-xl sm:text-2xl font-bold text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none border-b border-transparent focus:border-[var(--gh-border)] pb-1"
+            />
+
+            <button
+              type="button"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className={`p-2 rounded-md border border-[var(--gh-border)] transition-colors ${
+                isFavorite
+                  ? 'bg-[var(--gh-surface-hover)] text-amber-500'
+                  : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)]'
+              }`}
+              title={isFavorite ? 'Starred' : 'Tandai Favorit'}
+            >
+              <Star className={`w-4 h-4 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+            </button>
+          </div>
+
+          {/* Notion Properties Grid (Topik, Tanggal, Durasi) */}
+          <div className="pt-2 border-t border-[var(--gh-border)] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            {/* Property: Topik */}
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--gh-text-secondary)] font-medium w-16 shrink-0 flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5" /> Topik:
+              </span>
+              <div className="flex-1">
+                {showCustomTopicInput ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      required
+                      autoFocus
+                      value={customTopicName}
+                      onChange={(e) => setCustomTopicName(e.target.value)}
+                      placeholder="Topik baru..."
+                      className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-0.5 text-xs text-[var(--gh-text-primary)] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateCustomTopic}
+                      className="px-2 py-0.5 rounded bg-[#1f883d] text-white text-[11px] font-bold"
+                    >
+                      OK
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomTopicInput(false)}
+                      className="p-0.5 text-[var(--gh-text-secondary)]"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={category}
+                    onChange={(e) => {
+                      if (e.target.value === '__add_new__') {
+                        setShowCustomTopicInput(true);
+                      } else {
+                        setCategory(e.target.value);
+                      }
+                    }}
+                    className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-1 text-xs text-[var(--gh-text-primary)] focus:outline-none cursor-pointer"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                    <option value="__add_new__" className="font-semibold text-[var(--gh-accent)]">
+                      + Tambah Topik Baru...
+                    </option>
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* Property: Tanggal */}
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--gh-text-secondary)] font-medium w-16 shrink-0 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" /> Tanggal:
+              </span>
               <input
                 type="date"
                 value={studyDate}
                 onChange={(e) => setStudyDate(e.target.value)}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)]"
+                className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-1 text-xs text-[var(--gh-text-primary)] focus:outline-none"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[var(--gh-text-primary)] flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-[var(--gh-text-secondary)]" /> Durasi Belajar (Menit)
-              </label>
-              <input
-                type="number"
-                min="5"
-                step="5"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)]"
-              />
+            {/* Property: Durasi */}
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--gh-text-secondary)] font-medium w-16 shrink-0 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" /> Durasi:
+              </span>
+              <div className="flex items-center gap-1 flex-1">
+                <input
+                  type="number"
+                  min="5"
+                  step="5"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-20 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-1 text-xs text-[var(--gh-text-primary)] focus:outline-none"
+                />
+                <span className="text-[var(--gh-text-secondary)] text-[11px]">Menit</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Card Catatan Lengkap with Upload Buttons at the Bottom Right */}
-        <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3">
-          {/* Card Header */}
-          <div className="border-b border-[var(--gh-border)] pb-2">
-            <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
-              Catatan Lengkap
-            </h3>
-            <p className="text-[11px] text-[var(--gh-text-secondary)]">
-              Tuliskan semua hal yang Anda pelajari hari ini (teks bersih dan terstruktur)
-            </p>
+        {/* Notion Journal Body Editor with Formatting Bar */}
+        <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] overflow-hidden shadow-xs">
+          {/* Notion Markdown Formatting Toolbar */}
+          <div className="flex items-center gap-1 px-3 py-2 bg-[var(--gh-surface-subtle)] border-b border-[var(--gh-border)] overflow-x-auto text-xs">
+            <span className="text-[10px] uppercase font-bold text-[var(--gh-text-tertiary)] mr-1">Toolbar:</span>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('**', '**')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Tebal (Bold) **teks**"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('*', '*')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Miring (Italic) *teks*"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-px h-4 bg-[var(--gh-border)] mx-1" />
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n# ')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold text-xs"
+              title="Heading 1"
+            >
+              <Heading1 className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n## ')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold text-xs"
+              title="Heading 2"
+            >
+              <Heading2 className="w-3.5 h-3.5" />
+            </button>
+
+            <div className="w-px h-4 bg-[var(--gh-border)] mx-1" />
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n- ')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Bullet List"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n1. ')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Numbered List"
+            >
+              <ListOrdered className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n- [ ] ')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="To-Do Checklist"
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n> 💡 ')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Notion Callout Box"
+            >
+              <Quote className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => insertFormatting('\n```javascript\n', '\n```\n')}
+              className="p-1.5 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Code Block"
+            >
+              <Code2 className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          {/* Clean Writing Textarea */}
-          <textarea
-            rows={14}
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
-            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[260px]"
-          />
+          {/* Clean Distraction-Free Journal Canvas */}
+          <div className="p-4 space-y-3">
+            <textarea
+              ref={textareaRef}
+              rows={16}
+              required
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Tuliskan catatan jurnal pembelajaran Anda di sini... (Ketik judul, bullet list, atau gunakan toolbar di atas)"
+              className="w-full bg-transparent text-sm text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none font-sans leading-relaxed resize-y min-h-[300px]"
+            />
 
-          {/* Toolbar on Bottom Right of Card */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <div className="text-[11px] text-[var(--gh-text-tertiary)]">
-              {isCompressing ? 'Mengompresi gambar otomatis...' : `${imageUrls.length} gambar dilampirkan`}
+            {/* Bottom Right Image Tools on Card */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[var(--gh-border-subtle)] text-xs">
+              <div className="text-[11px] text-[var(--gh-text-tertiary)]">
+                {isCompressing ? 'Mengompresi gambar otomatis...' : `${imageUrls.length} gambar dilampirkan`}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageFileUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  disabled={isCompressing}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-medium cursor-pointer"
+                  title="Upload gambar dari komputer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
+                  <span>Upload Gambar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowImageInput(!showImageInput)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-medium cursor-pointer"
+                  title="Sisipkan URL Gambar Web"
+                >
+                  <LinkIcon className="w-3.5 h-3.5" />
+                  <span>URL Gambar</span>
+                </button>
+              </div>
             </div>
 
-            {/* Upload & URL Buttons on Bottom Right */}
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                accept="image/*"
-                multiple
-                onChange={handleImageFileUpload}
-                className="hidden"
-              />
-              <button
-                type="button"
-                disabled={isCompressing}
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-medium"
-                title="Upload gambar dari komputer (otomatis dikompres)"
-              >
-                <Upload className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
-                <span>Upload Gambar</span>
-              </button>
+            {/* URL Input Box */}
+            {showImageInput && (
+              <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md flex items-center gap-2 animate-in fade-in duration-150">
+                <ImageIcon className="w-4 h-4 text-[var(--gh-accent)] shrink-0" />
+                <input
+                  type="url"
+                  value={customImageUrl}
+                  onChange={(e) => setCustomImageUrl(e.target.value)}
+                  placeholder="Tempel link URL gambar (https://example.com/image.png)..."
+                  className="flex-1 bg-transparent text-xs text-[var(--gh-text-primary)] focus:outline-none placeholder-[var(--gh-text-tertiary)]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddImageUrl}
+                  className="px-3 py-1 rounded bg-[var(--gh-accent)] hover:opacity-90 text-white text-xs font-semibold"
+                >
+                  Sisipkan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowImageInput(false)}
+                  className="p-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
-              <button
-                type="button"
-                onClick={() => setShowImageInput(!showImageInput)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-medium"
-                title="Sisipkan URL Gambar Web"
-              >
-                <LinkIcon className="w-3.5 h-3.5" />
-                <span>URL Gambar</span>
-              </button>
-            </div>
+            {/* Attached Images Gallery */}
+            {imageUrls.length > 0 && (
+              <div className="space-y-1.5 p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md">
+                <div className="text-[11px] font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1">
+                  <ImageIcon className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
+                  <span>Lampiran Gambar ({imageUrls.length}):</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                  {imageUrls.map((imgUrl, i) => (
+                    <div key={i} className="relative group rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)] h-28">
+                      <img src={imgUrl} alt={`Lampiran ${i + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(i)}
+                        className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-black/90 text-white transition-opacity"
+                        title="Hapus gambar"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Quick URL Image Input Popup */}
-          {showImageInput && (
-            <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md flex items-center gap-2 animate-in fade-in duration-150">
-              <ImageIcon className="w-4 h-4 text-[var(--gh-accent)] shrink-0" />
-              <input
-                type="url"
-                value={customImageUrl}
-                onChange={(e) => setCustomImageUrl(e.target.value)}
-                placeholder="Tempel link URL gambar (https://example.com/image.png)..."
-                className="flex-1 bg-transparent text-xs text-[var(--gh-text-primary)] focus:outline-none placeholder-[var(--gh-text-tertiary)]"
-              />
-              <button
-                type="button"
-                onClick={handleAddImageUrl}
-                className="px-3 py-1 rounded bg-[var(--gh-accent)] hover:opacity-90 text-white text-xs font-semibold"
-              >
-                Sisipkan
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowImageInput(false)}
-                className="p-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Attached Images Thumbnail Preview (Clean below writing area) */}
-          {imageUrls.length > 0 && (
-            <div className="space-y-1.5 p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md mt-2">
-              <div className="text-[11px] font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1">
-                <ImageIcon className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
-                <span>Lampiran Gambar ({imageUrls.length}):</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                {imageUrls.map((imgUrl, i) => (
-                  <div key={i} className="relative group rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)] h-28">
-                    <img src={imgUrl} alt={`Lampiran ${i + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(i)}
-                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-black/70 hover:bg-black/90 text-white transition-opacity"
-                      title="Hapus gambar"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Optional Snippet / Quote Box */}
@@ -498,7 +764,7 @@ export function FullPageEditor({
                 <span>Snippet Kode / Rumus / Kutipan (Opsional)</span>
               </h3>
               <p className="text-[11px] text-[var(--gh-text-secondary)]">
-                Bila materi memiliki kode pemrograman, rumus matematika, atau kutipan kalimat kunci
+                Bila materi memiliki kode pemrograman atau rumus matematika khusus
               </p>
             </div>
 
@@ -522,7 +788,7 @@ export function FullPageEditor({
             rows={3}
             value={codeSnippet}
             onChange={(e) => setCodeSnippet(e.target.value)}
-            placeholder="// Tuliskan snippet kode, kutipan penting, atau rumus di sini..."
+            placeholder="// Tuliskan snippet kode atau rumus di sini..."
             className="w-full bg-[var(--gh-code-bg)] border border-[var(--gh-border)] rounded-md p-2.5 text-xs font-mono text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] resize-y"
           />
         </div>
@@ -538,10 +804,10 @@ export function FullPageEditor({
           </button>
           <button
             type="submit"
-            className="flex items-center gap-1.5 px-5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold shadow-sm transition-all"
+            className="flex items-center gap-1.5 px-5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
           >
             <Check className="w-4 h-4" />
-            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan Belajar'}</span>
+            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Jurnal'}</span>
           </button>
         </div>
       </form>
