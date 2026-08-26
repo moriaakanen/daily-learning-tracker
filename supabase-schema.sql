@@ -36,9 +36,9 @@ CREATE INDEX IF NOT EXISTS idx_learning_logs_category ON public.learning_logs (c
 CREATE INDEX IF NOT EXISTS idx_learning_logs_tags ON public.learning_logs USING GIN (tags);
 CREATE INDEX IF NOT EXISTS idx_learning_logs_created_at ON public.learning_logs (created_at DESC);
 
--- Full text search index
+-- Full text search index on title & content
 CREATE INDEX IF NOT EXISTS idx_learning_logs_fts ON public.learning_logs 
-USING GIN (to_tsvector('english', title || ' ' || content || ' ' || array_to_string(takeaways, ' ')));
+USING GIN (to_tsvector('english'::regconfig, coalesce(title, '') || ' ' || coalesce(content, '')));
 
 -- 4. Enable Row Level Security (RLS)
 ALTER TABLE public.learning_logs ENABLE ROW LEVEL SECURITY;
