@@ -28,7 +28,7 @@ interface LogDetailModalProps {
   onEdit: (log: LearningLog) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string, current: boolean) => void;
-  onTagClick: (tag: string) => void;
+  onTagClick?: (tag: string) => void;
   onAddFeedback: (logId: string, content: string) => Promise<void>;
 }
 
@@ -40,7 +40,6 @@ export function LogDetailModal({
   onEdit,
   onDelete,
   onToggleFavorite,
-  onTagClick,
   onAddFeedback,
 }: LogDetailModalProps) {
   const [copiedCode, setCopiedCode] = useState(false);
@@ -61,7 +60,7 @@ export function LogDetailModal({
   };
 
   const handleShare = () => {
-    const text = `💡 TIL: ${log.title}\n\nOleh: ${log.author_name || 'Tim'}\n\nTakeaways:\n${log.takeaways?.map((t) => `• ${t}`).join('\n') || ''}\n\n#${log.category} ${log.tags?.map((t) => `#${t}`).join(' ') || ''}`;
+    const text = `💡 TIL: ${log.title}\n\nTopik: ${log.category}\nOleh: ${log.author_name || 'Tim'}\n\n${log.content}`;
     navigator.clipboard.writeText(text);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
@@ -221,27 +220,10 @@ export function LogDetailModal({
             </div>
           )}
 
-          {/* Key Takeaways Box */}
-          {log.takeaways && log.takeaways.length > 0 && (
-            <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-[var(--gh-text-secondary)]">
-                Key Takeaways / Poin Inti
-              </div>
-              <ul className="space-y-1.5 text-xs text-[var(--gh-text-primary)]">
-                {log.takeaways.map((point, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="text-[var(--gh-accent)] font-bold">•</span>
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Markdown Content */}
-          <div className="prose max-w-none">
+          {/* Catatan Lengkap (Markdown Content) */}
+          <div className="prose max-w-none text-xs leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {log.content || '_Tidak ada deskripsi tambahan._'}
+              {log.content || '_Tidak ada deskripsi catatan._'}
             </ReactMarkdown>
           </div>
 
@@ -270,25 +252,6 @@ export function LogDetailModal({
               <pre className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-code-bg)] p-3.5 overflow-x-auto text-xs font-mono text-[var(--gh-text-primary)]">
                 <code>{log.code_snippet}</code>
               </pre>
-            </div>
-          )}
-
-          {/* Tags */}
-          {log.tags && log.tags.length > 0 && (
-            <div className="pt-3 border-t border-[var(--gh-border-subtle)] flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs text-[var(--gh-text-secondary)]">Tags:</span>
-              {log.tags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    onTagClick(tag);
-                    onClose();
-                  }}
-                  className="text-xs bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-accent)] px-2 py-0.5 rounded-full transition-colors"
-                >
-                  #{tag}
-                </button>
-              ))}
             </div>
           )}
 

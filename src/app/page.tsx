@@ -370,37 +370,11 @@ export default function Home() {
               filter={filter}
               onFilterChange={handleFilterUpdates}
               categories={categoriesList}
-              allTags={allTags}
               teamUsers={teamUsers}
               currentUser={currentUser}
               onOpenLogin={() => setIsUserModalOpen(true)}
               totalResultsCount={filteredLogs.length}
             />
-
-            {/* Popular Tags cloud */}
-            {allTags.length > 0 && (
-              <div className="mb-4 flex items-center gap-1.5 flex-wrap text-xs">
-                <span className="text-[11px] text-[var(--gh-text-secondary)] font-medium mr-1 flex items-center gap-1">
-                  <Tag className="w-3 h-3" /> Labels:
-                </span>
-                {allTags.slice(0, 10).map((tag) => {
-                  const isSelected = filter.selectedTag === tag;
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => handleTagClick(tag)}
-                      className={`px-2.5 py-0.5 rounded-full text-xs transition-colors border ${
-                        isSelected
-                          ? 'bg-[var(--gh-badge-bg)] text-[var(--gh-accent)] border-[var(--gh-accent)] font-semibold'
-                          : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-badge-border)]'
-                      }`}
-                    >
-                      #{tag}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Logs View */}
             {loading ? (

@@ -1,20 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import {
-  Plus,
-  Trash2,
   Star,
   ArrowLeft,
   Calendar,
   Clock,
-  Tag,
   BookOpen,
   Code2,
-  Eye,
-  Edit3,
   Check,
   X,
   Image as ImageIcon,
@@ -46,17 +39,13 @@ export function FullPageEditor({
   const [category, setCategory] = useState('Teknologi & Coding');
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
   const [duration, setDuration] = useState(30);
-  const [takeaways, setTakeaways] = useState<string[]>(['', '']);
   const [content, setContent] = useState('');
   const [codeSnippet, setCodeSnippet] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
-  const [activeTab, setActiveTab] = useState<'write' | 'preview' | 'split'>('split');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,11 +55,9 @@ export function FullPageEditor({
       setCategory(initialLog.category || 'Teknologi & Coding');
       setStudyDate(initialLog.study_date || new Date().toISOString().split('T')[0]);
       setDuration(initialLog.duration_minutes || 30);
-      setTakeaways(initialLog.takeaways?.length ? initialLog.takeaways : ['', '']);
       setContent(initialLog.content || '');
       setCodeSnippet(initialLog.code_snippet || '');
       setCodeLanguage(initialLog.code_language || 'javascript');
-      setTags(initialLog.tags || []);
       setIsFavorite(!!initialLog.is_favorite);
       setImageUrls(initialLog.image_urls || []);
     } else {
@@ -78,11 +65,9 @@ export function FullPageEditor({
       setCategory('Teknologi & Coding');
       setStudyDate(new Date().toISOString().split('T')[0]);
       setDuration(30);
-      setTakeaways(['', '']);
       setContent('');
       setCodeSnippet('');
       setCodeLanguage('javascript');
-      setTags([]);
       setIsFavorite(false);
       setImageUrls([]);
     }
@@ -100,7 +85,7 @@ export function FullPageEditor({
             Login Diperlukan
           </h2>
           <p className="text-xs text-[var(--gh-text-secondary)] leading-relaxed">
-            Sebelum dapat menulis atau memperbarui catatan pembelajaran harian, Anda harus masuk atau memilih akun pengguna terlebih dahulu.
+            Sebelum dapat menulis atau memperbarui catatan pembelajaran harian, Anda harus masuk ke akun pengguna terlebih dahulu.
           </p>
         </div>
 
@@ -111,7 +96,7 @@ export function FullPageEditor({
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all"
           >
             <LogIn className="w-4 h-4" />
-            <span>Masuk / Pilih Akun Pengguna</span>
+            <span>Masuk ke Akun Anda</span>
           </button>
 
           <button
@@ -125,39 +110,6 @@ export function FullPageEditor({
       </div>
     );
   }
-
-  const handleAddTakeaway = () => {
-    setTakeaways([...takeaways, '']);
-  };
-
-  const handleUpdateTakeaway = (index: number, val: string) => {
-    const updated = [...takeaways];
-    updated[index] = val;
-    setTakeaways(updated);
-  };
-
-  const handleRemoveTakeaway = (index: number) => {
-    if (takeaways.length <= 1) {
-      setTakeaways(['']);
-      return;
-    }
-    setTakeaways(takeaways.filter((_, i) => i !== index));
-  };
-
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      const val = tagInput.trim().replace(/^#/, '');
-      if (val && !tags.includes(val)) {
-        setTags([...tags, val]);
-        setTagInput('');
-      }
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
-  };
 
   const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -205,19 +157,17 @@ export function FullPageEditor({
       return;
     }
 
-    const cleanTakeaways = takeaways.map((t) => t.trim()).filter(Boolean);
-
     onSave(
       {
         title: title.trim(),
         category,
         study_date: studyDate,
         duration_minutes: Number(duration) || 30,
-        takeaways: cleanTakeaways,
+        takeaways: [],
+        tags: [],
         content: content.trim(),
         code_snippet: codeSnippet.trim() || undefined,
         code_language: codeLanguage,
-        tags,
         image_urls: imageUrls,
         is_favorite: isFavorite,
         author_id: initialLog?.author_id || currentUser.id,
@@ -280,13 +230,13 @@ export function FullPageEditor({
         </div>
       </div>
 
-      {/* Main Spacious Form */}
+      {/* Main Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title & Favorite */}
+        {/* Title & Topik */}
         <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-4">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-[var(--gh-text-primary)]">
-              Judul Materi / Topik <span className="text-rose-500">*</span>
+              Judul Materi / Catatan <span className="text-rose-500">*</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -312,10 +262,10 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Meta Grid: Category, Date, Duration */}
+          {/* Meta Grid: Topik, Date, Duration */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[var(--gh-text-primary)]">Kategori Bidang</label>
+              <label className="text-xs font-semibold text-[var(--gh-text-primary)]">Topik</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -357,64 +307,19 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Key Takeaways */}
-        <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
-                Key Takeaways / Poin Inti Pembelajaran
-              </h3>
-              <p className="text-[11px] text-[var(--gh-text-secondary)]">
-                Tulis 1-3 kesimpulan utama yang paling berkesan dan ingin selalu kamu ingat
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleAddTakeaway}
-              className="text-[var(--gh-accent)] hover:underline flex items-center gap-1 text-xs font-medium"
-            >
-              <Plus className="w-3.5 h-3.5" /> Tambah Poin
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {takeaways.map((point, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <span className="text-xs text-[var(--gh-text-tertiary)] w-5 text-center font-mono">
-                  {index + 1}.
-                </span>
-                <input
-                  type="text"
-                  value={point}
-                  onChange={(e) => handleUpdateTakeaway(index, e.target.value)}
-                  placeholder={`Poin penting ke-${index + 1}...`}
-                  className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)]"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTakeaway(index)}
-                  className="p-1.5 text-[var(--gh-text-secondary)] hover:text-rose-500 transition-colors"
-                  title="Hapus poin"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Spacious Markdown Editor with Image Upload Toolbar */}
+        {/* Clean, Full-Width Writing Area (Markdown with Image Upload Toolbar) */}
         <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--gh-border)] pb-2">
-            <div className="flex items-center gap-2">
-              <div>
-                <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
-                  Catatan Lengkap & Penjelasan Konsep (Markdown)
-                </h3>
-              </div>
+            <div>
+              <h3 className="text-xs font-semibold text-[var(--gh-text-primary)]">
+                Catatan Lengkap
+              </h3>
+              <p className="text-[11px] text-[var(--gh-text-secondary)]">
+                Tuliskan semua hal yang Anda pelajari hari ini (mendukung teks, paragraf, list, atau gambar)
+              </p>
             </div>
 
-            {/* Toolbar Buttons: Upload Image & View Switcher */}
+            {/* Toolbar Buttons: Upload Image & URL Image */}
             <div className="flex items-center gap-2">
               <input
                 type="file"
@@ -443,46 +348,10 @@ export function FullPageEditor({
                 <LinkIcon className="w-3.5 h-3.5" />
                 <span>URL Gambar</span>
               </button>
-
-              <div className="flex items-center bg-[var(--gh-bg)] rounded-md p-0.5 border border-[var(--gh-border)] text-xs">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('write')}
-                  className={`px-2.5 py-0.5 rounded transition-colors ${
-                    activeTab === 'write'
-                      ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
-                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                  }`}
-                >
-                  <Edit3 className="w-3 h-3 inline mr-1" /> Tulis
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('split')}
-                  className={`hidden md:inline px-2.5 py-0.5 rounded transition-colors ${
-                    activeTab === 'split'
-                      ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
-                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                  }`}
-                >
-                  Split
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('preview')}
-                  className={`px-2.5 py-0.5 rounded transition-colors ${
-                    activeTab === 'preview'
-                      ? 'bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] font-semibold'
-                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                  }`}
-                >
-                  <Eye className="w-3 h-3 inline mr-1" /> Preview
-                </button>
-              </div>
             </div>
           </div>
 
-          {/* Quick URL Image Input Dropdown */}
+          {/* Quick URL Image Input */}
           {showImageInput && (
             <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md flex items-center gap-2 animate-in fade-in duration-150">
               <ImageIcon className="w-4 h-4 text-[var(--gh-accent)] shrink-0" />
@@ -535,41 +404,15 @@ export function FullPageEditor({
             </div>
           )}
 
-          {/* Editor Body */}
-          {activeTab === 'split' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-h-[300px]">
-              <textarea
-                rows={14}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Tuliskan catatan, uraian, refleksi pemikiran, atau ringkasan materi di sini..."
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-mono leading-relaxed resize-y"
-              />
-              <div className="bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 overflow-y-auto max-h-[450px] text-xs prose">
-                {content ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-                ) : (
-                  <p className="text-[var(--gh-text-tertiary)] italic">Preview tulisan akan muncul secara realtime di sini...</p>
-                )}
-              </div>
-            </div>
-          ) : activeTab === 'write' ? (
-            <textarea
-              rows={14}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Tuliskan catatan, uraian, refleksi pemikiran, atau ringkasan materi di sini..."
-              className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-mono leading-relaxed resize-y"
-            />
-          ) : (
-            <div className="bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-4 min-h-[250px] overflow-y-auto text-xs prose">
-              {content ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-              ) : (
-                <p className="text-[var(--gh-text-tertiary)] italic">Belum ada konten untuk ditampilkan.</p>
-              )}
-            </div>
-          )}
+          {/* Spacious Writing Area */}
+          <textarea
+            rows={16}
+            required
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
+            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[350px]"
+          />
         </div>
 
         {/* Optional Snippet / Quote Box */}
@@ -578,7 +421,7 @@ export function FullPageEditor({
             <div>
               <h3 className="text-xs font-semibold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <Code2 className="w-3.5 h-3.5 text-[var(--gh-accent)]" />
-                <span>Code Snippet / Rumus / Kutipan (Opsional)</span>
+                <span>Snippet Kode / Rumus / Kutipan (Opsional)</span>
               </h3>
               <p className="text-[11px] text-[var(--gh-text-secondary)]">
                 Bila materi memiliki kode pemrograman, rumus matematika, atau kutipan kalimat kunci
@@ -608,39 +451,6 @@ export function FullPageEditor({
             placeholder="// Tuliskan snippet kode, kutipan penting, atau rumus di sini..."
             className="w-full bg-[var(--gh-code-bg)] border border-[var(--gh-border)] rounded-md p-2.5 text-xs font-mono text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] resize-y"
           />
-        </div>
-
-        {/* Tags / Labels */}
-        <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-2">
-          <label className="text-xs font-semibold text-[var(--gh-text-primary)] flex items-center gap-1">
-            <Tag className="w-3.5 h-3.5 text-[var(--gh-text-secondary)]" />
-            <span>Tags & Topik Spesifik (Tekan Enter atau Koma untuk menambah)</span>
-          </label>
-          <div className="flex flex-wrap items-center gap-1.5 p-2.5 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md min-h-[42px]">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="flex items-center gap-1 text-xs bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] text-[var(--gh-text-secondary)] px-2.5 py-0.5 rounded-full"
-              >
-                #{tag}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTag(tag)}
-                  className="hover:text-[var(--gh-text-primary)] ml-0.5"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              placeholder={tags.length === 0 ? "Ketik tag topik lalu tekan Enter (misal: psikologi, buku, finansial, javascript)..." : ""}
-              className="flex-1 bg-transparent border-none text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none min-w-[200px]"
-            />
-          </div>
         </div>
 
         {/* Bottom Actions */}

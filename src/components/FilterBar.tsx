@@ -1,14 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Star, X, Tag, ArrowUpDown, Users, User as UserIcon } from 'lucide-react';
-import { FilterState, DateFilter, UserScopeFilter, User } from '@/types';
+import { Star, ArrowUpDown, Users, User as UserIcon } from 'lucide-react';
+import { FilterState, DateFilter, User } from '@/types';
 
 interface FilterBarProps {
   filter: FilterState;
   onFilterChange: (updates: Partial<FilterState>) => void;
   categories: string[];
-  allTags: string[];
   teamUsers: User[];
   currentUser: User | null;
   onOpenLogin: () => void;
@@ -19,8 +18,6 @@ export function FilterBar({
   filter,
   onFilterChange,
   categories,
-  allTags,
-  teamUsers,
   currentUser,
   onOpenLogin,
   totalResultsCount,
@@ -42,7 +39,7 @@ export function FilterBar({
 
   return (
     <div className="mb-4 space-y-2.5">
-      {/* Category Labels bar */}
+      {/* Topik Labels bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           onClick={() => onFilterChange({ selectedCategory: 'All' })}
@@ -52,7 +49,7 @@ export function FilterBar({
               : 'bg-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-transparent hover:border-[var(--gh-border)]'
           }`}
         >
-          Semua Kategori ({totalResultsCount})
+          Semua Topik ({totalResultsCount})
         </button>
 
         {categories.map((cat) => {
@@ -73,7 +70,7 @@ export function FilterBar({
         })}
       </div>
 
-      {/* Control row: Team Scope + Date + Favorites + Tags + Sort */}
+      {/* Control row: Team Scope + Date + Favorites + Sort */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-[var(--gh-border-subtle)] text-xs">
         <div className="flex items-center gap-2 flex-wrap">
           {/* User Scope Filter (Feed Tim vs Catatan Saya) */}
@@ -135,20 +132,6 @@ export function FilterBar({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Active Tag filter badge */}
-          {filter.selectedTag && (
-            <div className="flex items-center gap-1 bg-[var(--gh-surface)] border border-[var(--gh-border)] text-[var(--gh-text-primary)] px-2 py-0.5 rounded text-xs">
-              <Tag className="w-3 h-3 text-[var(--gh-text-secondary)]" />
-              <span>#{filter.selectedTag}</span>
-              <button
-                onClick={() => onFilterChange({ selectedTag: null })}
-                className="text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          )}
-
           {/* Sort By Dropdown */}
           <div className="flex items-center gap-1 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-md px-2 py-1 text-[var(--gh-text-secondary)] text-xs">
             <ArrowUpDown className="w-3 h-3" />

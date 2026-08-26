@@ -265,9 +265,9 @@ export function StatsOverview({ stats, logs }: StatsOverviewProps) {
 
           <span>•</span>
 
-          <div className="flex items-center gap-1.5" title="Total Poin Kesimpulan (Key Takeaways)">
-            <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400" />
-            <span>{totalTakeaways} Takeaways</span>
+          <div className="flex items-center gap-1.5" title="Total Catatan Pembelajaran">
+            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <span>{logs.length} Catatan</span>
           </div>
         </div>
       </div>
@@ -521,16 +521,16 @@ export function StatsOverview({ stats, logs }: StatsOverviewProps) {
                 </p>
               </div>
 
-              {/* Insight 3: Rasio Efisiensi / Takeaway */}
+              {/* Insight 3: Total Entri Catatan */}
               <div className="p-3 bg-[var(--gh-bg)] rounded-md border border-[var(--gh-border)] space-y-1">
                 <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--gh-text-tertiary)]">
-                  Rata-rata Poin per Sesi
+                  Total Entri Catatan
                 </span>
                 <div className="text-sm font-bold text-indigo-400">
-                  {logs.length ? (totalTakeaways / logs.length).toFixed(1) : 0} Poin
+                  {logs.length} Catatan
                 </div>
                 <p className="text-[10px] text-[var(--gh-text-secondary)]">
-                  Kesimpulan inti terstruktur
+                  Terdokumentasi dalam sistem
                 </p>
               </div>
             </div>
