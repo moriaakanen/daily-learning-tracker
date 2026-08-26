@@ -8,77 +8,74 @@ import {
 } from './supabase';
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Frontend', color: '#38bdf8', icon: 'Layout' },
-  { id: 'cat-2', name: 'Backend', color: '#4ade80', icon: 'Server' },
-  { id: 'cat-3', name: 'Database', color: '#f59e0b', icon: 'Database' },
-  { id: 'cat-4', name: 'DevOps & Cloud', color: '#a855f7', icon: 'Cloud' },
-  { id: 'cat-5', name: 'AI & Machine Learning', color: '#ec4899', icon: 'Brain' },
-  { id: 'cat-6', name: 'Mobile Dev', color: '#06b6d4', icon: 'Smartphone' },
-  { id: 'cat-7', name: 'System Design', color: '#f97316', icon: 'Cpu' },
-  { id: 'cat-8', name: 'General / Concept', color: '#6366f1', icon: 'BookOpen' },
+  { id: 'cat-1', name: 'Teknologi & Coding', color: '#38bdf8', icon: 'Code' },
+  { id: 'cat-2', name: 'Bisnis & Finansial', color: '#34d399', icon: 'TrendingUp' },
+  { id: 'cat-3', name: 'Buku & Literasi', color: '#fbbf24', icon: 'BookOpen' },
+  { id: 'cat-4', name: 'Bahasa & Komunikasi', color: '#a78bfa', icon: 'MessageSquare' },
+  { id: 'cat-5', name: 'Sains & Psikologi', color: '#f472b6', icon: 'Brain' },
+  { id: 'cat-6', name: 'Produktivitas & Habits', color: '#fb923c', icon: 'Zap' },
+  { id: 'cat-7', name: 'Desain & Kreativitas', color: '#22d3ee', icon: 'Palette' },
+  { id: 'cat-8', name: 'Kesehatan & Olahraga', color: '#4ade80', icon: 'Activity' },
+  { id: 'cat-9', name: 'Wawasan Umum & Filosofi', color: '#818cf8', icon: 'Compass' },
 ];
 
 export const INITIAL_LOGS: LearningLog[] = [
   {
     id: 'sample-1',
-    title: 'Optimasi Query PostgreSQL & Pembuatan GIN Index',
-    category: 'Database',
-    tags: ['PostgreSQL', 'Indexing', 'SQL', 'Performance'],
+    title: 'Prinsip Pareto 80/20 dalam Efisiensi Kerja & Belajar',
+    category: 'Produktivitas & Habits',
+    tags: ['Produktivitas', 'TimeManagement', 'Mindset', 'SelfGrowth'],
     takeaways: [
-      'B-Tree cocok untuk operator perbandingan skalar (=, <, >, BETWEEN)',
-      'GIN Index sangat efisien untuk kolom tipe Array, JSONB, dan Full-Text Search',
-      'Gunakan EXPLAIN (ANALYZE, BUFFERS) untuk menganalisis waktu eksekusi aktual',
+      '80% hasil signifikan biasanya datang dari 20% usaha/fokus yang tepat sasaran',
+      'Identifikasi tugas bernilai tinggi (High-Impact Tasks) di awal hari sebelum terdistraksi',
+      'Berani mengeliminasi atau mendelegasikan 80% hal yang hanya menghasilkan dampak kecil',
     ],
-    content: `## Apa yang Dipelajari Hari Ini?
-Hari ini saya mendalami cara kerja indexing pada **PostgreSQL**, terutama perbedaan antara indeks default *B-Tree* dan *GIN (Generalized Inverted Index)*.
+    content: `## Ringkasan Konsep
+Hari ini saya mempelajari kembali penerapan **Prinsip Pareto (Aturan 80/20)** karya ekonom Vilfredo Pareto. 
 
-### Mengapa GIN Index Penting?
-Ketika kita memiliki kolom berstruktur data multi-nilai seperti \`tags TEXT[]\` atau dokumen \`jsonb\`, pencarian menggunakan operator containment (\`@>\`) akan sangat lambat jika memakai sequential scan. Dengan GIN index, PostgreSQL membuat inverted index pemetaan tiap elemen ke row pointer.
+Dalam konteks belajar dan rutinitas harian, seringkali kita menghabiskan 80% energi untuk hal-hal sepele (tugas administratif, merapikan catatan berlebihan) yang hanya menyumbang 20% pemahaman.
 
-### Contoh Implementasi:
-\`\`\`sql
-CREATE INDEX idx_logs_tags ON learning_logs USING GIN (tags);
-SELECT * FROM learning_logs WHERE tags @> ARRAY['PostgreSQL'];
-\`\`\`
+### Langkah Praktis Penerapan:
+1. **Audit Aktivitas Harian**: Tuliskan semua yang dikerjakan hari ini.
+2. **Sorot 20% Inti**: Manakah 1-2 materi atau tindakan yang memberi pemahaman atau hasil terbesar?
+3. **Deep Work**: Alokasikan waktu 60-90 menit tanpa distraksi untuk fokus penuh pada 20% tersebut.
 `,
-    code_snippet: `CREATE INDEX idx_logs_tags ON learning_logs USING GIN (tags);\nEXPLAIN ANALYZE SELECT * FROM learning_logs WHERE tags @> ARRAY['PostgreSQL'];`,
-    code_language: 'sql',
     study_date: new Date().toISOString().split('T')[0],
-    duration_minutes: 50,
+    duration_minutes: 45,
     is_favorite: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
   {
     id: 'sample-2',
-    title: 'React 19 Server Actions & Optimistic Updates',
-    category: 'Frontend',
-    tags: ['React', 'Next.js', 'Server Actions', 'UI/UX'],
+    title: 'Atomic Habits: Konsep 1% Lebih Baik Setiap Hari',
+    category: 'Buku & Literasi',
+    tags: ['Buku', 'Kebiasaan', 'JamesClear', 'Filosofi'],
     takeaways: [
-      'useActionState mempermudah penanganan loading, error, dan data balikan dari server action',
-      'useOptimistic memberikan instant feedback ke user sebelum response server selesai',
-      'Mengurangi kebutuhan boilerplate global state untuk mutasi sederhana',
+      'Peningkatan 1% setiap hari menghasilkan 37 kali lipat kemajuan dalam kurun waktu 1 tahun (Compound Effect)',
+      'Fokus pada sistem dan identitas diri, bukan hanya target angka',
+      'Jadikan kebiasaan baru terlihat jelas (Make it obvious) dan mudah dilakukan (Make it easy)',
     ],
-    content: `Mempelajari paradigma mutasi data modern di **Next.js App Router** menggunakan *Server Actions*. Fitur hook seperti \`useOptimistic\` membuat aplikasi terasa sangat responsif dan instan.`,
+    content: `Catatan dari membaca bab awal **Atomic Habits**: Perubahan kecil yang konsisten jauh lebih berharga daripada ledakan motivasi sesaat yang cepat padam.`,
     study_date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
-    duration_minutes: 40,
+    duration_minutes: 30,
     is_favorite: true,
     created_at: new Date(Date.now() - 86400000).toISOString(),
     updated_at: new Date(Date.now() - 86400000).toISOString(),
   },
   {
     id: 'sample-3',
-    title: 'Arsitektur Event-Driven dengan Redis Streams',
-    category: 'Backend',
-    tags: ['Redis', 'Event-Driven', 'Microservices', 'Architecture'],
+    title: 'Dasar Investasi Indeks Saham (Index Fund / ETF) untuk Pemula',
+    category: 'Bisnis & Finansial',
+    tags: ['Finansial', 'Investasi', 'Ekonomi', 'LiterasiKeuangan'],
     takeaways: [
-      'Redis Streams menyediakan data structure append-only log mirip Apache Kafka namun lebih ringan',
-      'Consumer Groups memungkinkan pendistribusian pesan ke multiple worker secara otomatis',
-      'XACK digunakan untuk konfirmasi pemrosesan pesan agar tidak hilang jika terjadi crash',
+      'Index Fund menawarkan diversifikasi instan ke ratusan perusahaan dengan biaya (expense ratio) yang sangat rendah',
+      'Dollar-Cost Averaging (DCA) melindungi dari risiko salah memperkirakan waktu pasar (timing the market)',
+      'Kunci utama adalah jangka panjang (long-term compounding) dan disiplin alokasi aset',
     ],
-    content: `Eksplorasi penggunaan **Redis Streams** untuk messaging queue antar microservices. Sangat cocok untuk asynchronous job processing dengan throughput tinggi dan latency rendah.`,
+    content: `Mempelajari instrumen investasi pasif berbasis indeks. Sangat cocok untuk mengamankan nilai uang dari inflasi tanpa perlu menganalisis laporan keuangan saham individu setiap hari.`,
     study_date: new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0],
-    duration_minutes: 60,
+    duration_minutes: 40,
     is_favorite: false,
     created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
     updated_at: new Date(Date.now() - 2 * 86400000).toISOString(),
@@ -260,7 +257,7 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
     // Monthly hours
     if (log.study_date) {
       dateSet.add(log.study_date);
-      const monthKey = log.study_date.substring(0, 7); // YYYY-MM
+      const monthKey = log.study_date.substring(0, 7);
       monthlyHours[monthKey] = (monthlyHours[monthKey] || 0) + mins / 60;
     }
   });
@@ -338,20 +335,16 @@ export function calculateStats(logs: LearningLog[]): StatsSummary {
 export function filterLogs(logs: LearningLog[], filter: FilterState): LearningLog[] {
   return logs
     .filter((log) => {
-      // Favorite filter
       if (filter.onlyFavorites && !log.is_favorite) return false;
 
-      // Category filter
       if (filter.selectedCategory && filter.selectedCategory !== 'All' && log.category !== filter.selectedCategory) {
         return false;
       }
 
-      // Tag filter
       if (filter.selectedTag) {
         if (!log.tags || !log.tags.includes(filter.selectedTag)) return false;
       }
 
-      // Date filter
       if (filter.dateFilter !== 'all') {
         const today = new Date().toISOString().split('T')[0];
         const logDate = log.study_date;
@@ -370,7 +363,6 @@ export function filterLogs(logs: LearningLog[], filter: FilterState): LearningLo
         }
       }
 
-      // Search query (full-text search on title, tags, takeaways, content)
       if (filter.searchQuery.trim()) {
         const query = filter.searchQuery.toLowerCase().trim();
         const matchTitle = log.title?.toLowerCase().includes(query);

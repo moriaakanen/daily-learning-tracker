@@ -6,10 +6,7 @@ import {
   BookOpen,
   GitPullRequest,
   Tag,
-  Search,
-  Flame,
-  LayoutGrid,
-  GitCommit,
+  PenSquare,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { StatsOverview } from '@/components/StatsOverview';
@@ -17,7 +14,7 @@ import { FilterBar } from '@/components/FilterBar';
 import { LogCard } from '@/components/LogCard';
 import { TimelineView } from '@/components/TimelineView';
 import { LogDetailModal } from '@/components/LogDetailModal';
-import { LogFormModal } from '@/components/LogFormModal';
+import { FullPageEditor } from '@/components/FullPageEditor';
 import { SettingsModal } from '@/components/SettingsModal';
 import {
   getAllLogs,
@@ -33,14 +30,18 @@ import {
 import { getSupabaseClient } from '@/lib/supabase';
 import { LearningLog, FilterState, ViewMode } from '@/types';
 
+type ActiveTab = 'overview' | 'logs' | 'editor';
+
 export default function Home() {
   const [logs, setLogs] = useState<LearningLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // Modals
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  // Navigation tab
+  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+
+  // Editing state
   const [editingLog, setEditingLog] = useState<LearningLog | null>(null);
   const [selectedLog, setSelectedLog] = useState<LearningLog | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -54,9 +55,6 @@ export default function Home() {
     onlyFavorites: false,
     sortBy: 'date-desc',
   });
-
-  // Active Tab: overview | logs
-  const [activeTab, setActiveTab] = useState<'overview' | 'logs'>('overview');
 
   const loadData = async () => {
     setLoading(true);
@@ -103,6 +101,19 @@ export default function Home() {
     return calculateStats(logs);
   }, [logs]);
 
+  const handleOpenNewEntry = () => {
+    setEditingLog(null);
+    setActiveTab('editor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleEditEntry = (log: LearningLog) => {
+    setEditingLog(log);
+    setSelectedLog(null);
+    setActiveTab('editor');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleCreateOrUpdateLog = async (
     logData: Omit<LearningLog, 'id' | 'created_at' | 'updated_at'>,
     existingId?: string
@@ -114,6 +125,8 @@ export default function Home() {
       const created = await createLog(logData);
       setLogs((prev) => [created, ...prev.filter((l) => l.id !== created.id)]);
     }
+    setActiveTab('overview');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteLog = async (id: string) => {
@@ -133,6 +146,7 @@ export default function Home() {
       ...prev,
       selectedTag: prev.selectedTag === tag ? null : tag,
     }));
+    setActiveTab('logs');
   };
 
   const handleFilterUpdates = (updates: Partial<FilterState>) => {
@@ -153,22 +167,22 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-[var(--gh-bg)] text-[var(--gh-text-primary)] transition-colors">
       {/* GitHub Top Header */}
       <Header
-        onOpenNewLog={() => {
-          setEditingLog(null);
-          setIsFormOpen(true);
-        }}
+        onOpenNewLog={handleOpenNewEntry}
         onOpenSettings={() => setIsSettingsOpen(true)}
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         searchQuery={filter.searchQuery}
-        onSearchChange={(q) => handleFilterUpdates({ searchQuery: q })}
+        onSearchChange={(q) => {
+          handleFilterUpdates({ searchQuery: q });
+          if (activeTab === 'editor') setActiveTab('logs');
+        }}
         isSupabaseConnected={isSupabaseConnected}
         totalLogsCount={logs.length}
       />
 
-      {/* GitHub Subnav Navigation Bar (Code, Issues, Pull Requests style) */}
+      {/* GitHub Subnav Navigation Bar */}
       <div className="border-b border-[var(--gh-border)] bg-[var(--gh-surface)] px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex items-center gap-4 text-xs font-semibold overflow-x-auto scrollbar-none">
+        <div className="max-w-6xl mx-auto flex items-center gap-3 sm:gap-6 text-xs font-semibold overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
@@ -178,7 +192,7 @@ export default function Home() {
             }`}
           >
             <BookOpen className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>Overview</span>
+            <span>Overview & Heatmap</span>
           </button>
 
           <button
@@ -190,10 +204,22 @@ export default function Home() {
             }`}
           >
             <GitPullRequest className="w-4 h-4 text-[var(--gh-text-secondary)]" />
-            <span>Daily Logs</span>
+            <span>Semua Catatan</span>
             <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
               {logs.length}
             </span>
+          </button>
+
+          <button
+            onClick={handleOpenNewEntry}
+            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
+              activeTab === 'editor'
+                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
+                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+            }`}
+          >
+            <PenSquare className="w-4 h-4 text-[var(--gh-text-secondary)]" />
+            <span>{editingLog ? 'Edit Catatan' : 'Tulis Catatan Baru'}</span>
           </button>
 
           <button
@@ -206,120 +232,127 @@ export default function Home() {
       </div>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-6">
-        {/* Real GitHub Contribution Heatmap */}
-        {activeTab === 'overview' && <StatsOverview stats={stats} logs={logs} />}
-
-        {/* Filter and search row */}
-        <FilterBar
-          filter={filter}
-          onFilterChange={handleFilterUpdates}
-          categories={categoriesList}
-          allTags={allTags}
-          totalResultsCount={filteredLogs.length}
-        />
-
-        {/* Popular Tags cloud */}
-        {allTags.length > 0 && (
-          <div className="mb-4 flex items-center gap-1.5 flex-wrap text-xs">
-            <span className="text-[11px] text-[var(--gh-text-secondary)] font-medium mr-1 flex items-center gap-1">
-              <Tag className="w-3 h-3" /> Labels:
-            </span>
-            {allTags.slice(0, 10).map((tag) => {
-              const isSelected = filter.selectedTag === tag;
-              return (
-                <button
-                  key={tag}
-                  onClick={() => handleTagClick(tag)}
-                  className={`px-2 py-0.5 rounded-full text-xs transition-colors border ${
-                    isSelected
-                      ? 'bg-[var(--gh-badge-bg)] text-[var(--gh-accent)] border-[var(--gh-accent)] font-semibold'
-                      : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-badge-border)]'
-                  }`}
-                >
-                  #{tag}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Logs View */}
-        {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="w-5 h-5 rounded-full border-2 border-[var(--gh-accent)] border-t-transparent animate-spin" />
-            <p className="text-xs text-[var(--gh-text-secondary)]">Loading notes...</p>
-          </div>
-        ) : filteredLogs.length === 0 ? (
-          <div className="py-16 px-4 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center flex flex-col items-center justify-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center text-[var(--gh-text-secondary)]">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div className="max-w-xs space-y-1">
-              <h3 className="text-sm font-semibold text-[var(--gh-text-primary)]">
-                No entries match your search
-              </h3>
-              <p className="text-xs text-[var(--gh-text-secondary)]">
-                {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
-                  ? 'Try clearing the search or filter query to see all logs.'
-                  : 'Get started by creating your first daily learning note.'}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                if (filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag) {
-                  setFilter({
-                    searchQuery: '',
-                    selectedCategory: 'All',
-                    selectedTag: null,
-                    dateFilter: 'all',
-                    onlyFavorites: false,
-                    sortBy: 'date-desc',
-                  });
-                } else {
-                  setEditingLog(null);
-                  setIsFormOpen(true);
-                }
-              }}
-              className="flex items-center gap-1.5 bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>
-                {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
-                  ? 'Clear filters'
-                  : 'New Learning Entry'}
-              </span>
-            </button>
-          </div>
-        ) : viewMode === 'timeline' ? (
-          <TimelineView
-            logs={filteredLogs}
-            onSelect={setSelectedLog}
-            onEdit={(log) => {
-              setEditingLog(log);
-              setIsFormOpen(true);
-            }}
-            onDelete={handleDeleteLog}
-            onToggleFavorite={handleToggleFavorite}
-            onTagClick={handleTagClick}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
+        {/* Full Page Editor Tab */}
+        {activeTab === 'editor' ? (
+          <FullPageEditor
+            initialLog={editingLog}
+            categories={categoriesList}
+            onSave={handleCreateOrUpdateLog}
+            onCancel={() => setActiveTab('overview')}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredLogs.map((log) => (
-              <LogCard
-                key={log.id}
-                log={log}
+          <>
+            {/* Overview Heatmap Graph */}
+            {activeTab === 'overview' && (
+              <StatsOverview stats={stats} logs={logs} />
+            )}
+
+            {/* Filter and search row */}
+            <FilterBar
+              filter={filter}
+              onFilterChange={handleFilterUpdates}
+              categories={categoriesList}
+              allTags={allTags}
+              totalResultsCount={filteredLogs.length}
+            />
+
+            {/* Popular Tags cloud */}
+            {allTags.length > 0 && (
+              <div className="mb-4 flex items-center gap-1.5 flex-wrap text-xs">
+                <span className="text-[11px] text-[var(--gh-text-secondary)] font-medium mr-1 flex items-center gap-1">
+                  <Tag className="w-3 h-3" /> Labels:
+                </span>
+                {allTags.slice(0, 10).map((tag) => {
+                  const isSelected = filter.selectedTag === tag;
+                  return (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagClick(tag)}
+                      className={`px-2.5 py-0.5 rounded-full text-xs transition-colors border ${
+                        isSelected
+                          ? 'bg-[var(--gh-badge-bg)] text-[var(--gh-accent)] border-[var(--gh-accent)] font-semibold'
+                          : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-badge-border)]'
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Logs View */}
+            {loading ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
+                <div className="w-5 h-5 rounded-full border-2 border-[var(--gh-accent)] border-t-transparent animate-spin" />
+                <p className="text-xs text-[var(--gh-text-secondary)]">Memuat catatan...</p>
+              </div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="py-16 px-4 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center flex flex-col items-center justify-center space-y-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center text-[var(--gh-text-secondary)]">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div className="max-w-xs space-y-1">
+                  <h3 className="text-sm font-semibold text-[var(--gh-text-primary)]">
+                    Tidak ada catatan yang cocok
+                  </h3>
+                  <p className="text-xs text-[var(--gh-text-secondary)]">
+                    {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
+                      ? 'Coba bersihkan kata kunci atau filter untuk melihat semua catatan.'
+                      : 'Mulai tulis hal bermanfaat yang kamu pelajari hari ini.'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag) {
+                      setFilter({
+                        searchQuery: '',
+                        selectedCategory: 'All',
+                        selectedTag: null,
+                        dateFilter: 'all',
+                        onlyFavorites: false,
+                        sortBy: 'date-desc',
+                      });
+                    } else {
+                      handleOpenNewEntry();
+                    }
+                  }}
+                  className="flex items-center gap-1.5 bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold px-3.5 py-1.5 rounded-md shadow-sm transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>
+                    {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
+                      ? 'Reset Filter'
+                      : 'Tulis Catatan Baru'}
+                  </span>
+                </button>
+              </div>
+            ) : viewMode === 'timeline' ? (
+              <TimelineView
+                logs={filteredLogs}
                 onSelect={setSelectedLog}
-                onEdit={(l) => {
-                  setEditingLog(l);
-                  setIsFormOpen(true);
-                }}
+                onEdit={handleEditEntry}
                 onDelete={handleDeleteLog}
                 onToggleFavorite={handleToggleFavorite}
                 onTagClick={handleTagClick}
               />
-            ))}
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredLogs.map((log) => (
+                  <LogCard
+                    key={log.id}
+                    log={log}
+                    onSelect={setSelectedLog}
+                    onEdit={handleEditEntry}
+                    onDelete={handleDeleteLog}
+                    onToggleFavorite={handleToggleFavorite}
+                    onTagClick={handleTagClick}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -349,30 +382,17 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Modals */}
+      {/* Reading Modal */}
       <LogDetailModal
         log={selectedLog}
         onClose={() => setSelectedLog(null)}
-        onEdit={(log) => {
-          setEditingLog(log);
-          setIsFormOpen(true);
-        }}
+        onEdit={handleEditEntry}
         onDelete={handleDeleteLog}
         onToggleFavorite={handleToggleFavorite}
         onTagClick={handleTagClick}
       />
 
-      <LogFormModal
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setEditingLog(null);
-        }}
-        onSave={handleCreateOrUpdateLog}
-        initialLog={editingLog}
-        categories={categoriesList}
-      />
-
+      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
