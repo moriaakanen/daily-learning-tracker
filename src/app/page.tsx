@@ -365,11 +365,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Overview Heatmap Graph */}
-            {activeTab === 'overview' && (
-              <StatsOverview stats={stats} logs={logs} />
-            )}
-
             {/* Filter and search row */}
             <FilterBar
               filter={filter}
@@ -477,6 +472,13 @@ export default function Home() {
                     onTagClick={handleTagClick}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* Learning Activity & Contribution Graph at the bottom */}
+            {activeTab === 'overview' && (
+              <div className="mt-8 pt-6 border-t border-[var(--gh-border)]">
+                <StatsOverview stats={stats} logs={logs} />
               </div>
             )}
           </>
