@@ -20,13 +20,16 @@ import {
   Image as ImageIcon,
   Upload,
   Link as LinkIcon,
+  LogIn,
+  Lock,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 
 interface FullPageEditorProps {
-  currentUser: User;
+  currentUser: User | null;
   initialLog?: LearningLog | null;
   categories: string[];
+  onOpenLogin: () => void;
   onSave: (log: Omit<LearningLog, 'id' | 'created_at' | 'updated_at'>, existingId?: string) => void;
   onCancel: () => void;
 }
@@ -35,6 +38,7 @@ export function FullPageEditor({
   currentUser,
   initialLog,
   categories,
+  onOpenLogin,
   onSave,
   onCancel,
 }: FullPageEditorProps) {
@@ -84,6 +88,44 @@ export function FullPageEditor({
     }
   }, [initialLog]);
 
+  // If user is not logged in, enforce login screen
+  if (!currentUser) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-6 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center space-y-4 animate-in fade-in duration-200">
+        <div className="w-12 h-12 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center mx-auto text-[var(--gh-accent)]">
+          <Lock className="w-6 h-6" />
+        </div>
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold text-[var(--gh-text-primary)]">
+            Login Diperlukan
+          </h2>
+          <p className="text-xs text-[var(--gh-text-secondary)] leading-relaxed">
+            Sebelum dapat menulis atau memperbarui catatan pembelajaran harian, Anda harus masuk atau memilih akun pengguna terlebih dahulu.
+          </p>
+        </div>
+
+        <div className="pt-2 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onOpenLogin}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Masuk / Pilih Akun Pengguna</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full px-4 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] transition-colors"
+          >
+            Kembali ke Beranda
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const handleAddTakeaway = () => {
     setTakeaways([...takeaways, '']);
   };
@@ -117,7 +159,6 @@ export function FullPageEditor({
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  // Image Upload Handler (Base64 file converter)
   const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -127,8 +168,6 @@ export function FullPageEditor({
         alert('File harus berupa gambar (PNG, JPG, GIF, WebP).');
         return;
       }
-
-      // Max 3MB warning
       if (file.size > 3 * 1024 * 1024) {
         alert('Ukuran gambar maksimal 3MB.');
         return;
@@ -139,7 +178,6 @@ export function FullPageEditor({
         const base64 = event.target?.result as string;
         if (base64) {
           setImageUrls((prev) => [...prev, base64]);
-          // Also append to markdown content for seamless inline rendering
           setContent((prev) => prev + `\n\n![${file.name.replace(/\.[^/.]+$/, '')}](${base64})\n`);
         }
       };
@@ -378,7 +416,6 @@ export function FullPageEditor({
 
             {/* Toolbar Buttons: Upload Image & View Switcher */}
             <div className="flex items-center gap-2">
-              {/* Add Image Buttons */}
               <input
                 type="file"
                 ref={fileInputRef}
@@ -407,7 +444,6 @@ export function FullPageEditor({
                 <span>URL Gambar</span>
               </button>
 
-              {/* View switcher */}
               <div className="flex items-center bg-[var(--gh-bg)] rounded-md p-0.5 border border-[var(--gh-border)] text-xs">
                 <button
                   type="button"

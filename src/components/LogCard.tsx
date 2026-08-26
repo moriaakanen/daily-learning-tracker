@@ -13,7 +13,7 @@ import { LearningLog, User } from '@/types';
 
 interface LogCardProps {
   log: LearningLog;
-  currentUser: User;
+  currentUser: User | null;
   onSelect: (log: LearningLog) => void;
   onEdit: (log: LearningLog) => void;
   onDelete: (id: string) => void;
@@ -48,7 +48,7 @@ export function LogCard({
     year: 'numeric',
   });
 
-  const isAuthor = !log.author_id || log.author_id === currentUser.id;
+  const isAuthor = currentUser && (!log.author_id || log.author_id === currentUser.id);
 
   const labelStyle = LABEL_COLORS[log.category] || {
     bg: 'var(--gh-badge-bg)',

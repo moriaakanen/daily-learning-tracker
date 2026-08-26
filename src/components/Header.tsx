@@ -9,13 +9,14 @@ import {
   LayoutGrid,
   GitCommit,
   X,
-  User as UserIcon,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { ViewMode, User } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
-  currentUser: User;
+  currentUser: User | null;
   onOpenNewLog: () => void;
   onOpenSettings: () => void;
   onOpenUserModal: () => void;
@@ -68,7 +69,7 @@ export function Header({
                 daily-learning-tracker
               </a>
               <span className="ml-1 text-[11px] font-medium text-[var(--gh-text-secondary)] border border-[var(--gh-border)] px-1.5 py-0.2 rounded-full">
-                Team Public
+                Public
               </span>
             </div>
           </div>
@@ -138,26 +139,36 @@ export function Header({
             <button
               onClick={onOpenSettings}
               className="p-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
-              title="Pengaturan Repository & Database"
+              title="Pengaturan Database & Backup"
             >
               <Settings className="w-4 h-4" />
             </button>
 
-            {/* User Profile Login / Switch Button */}
-            <button
-              onClick={onOpenUserModal}
-              className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-primary)] transition-colors"
-              title={`Sedang masuk sebagai ${currentUser.name} (@${currentUser.username}). Klik untuk ganti akun.`}
-            >
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-5 h-5 rounded-full object-cover border border-[var(--gh-border)]"
-              />
-              <span className="hidden sm:inline font-semibold text-xs truncate max-w-[90px]">
-                {currentUser.name.split(' ')[0]}
-              </span>
-            </button>
+            {/* User Profile / Login Button */}
+            {currentUser ? (
+              <button
+                onClick={onOpenUserModal}
+                className="flex items-center gap-1.5 p-1 sm:px-2 sm:py-1 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-primary)] transition-colors"
+                title={`Masuk sebagai ${currentUser.name} (@${currentUser.username}). Klik untuk ganti akun/keluar.`}
+              >
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  className="w-5 h-5 rounded-full object-cover border border-[var(--gh-border)]"
+                />
+                <span className="hidden sm:inline font-semibold text-xs truncate max-w-[85px]">
+                  {currentUser.name.split(' ')[0]}
+                </span>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenUserModal}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs font-semibold text-[var(--gh-accent)] hover:underline transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Masuk (Sign in)</span>
+              </button>
+            )}
 
             {/* Primary Action: New Entry (GitHub Green Button) */}
             <button

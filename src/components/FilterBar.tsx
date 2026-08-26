@@ -10,7 +10,8 @@ interface FilterBarProps {
   categories: string[];
   allTags: string[];
   teamUsers: User[];
-  currentUser: User;
+  currentUser: User | null;
+  onOpenLogin: () => void;
   totalResultsCount: number;
 }
 
@@ -21,6 +22,7 @@ export function FilterBar({
   allTags,
   teamUsers,
   currentUser,
+  onOpenLogin,
   totalResultsCount,
 }: FilterBarProps) {
   const dateOptions: { label: string; value: DateFilter }[] = [
@@ -29,6 +31,14 @@ export function FilterBar({
     { label: '7 Hari Terakhir', value: 'this-week' },
     { label: 'Bulan Ini', value: 'this-month' },
   ];
+
+  const handleMineClick = () => {
+    if (!currentUser) {
+      onOpenLogin();
+      return;
+    }
+    onFilterChange({ userScope: 'mine' });
+  };
 
   return (
     <div className="mb-4 space-y-2.5">
@@ -66,7 +76,7 @@ export function FilterBar({
       {/* Control row: Team Scope + Date + Favorites + Tags + Sort */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-[var(--gh-border-subtle)] text-xs">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* User Scope Filter (All Team vs Mine vs Specific Member) */}
+          {/* User Scope Filter (Feed Tim vs Catatan Saya) */}
           <div className="flex items-center bg-[var(--gh-surface)] rounded-md p-0.5 border border-[var(--gh-border)]">
             <button
               onClick={() => onFilterChange({ userScope: 'all' })}
@@ -81,7 +91,7 @@ export function FilterBar({
             </button>
 
             <button
-              onClick={() => onFilterChange({ userScope: 'mine' })}
+              onClick={handleMineClick}
               className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-xs transition-colors ${
                 filter.userScope === 'mine'
                   ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] font-semibold shadow-xs'

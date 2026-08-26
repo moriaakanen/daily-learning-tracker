@@ -16,14 +16,15 @@ import {
   MessageSquare,
   Send,
   Image as ImageIcon,
-  User as UserIcon,
+  LogIn,
 } from 'lucide-react';
-import { LearningLog, User, FeedbackItem } from '@/types';
+import { LearningLog, User } from '@/types';
 
 interface LogDetailModalProps {
   log: LearningLog | null;
-  currentUser: User;
+  currentUser: User | null;
   onClose: () => void;
+  onOpenLogin: () => void;
   onEdit: (log: LearningLog) => void;
   onDelete: (id: string) => void;
   onToggleFavorite: (id: string, current: boolean) => void;
@@ -35,6 +36,7 @@ export function LogDetailModal({
   log,
   currentUser,
   onClose,
+  onOpenLogin,
   onEdit,
   onDelete,
   onToggleFavorite,
@@ -48,7 +50,7 @@ export function LogDetailModal({
 
   if (!log) return null;
 
-  const isAuthor = !log.author_id || log.author_id === currentUser.id;
+  const isAuthor = currentUser && (!log.author_id || log.author_id === currentUser.id);
 
   const handleCopyCode = () => {
     if (log.code_snippet) {
@@ -67,6 +69,10 @@ export function LogDetailModal({
 
   const handleSendFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentUser) {
+      onOpenLogin();
+      return;
+    }
     if (!feedbackInput.trim()) return;
 
     setSubmittingFeedback(true);
@@ -95,7 +101,7 @@ export function LogDetailModal({
         className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header bar (GitHub Issue style) */}
+        {/* Header bar */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--gh-border)] bg-[var(--gh-surface)]">
           <div className="flex items-center gap-3 text-xs text-[var(--gh-text-secondary)]">
             <div className="flex items-center gap-1.5">
@@ -198,7 +204,7 @@ export function LogDetailModal({
             {log.title}
           </h1>
 
-          {/* Attached Images Gallery if present */}
+          {/* Attached Images */}
           {log.image_urls && log.image_urls.length > 0 && (
             <div className="space-y-2">
               <div className="text-xs font-semibold text-[var(--gh-text-secondary)] flex items-center gap-1.5">
@@ -286,7 +292,7 @@ export function LogDetailModal({
             </div>
           )}
 
-          {/* GitHub Issue-Style Feedback / Comment Thread */}
+          {/* Feedback Section */}
           <div className="pt-6 border-t border-[var(--gh-border)] space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-[var(--gh-text-primary)] flex items-center gap-2">
@@ -338,35 +344,51 @@ export function LogDetailModal({
               )}
             </div>
 
-            {/* Comment Input Box */}
-            <form onSubmit={handleSendFeedback} className="space-y-2 pt-2">
-              <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-4 h-4 rounded-full object-cover border border-[var(--gh-border)]"
-                />
-                <span>Komentar sebagai <strong>{currentUser.name}</strong></span>
-              </div>
-              <div className="flex items-start gap-2">
-                <textarea
-                  rows={2}
-                  required
-                  value={feedbackInput}
-                  onChange={(e) => setFeedbackInput(e.target.value)}
-                  placeholder="Tulis feedback, ide tambahan, atau apresiasi..."
-                  className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-2.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] resize-y"
-                />
+            {/* Comment Input or Login Prompt */}
+            {currentUser ? (
+              <form onSubmit={handleSendFeedback} className="space-y-2 pt-2">
+                <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
+                  <img
+                    src={currentUser.avatar}
+                    alt={currentUser.name}
+                    className="w-4 h-4 rounded-full object-cover border border-[var(--gh-border)]"
+                  />
+                  <span>Komentar sebagai <strong>{currentUser.name}</strong></span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <textarea
+                    rows={2}
+                    required
+                    value={feedbackInput}
+                    onChange={(e) => setFeedbackInput(e.target.value)}
+                    placeholder="Tulis feedback, ide tambahan, atau apresiasi..."
+                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-2.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] resize-y"
+                  />
+                  <button
+                    type="submit"
+                    disabled={submittingFeedback || !feedbackInput.trim()}
+                    className="flex items-center gap-1 px-3.5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50 shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>Kirim</span>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="p-3 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] flex items-center justify-between gap-3 text-xs">
+                <span className="text-[var(--gh-text-secondary)]">
+                  Silakan masuk terlebih dahulu untuk meninggalkan komentar atau feedback.
+                </span>
                 <button
-                  type="submit"
-                  disabled={submittingFeedback || !feedbackInput.trim()}
-                  className="flex items-center gap-1 px-3.5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all disabled:opacity-50 shrink-0"
+                  type="button"
+                  onClick={onOpenLogin}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-semibold transition-all shrink-0"
                 >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Kirim</span>
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Masuk Akun</span>
                 </button>
               </div>
-            </form>
+            )}
           </div>
         </div>
       </div>

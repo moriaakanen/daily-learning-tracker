@@ -9,6 +9,8 @@ import {
   PenSquare,
   Users,
   User as UserIcon,
+  LogIn,
+  Lock,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { StatsOverview } from '@/components/StatsOverview';
@@ -34,6 +36,7 @@ import {
 import {
   getCurrentUser,
   setCurrentUser,
+  logoutUser,
   getTeamUsers,
   saveTeamUsers,
 } from '@/lib/auth';
@@ -49,8 +52,8 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
   // User Auth State
-  const [currentUser, setCurrentUserState] = useState<User>(getCurrentUser());
-  const [teamUsers, setTeamUsers] = useState<User[]>(getTeamUsers());
+  const [currentUser, setCurrentUserState] = useState<User | null>(null);
+  const [teamUsers, setTeamUsers] = useState<User[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   // Navigation tab
@@ -97,6 +100,14 @@ export default function Home() {
     setCurrentUser(user);
   };
 
+  const handleLogout = () => {
+    logoutUser();
+    setCurrentUserState(null);
+    if (filter.userScope === 'mine') {
+      setFilter((prev) => ({ ...prev, userScope: 'all' }));
+    }
+  };
+
   const handleUserCreated = (newUser: User) => {
     const updated = [...teamUsers, newUser];
     setTeamUsers(updated);
@@ -124,7 +135,7 @@ export default function Home() {
   }, [logs]);
 
   const filteredLogs = useMemo(() => {
-    return filterLogs(logs, filter, currentUser.id);
+    return filterLogs(logs, filter, currentUser?.id);
   }, [logs, filter, currentUser]);
 
   const stats = useMemo(() => {
@@ -132,12 +143,20 @@ export default function Home() {
   }, [logs]);
 
   const handleOpenNewEntry = () => {
+    if (!currentUser) {
+      setIsUserModalOpen(true);
+      return;
+    }
     setEditingLog(null);
     setActiveTab('editor');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEditEntry = (log: LearningLog) => {
+    if (!currentUser) {
+      setIsUserModalOpen(true);
+      return;
+    }
     setEditingLog(log);
     setSelectedLog(null);
     setActiveTab('editor');
@@ -172,6 +191,10 @@ export default function Home() {
   };
 
   const handleAddFeedback = async (logId: string, content: string) => {
+    if (!currentUser) {
+      setIsUserModalOpen(true);
+      return;
+    }
     const newFb = await addFeedback(logId, currentUser, content);
     setLogs((prev) =>
       prev.map((log) => {
@@ -263,6 +286,10 @@ export default function Home() {
 
           <button
             onClick={() => {
+              if (!currentUser) {
+                setIsUserModalOpen(true);
+                return;
+              }
               setFilter((prev) => ({ ...prev, userScope: 'mine' }));
               setActiveTab('logs');
             }}
@@ -274,9 +301,11 @@ export default function Home() {
           >
             <UserIcon className="w-4 h-4 text-[var(--gh-text-secondary)]" />
             <span>Catatan Saya</span>
-            <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
-              {logs.filter((l) => l.author_id === currentUser.id).length}
-            </span>
+            {currentUser && (
+              <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
+                {logs.filter((l) => l.author_id === currentUser.id).length}
+              </span>
+            )}
           </button>
 
           <button
@@ -308,11 +337,37 @@ export default function Home() {
             currentUser={currentUser}
             initialLog={editingLog}
             categories={categoriesList}
+            onOpenLogin={() => setIsUserModalOpen(true)}
             onSave={handleCreateOrUpdateLog}
             onCancel={() => setActiveTab('overview')}
           />
         ) : (
           <>
+            {/* Guest Banner if not logged in */}
+            {!currentUser && (
+              <div className="mb-6 p-3.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <Lock className="w-4 h-4 text-[var(--gh-accent)]" />
+                  <div>
+                    <span className="font-semibold text-[var(--gh-text-primary)]">
+                      Mode Tamu / Jelajah:
+                    </span>{' '}
+                    <span className="text-[var(--gh-text-secondary)]">
+                      Anda dapat melihat semua catatan pembelajaran tim. Masuk akun untuk menulis catatan harian & memberi feedback.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsUserModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-semibold transition-all shadow-xs shrink-0"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Masuk Sekarang</span>
+                </button>
+              </div>
+            )}
+
             {/* Overview Heatmap Graph */}
             {activeTab === 'overview' && (
               <StatsOverview stats={stats} logs={logs} />
@@ -326,6 +381,7 @@ export default function Home() {
               allTags={allTags}
               teamUsers={teamUsers}
               currentUser={currentUser}
+              onOpenLogin={() => setIsUserModalOpen(true)}
               totalResultsCount={filteredLogs.length}
             />
 
@@ -438,12 +494,21 @@ export default function Home() {
             <span>&copy; {new Date().getFullYear()} Daily LearnLog • GitHub Primer Style</span>
           </div>
           <div className="flex items-center gap-4 text-[var(--gh-accent)]">
-            <button
-              onClick={() => setIsUserModalOpen(true)}
-              className="hover:underline"
-            >
-              Akun: {currentUser.name}
-            </button>
+            {currentUser ? (
+              <button
+                onClick={() => setIsUserModalOpen(true)}
+                className="hover:underline"
+              >
+                Akun: {currentUser.name}
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsUserModalOpen(true)}
+                className="hover:underline font-semibold"
+              >
+                Masuk / Login
+              </button>
+            )}
             <span>•</span>
             <a
               href="https://github.com/moriaakanen/daily-learning-tracker"
@@ -469,6 +534,7 @@ export default function Home() {
         log={selectedLog}
         currentUser={currentUser}
         onClose={() => setSelectedLog(null)}
+        onOpenLogin={() => setIsUserModalOpen(true)}
         onEdit={handleEditEntry}
         onDelete={handleDeleteLog}
         onToggleFavorite={handleToggleFavorite}
@@ -483,6 +549,7 @@ export default function Home() {
         currentUser={currentUser}
         teamUsers={teamUsers}
         onSelectUser={handleSelectUser}
+        onLogout={handleLogout}
         onUserCreated={handleUserCreated}
       />
 

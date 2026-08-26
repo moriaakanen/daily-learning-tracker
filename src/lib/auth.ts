@@ -64,27 +64,32 @@ export function saveTeamUsers(users: User[]) {
   }
 }
 
-export function getCurrentUser(): User {
-  if (typeof window === 'undefined') return DEFAULT_TEAM_USERS[0];
+export function getCurrentUser(): User | null {
+  if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(CURRENT_USER_KEY);
-    if (!raw) {
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(DEFAULT_TEAM_USERS[0]));
-      return DEFAULT_TEAM_USERS[0];
-    }
+    if (!raw) return null;
     return JSON.parse(raw);
   } catch (e) {
-    return DEFAULT_TEAM_USERS[0];
+    return null;
   }
 }
 
-export function setCurrentUser(user: User) {
+export function setCurrentUser(user: User | null) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    if (user) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
   } catch (e) {
     console.error('Error setting current user', e);
   }
+}
+
+export function logoutUser() {
+  setCurrentUser(null);
 }
 
 export function createNewUser(name: string, username: string, role?: string): User {
@@ -102,7 +107,7 @@ export function createNewUser(name: string, username: string, role?: string): Us
     id,
     name: name.trim(),
     username: username.trim().toLowerCase().replace(/\s+/g, '_'),
-    role: role?.trim() || 'Team Member',
+    role: role?.trim() || 'Anggota Tim',
     avatar,
   };
 
