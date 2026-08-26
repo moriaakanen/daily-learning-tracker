@@ -103,7 +103,7 @@ export function LogFormModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('Mohon isi judul materi belajar.');
+      alert('Please enter a title for your learning note.');
       return;
     }
 
@@ -129,36 +129,36 @@ export function LogFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="relative w-full max-w-2xl max-h-[92vh] flex flex-col rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-2xl max-h-[92vh] flex flex-col rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-950/50">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--gh-border)] bg-[var(--gh-surface)]">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100">
-              {initialLog ? 'Edit Catatan' : 'Catatan Baru'}
+            <h2 className="text-sm font-semibold text-[var(--gh-text-primary)]">
+              {initialLog ? 'Edit Learning Log' : 'New Learning Entry'}
             </h2>
-            <p className="text-[11px] text-zinc-400">
-              Dokumentasikan apa yang kamu pelajari hari ini
+            <p className="text-[11px] text-[var(--gh-text-secondary)]">
+              Document your daily learnings and takeaways
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Scrollable Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-xs">
           {/* Title */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-300">
-              Judul Materi <span className="text-rose-400">*</span>
+            <label className="font-semibold text-[var(--gh-text-primary)]">
+              Title <span className="text-rose-500">*</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -166,63 +166,60 @@ export function LogFormModal({
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Contoh: Memahami Arsitektur Event-Driven dengan Redis"
-                className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+                placeholder="e.g. Understanding PostgreSQL GIN Indexing"
+                className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] focus:ring-1 focus:ring-[var(--gh-accent)]"
               />
               <button
                 type="button"
                 onClick={() => setIsFavorite(!isFavorite)}
-                className={`p-2 rounded-lg border transition-colors ${
+                className={`p-1.5 rounded border border-[var(--gh-border)] transition-colors ${
                   isFavorite
-                    ? 'bg-amber-950/40 border-amber-800/60 text-amber-300'
-                    : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                    ? 'bg-[var(--gh-surface-hover)] text-amber-500'
+                    : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)]'
                 }`}
-                title="Favorit"
+                title="Star"
               >
                 <Star className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
               </button>
             </div>
           </div>
 
-          {/* Meta Grid */}
+          {/* Meta Grid: Category, Date, Duration */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            {/* Category */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Kategori</label>
+              <label className="font-semibold text-[var(--gh-text-primary)]">Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-600 cursor-pointer"
+                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)] cursor-pointer"
               >
                 {categories.map((cat) => (
-                  <option key={cat} value={cat} className="bg-zinc-900">
+                  <option key={cat} value={cat} className="bg-[var(--gh-bg)]">
                     {cat}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Date */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Tanggal</label>
+              <label className="font-semibold text-[var(--gh-text-primary)]">Date</label>
               <input
                 type="date"
                 value={studyDate}
                 onChange={(e) => setStudyDate(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-600"
+                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)]"
               />
             </div>
 
-            {/* Duration */}
             <div className="space-y-1">
-              <label className="text-xs font-medium text-zinc-300">Durasi (Menit)</label>
+              <label className="font-semibold text-[var(--gh-text-primary)]">Duration (Minutes)</label>
               <input
                 type="number"
                 min="5"
                 step="5"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-600"
+                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-2.5 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)]"
               />
             </div>
           </div>
@@ -230,75 +227,74 @@ export function LogFormModal({
           {/* Key Takeaways */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-zinc-300">
-                Poin Kunci / Kesimpulan Inti
+              <label className="font-semibold text-[var(--gh-text-primary)]">
+                Key Takeaways / Summary (Bullets)
               </label>
               <button
                 type="button"
                 onClick={handleAddTakeaway}
-                className="text-xs text-zinc-400 hover:text-zinc-200 flex items-center gap-1"
+                className="text-[var(--gh-accent)] hover:underline flex items-center gap-1 text-[11px]"
               >
-                <Plus className="w-3 h-3" /> Tambah Poin
+                <Plus className="w-3 h-3" /> Add bullet
               </button>
             </div>
 
             <div className="space-y-1.5">
               {takeaways.map((point, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-500 w-4 text-center font-mono">
+                  <span className="text-[var(--gh-text-tertiary)] w-4 text-center font-mono text-xs">
                     {index + 1}.
                   </span>
                   <input
                     type="text"
                     value={point}
                     onChange={(e) => handleUpdateTakeaway(index, e.target.value)}
-                    placeholder={`Poin penting ke-${index + 1}...`}
-                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
+                    placeholder={`Takeaway #${index + 1}...`}
+                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-2.5 py-1 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)]"
                   />
                   <button
                     type="button"
                     onClick={() => handleRemoveTakeaway(index)}
-                    className="p-1.5 text-zinc-500 hover:text-rose-400 transition-colors"
+                    className="p-1 text-[var(--gh-text-secondary)] hover:text-rose-500 transition-colors"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Markdown Content Editor */}
+          {/* Markdown Content (GitHub style Write/Preview tabs) */}
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-zinc-300">
-                Catatan Lengkap (Markdown)
-              </label>
-
-              {/* Tabs */}
-              <div className="flex items-center bg-zinc-950 rounded-md p-0.5 border border-zinc-800">
+            <div className="flex items-center justify-between border-b border-[var(--gh-border)] pb-1">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setActiveTab('write')}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-3 py-1 text-xs font-semibold rounded-t-md transition-colors ${
                     activeTab === 'write'
-                      ? 'bg-zinc-800 text-zinc-100'
-                      : 'text-zinc-400 hover:text-zinc-200'
+                      ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] border-t border-l border-r border-[var(--gh-border)] -mb-[5px] pb-1.5'
+                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
                   }`}
                 >
-                  Tulis
+                  Write
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab('preview')}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  className={`px-3 py-1 text-xs font-semibold rounded-t-md transition-colors ${
                     activeTab === 'preview'
-                      ? 'bg-zinc-800 text-zinc-100'
-                      : 'text-zinc-400 hover:text-zinc-200'
+                      ? 'bg-[var(--gh-bg)] text-[var(--gh-text-primary)] border-t border-l border-r border-[var(--gh-border)] -mb-[5px] pb-1.5'
+                      : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
                   }`}
                 >
                   Preview
                 </button>
               </div>
+
+              <span className="text-[10px] text-[var(--gh-text-tertiary)]">
+                Markdown supported
+              </span>
             </div>
 
             {activeTab === 'write' ? (
@@ -306,15 +302,15 @@ export function LogFormModal({
                 rows={5}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Tuliskan penjelasan, rangkuman konsep, atau referensi materi..."
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-zinc-600 font-mono leading-relaxed"
+                placeholder="Write detailed notes, documentation, or study summary..."
+                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-2.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-mono leading-relaxed"
               />
             ) : (
-              <div className="min-h-[120px] max-h-[220px] overflow-y-auto bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs prose">
+              <div className="min-h-[120px] max-h-[220px] overflow-y-auto bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3 text-xs prose">
                 {content ? (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                 ) : (
-                  <p className="text-zinc-500 italic">Belum ada konten untuk dipratinjau.</p>
+                  <p className="text-[var(--gh-text-tertiary)] italic">Nothing to preview.</p>
                 )}
               </div>
             )}
@@ -323,14 +319,14 @@ export function LogFormModal({
           {/* Code Snippet */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-zinc-300">
-                Code Snippet (Opsional)
+              <label className="font-semibold text-[var(--gh-text-primary)]">
+                Code Snippet (Optional)
               </label>
 
               <select
                 value={codeLanguage}
                 onChange={(e) => setCodeLanguage(e.target.value)}
-                className="bg-zinc-950 border border-zinc-800 text-zinc-400 text-[11px] rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
+                className="bg-[var(--gh-bg)] border border-[var(--gh-border)] text-[var(--gh-text-secondary)] text-[11px] rounded px-1.5 py-0.5 focus:outline-none cursor-pointer"
               >
                 <option value="javascript">JavaScript / TypeScript</option>
                 <option value="python">Python</option>
@@ -346,27 +342,27 @@ export function LogFormModal({
               rows={3}
               value={codeSnippet}
               onChange={(e) => setCodeSnippet(e.target.value)}
-              placeholder="// Masukkan kode atau command di sini..."
-              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-600"
+              placeholder="// Add code snippet or query..."
+              className="w-full bg-[var(--gh-code-bg)] border border-[var(--gh-border)] rounded-md p-2 text-xs font-mono text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)]"
             />
           </div>
 
           {/* Tags */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-300">
-              Tags (Tekan Enter atau Koma)
+            <label className="font-semibold text-[var(--gh-text-primary)]">
+              Tags / Labels
             </label>
-            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-zinc-950 border border-zinc-800 rounded-lg min-h-[38px]">
+            <div className="flex flex-wrap items-center gap-1.5 p-2 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md min-h-[38px]">
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="flex items-center gap-1 text-[11px] bg-zinc-800 text-zinc-200 px-2 py-0.5 rounded"
+                  className="flex items-center gap-1 text-[11px] bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] text-[var(--gh-text-secondary)] px-2 py-0.5 rounded-full"
                 >
                   #{tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-white"
+                    className="hover:text-[var(--gh-text-primary)]"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -377,26 +373,26 @@ export function LogFormModal({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleAddTag}
-                placeholder={tags.length === 0 ? "Ketik tag lalu tekan Enter (misal: react, postgresql)..." : ""}
-                className="flex-1 bg-transparent border-none text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none min-w-[120px]"
+                placeholder={tags.length === 0 ? "Type tag & press Enter..." : ""}
+                className="flex-1 bg-transparent border-none text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none min-w-[120px]"
               />
             </div>
           </div>
 
-          {/* Footer Submit */}
-          <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
+          {/* Footer */}
+          <div className="pt-3 border-t border-[var(--gh-border)] flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+              className="px-3 py-1 rounded-md text-xs font-medium border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
             >
-              Batal
+              Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold transition-all active:scale-[0.98]"
+              className="px-3.5 py-1 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all"
             >
-              {initialLog ? 'Simpan Perubahan' : 'Simpan Catatan'}
+              {initialLog ? 'Save Changes' : 'Submit Entry'}
             </button>
           </div>
         </form>

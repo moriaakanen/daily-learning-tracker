@@ -4,6 +4,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   BookOpen,
+  GitPullRequest,
+  Tag,
+  Search,
+  Flame,
+  LayoutGrid,
+  GitCommit,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { StatsOverview } from '@/components/StatsOverview';
@@ -31,16 +37,15 @@ export default function Home() {
   const [logs, setLogs] = useState<LearningLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
-  const [showStats, setShowStats] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
-  // Modals state
+  // Modals
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<LearningLog | null>(null);
   const [selectedLog, setSelectedLog] = useState<LearningLog | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Filters state
+  // Filters
   const [filter, setFilter] = useState<FilterState>({
     searchQuery: '',
     selectedCategory: 'All',
@@ -50,7 +55,9 @@ export default function Home() {
     sortBy: 'date-desc',
   });
 
-  // Load initial data
+  // Active Tab: overview | logs
+  const [activeTab, setActiveTab] = useState<'overview' | 'logs'>('overview');
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -69,14 +76,12 @@ export default function Home() {
     loadData();
   }, []);
 
-  // Compute Categories
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
     const customNames = logs.map((l) => l.category).filter(Boolean);
     return Array.from(new Set([...defaultNames, ...customNames]));
   }, [logs]);
 
-  // Compute Tags
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     logs.forEach((log) => {
@@ -90,17 +95,14 @@ export default function Home() {
     return Array.from(tagSet).sort();
   }, [logs]);
 
-  // Filtered logs
   const filteredLogs = useMemo(() => {
     return filterLogs(logs, filter);
   }, [logs, filter]);
 
-  // Stats
   const stats = useMemo(() => {
     return calculateStats(logs);
   }, [logs]);
 
-  // Handlers
   const handleCreateOrUpdateLog = async (
     logData: Omit<LearningLog, 'id' | 'created_at' | 'updated_at'>,
     existingId?: string
@@ -148,16 +150,14 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-zinc-100">
-      {/* Top Header */}
+    <div className="min-h-screen flex flex-col bg-[var(--gh-bg)] text-[var(--gh-text-primary)] transition-colors">
+      {/* GitHub Top Header */}
       <Header
         onOpenNewLog={() => {
           setEditingLog(null);
           setIsFormOpen(true);
         }}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        showStats={showStats}
-        onToggleStats={() => setShowStats(!showStats)}
         viewMode={viewMode}
         onChangeViewMode={setViewMode}
         searchQuery={filter.searchQuery}
@@ -166,12 +166,51 @@ export default function Home() {
         totalLogsCount={logs.length}
       />
 
-      {/* Main Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-7">
-        {/* Metric Bar if toggled */}
-        {showStats && <StatsOverview stats={stats} />}
+      {/* GitHub Subnav Navigation Bar (Code, Issues, Pull Requests style) */}
+      <div className="border-b border-[var(--gh-border)] bg-[var(--gh-surface)] px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto flex items-center gap-4 text-xs font-semibold overflow-x-auto scrollbar-none">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
+              activeTab === 'overview'
+                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
+                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+            }`}
+          >
+            <BookOpen className="w-4 h-4 text-[var(--gh-text-secondary)]" />
+            <span>Overview</span>
+          </button>
 
-        {/* Filter Bar */}
+          <button
+            onClick={() => setActiveTab('logs')}
+            className={`flex items-center gap-1.5 py-3 border-b-2 transition-colors ${
+              activeTab === 'logs'
+                ? 'border-[#fd8c73] text-[var(--gh-text-primary)]'
+                : 'border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
+            }`}
+          >
+            <GitPullRequest className="w-4 h-4 text-[var(--gh-text-secondary)]" />
+            <span>Daily Logs</span>
+            <span className="ml-1 bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)] text-[10px] px-1.5 py-0.2 rounded-full">
+              {logs.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center gap-1.5 py-3 border-b-2 border-transparent text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors ml-auto"
+          >
+            <span>Database</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Container */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-5 sm:py-6">
+        {/* Real GitHub Contribution Heatmap */}
+        {activeTab === 'overview' && <StatsOverview stats={stats} logs={logs} />}
+
+        {/* Filter and search row */}
         <FilterBar
           filter={filter}
           onFilterChange={handleFilterUpdates}
@@ -180,22 +219,22 @@ export default function Home() {
           totalResultsCount={filteredLogs.length}
         />
 
-        {/* Minimal Tag Strip */}
+        {/* Popular Tags cloud */}
         {allTags.length > 0 && (
           <div className="mb-4 flex items-center gap-1.5 flex-wrap text-xs">
-            <span className="text-[11px] text-zinc-500 font-medium mr-1">
-              Topik:
+            <span className="text-[11px] text-[var(--gh-text-secondary)] font-medium mr-1 flex items-center gap-1">
+              <Tag className="w-3 h-3" /> Labels:
             </span>
-            {allTags.slice(0, 8).map((tag) => {
+            {allTags.slice(0, 10).map((tag) => {
               const isSelected = filter.selectedTag === tag;
               return (
                 <button
                   key={tag}
                   onClick={() => handleTagClick(tag)}
-                  className={`px-2 py-0.5 rounded text-[11px] transition-colors ${
+                  className={`px-2 py-0.5 rounded-full text-xs transition-colors border ${
                     isSelected
-                      ? 'bg-zinc-200 text-zinc-950 font-medium'
-                      : 'text-zinc-400 hover:text-zinc-200 bg-zinc-900 border border-zinc-800'
+                      ? 'bg-[var(--gh-badge-bg)] text-[var(--gh-accent)] border-[var(--gh-accent)] font-semibold'
+                      : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-badge-border)]'
                   }`}
                 >
                   #{tag}
@@ -205,25 +244,25 @@ export default function Home() {
           </div>
         )}
 
-        {/* Log Entries View */}
+        {/* Logs View */}
         {loading ? (
           <div className="py-16 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="w-5 h-5 rounded-full border-2 border-zinc-500 border-t-transparent animate-spin" />
-            <p className="text-xs text-zinc-500">Memuat catatan...</p>
+            <div className="w-5 h-5 rounded-full border-2 border-[var(--gh-accent)] border-t-transparent animate-spin" />
+            <p className="text-xs text-[var(--gh-text-secondary)]">Loading notes...</p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="py-16 px-4 rounded-xl bg-zinc-900/30 border border-zinc-800 text-center flex flex-col items-center justify-center space-y-3">
-            <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
+          <div className="py-16 px-4 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center flex flex-col items-center justify-center space-y-3">
+            <div className="w-10 h-10 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center text-[var(--gh-text-secondary)]">
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="max-w-xs space-y-1">
-              <h3 className="text-sm font-semibold text-zinc-200">
-                Tidak ada catatan
+              <h3 className="text-sm font-semibold text-[var(--gh-text-primary)]">
+                No entries match your search
               </h3>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-[var(--gh-text-secondary)]">
                 {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
-                  ? 'Tidak ada hasil untuk filter ini.'
-                  : 'Belum ada catatan belajar yang dibuat.'}
+                  ? 'Try clearing the search or filter query to see all logs.'
+                  : 'Get started by creating your first daily learning note.'}
               </p>
             </div>
             <button
@@ -242,13 +281,13 @@ export default function Home() {
                   setIsFormOpen(true);
                 }
               }}
-              className="flex items-center gap-1.5 bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+              className="flex items-center gap-1.5 bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-sm transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>
                 {filter.searchQuery || filter.selectedCategory !== 'All' || filter.selectedTag
-                  ? 'Reset Filter'
-                  : 'Tulis Catatan Pertama'}
+                  ? 'Clear filters'
+                  : 'New Learning Entry'}
               </span>
             </button>
           </div>
@@ -265,7 +304,7 @@ export default function Home() {
             onTagClick={handleTagClick}
           />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredLogs.map((log) => (
               <LogCard
                 key={log.id}
@@ -284,16 +323,27 @@ export default function Home() {
         )}
       </main>
 
-      {/* Subtle Footer */}
-      <footer className="border-t border-zinc-800/60 py-5 text-center text-xs text-zinc-500 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Daily LearnLog • Developer Learning Journal</span>
-          <div className="flex items-center gap-3">
+      {/* GitHub Footer */}
+      <footer className="border-t border-[var(--gh-border)] py-6 text-xs text-[var(--gh-text-secondary)] mt-auto bg-[var(--gh-surface)]">
+        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-[var(--gh-text-tertiary)]" />
+            <span>&copy; {new Date().getFullYear()} Daily LearnLog • GitHub Primer Style</span>
+          </div>
+          <div className="flex items-center gap-4 text-[var(--gh-accent)]">
+            <a
+              href="https://github.com/moriaakanen/daily-learning-tracker"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:underline"
+            >
+              GitHub Repository
+            </a>
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="hover:text-zinc-300 transition-colors"
+              className="hover:underline"
             >
-              Pengaturan Database
+              Database Settings
             </button>
           </div>
         </div>

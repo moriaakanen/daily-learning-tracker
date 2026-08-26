@@ -1,29 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --bg-main: #09090b;
-  --bg-surface: #121215;
-  --bg-surface-elevated: #18181b;
-  --border-subtle: #27272a;
-  --border-muted: #3f3f46;
-  --text-primary: #fafafa;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #71717a;
+  /* GitHub Light Mode Palette */
+  --gh-bg: #ffffff;
+  --gh-surface: #f6f8fa;
+  --gh-surface-subtle: #f3f4f6;
+  --gh-surface-hover: #eaeef2;
+  --gh-border: #d0d7de;
+  --gh-border-subtle: #ebeef1;
+  --gh-text-primary: #1f2328;
+  --gh-text-secondary: #656d76;
+  --gh-text-tertiary: #8c959f;
+  --gh-accent: #0969da;
+  --gh-accent-hover: #0860ca;
+  --gh-btn-primary-bg: #1f883d;
+  --gh-btn-primary-hover: #1a7f37;
+  --gh-btn-primary-text: #ffffff;
+  --gh-badge-bg: #eff2f5;
+  --gh-badge-border: #d0d7de;
+  --gh-badge-text: #57606a;
+  --gh-code-bg: #f6f8fa;
+
+  /* Heatmap levels (Light) */
+  --gh-graph-0: #ebedf0;
+  --gh-graph-1: #9be9a8;
+  --gh-graph-2: #40c463;
+  --gh-graph-3: #30a14e;
+  --gh-graph-4: #216e39;
+}
+
+.dark {
+  /* GitHub Dark Mode Palette (Default Dark) */
+  --gh-bg: #0d1117;
+  --gh-surface: #161b22;
+  --gh-surface-subtle: #1c2128;
+  --gh-surface-hover: #21262d;
+  --gh-border: #30363d;
+  --gh-border-subtle: #21262d;
+  --gh-text-primary: #e6edf3;
+  --gh-text-secondary: #7d8590;
+  --gh-text-tertiary: #6e7681;
+  --gh-accent: #2f81f7;
+  --gh-accent-hover: #58a6ff;
+  --gh-btn-primary-bg: #238636;
+  --gh-btn-primary-hover: #2ea043;
+  --gh-btn-primary-text: #ffffff;
+  --gh-badge-bg: #21262d;
+  --gh-badge-border: #30363d;
+  --gh-badge-text: #8b949e;
+  --gh-code-bg: #161b22;
+
+  /* Heatmap levels (Dark) */
+  --gh-graph-0: #161b22;
+  --gh-graph-1: #0e4429;
+  --gh-graph-2: #006d32;
+  --gh-graph-3: #26a641;
+  --gh-graph-4: #39d353;
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  letter-spacing: -0.01em;
+  background-color: var(--gh-bg);
+  color: var(--gh-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom Minimalist Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -31,69 +78,72 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 9999px;
+  background: var(--gh-border);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--gh-text-secondary);
 }
 
-/* Editorial Clean Markdown typography */
+/* GitHub Markdown Style */
 .prose {
-  color: #d4d4d8;
-  font-size: 0.925rem;
-  line-height: 1.7;
+  color: var(--gh-text-primary);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .prose h1, .prose h2, .prose h3, .prose h4 {
-  color: #fafafa;
+  color: var(--gh-text-primary);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--gh-border-subtle);
+  padding-bottom: 0.3rem;
 }
 
-.prose h1 { font-size: 1.35rem; }
-.prose h2 { font-size: 1.15rem; }
-.prose h3 { font-size: 1.05rem; }
+.prose h1 { font-size: 1.5rem; }
+.prose h2 { font-size: 1.25rem; }
+.prose h3 { font-size: 1.1rem; }
 
 .prose p {
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.75rem;
 }
 
 .prose ul {
   list-style-type: disc;
-  padding-left: 1.25rem;
-  margin-bottom: 0.85rem;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .prose ol {
   list-style-type: decimal;
-  padding-left: 1.25rem;
-  margin-bottom: 0.85rem;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .prose li {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
 }
 
 .prose code {
-  background: #18181b;
-  color: #e4e4e7;
-  border: 1px solid #27272a;
-  padding: 0.15rem 0.35rem;
-  border-radius: 0.375rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.85em;
+  background: var(--gh-code-bg);
+  color: var(--gh-text-primary);
+  border: 1px solid var(--gh-border);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 85%;
 }
 
 .prose pre {
-  background: #121215;
-  border: 1px solid #27272a;
-  border-radius: 0.75rem;
-  padding: 1rem;
-  overflow-x: auto;
+  background: var(--gh-code-bg);
+  border: 1px solid var(--gh-border);
+  border-radius: 6px;
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
   margin: 1rem 0;
 }
 
@@ -101,19 +151,18 @@ body {
   background: transparent;
   border: none;
   padding: 0;
-  color: #e4e4e7;
+  font-size: 100%;
 }
 
 .prose blockquote {
-  border-left: 2px solid #3f3f46;
-  padding-left: 1rem;
-  color: #a1a1aa;
-  font-style: normal;
+  border-left: 0.25em solid var(--gh-border);
+  padding: 0 1em;
+  color: var(--gh-text-secondary);
   margin: 1rem 0;
 }
 
 .prose a {
-  color: #60a5fa;
+  color: var(--gh-accent);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 2px;
 }

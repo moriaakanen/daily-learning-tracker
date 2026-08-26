@@ -11,6 +11,9 @@ import {
   Edit2,
   Trash2,
   Share2,
+  GitCommit,
+  Clock,
+  Calendar,
 } from 'lucide-react';
 import { LearningLog } from '@/types';
 
@@ -45,37 +48,43 @@ export function LogDetailModal({
   };
 
   const handleShare = () => {
-    const text = `💡 Today I Learned: ${log.title}\n\nKey Takeaways:\n${log.takeaways?.map((t) => `• ${t}`).join('\n') || ''}\n\n#${log.category} ${log.tags?.map((t) => `#${t}`).join(' ') || ''}`;
+    const text = `💡 TIL: ${log.title}\n\nTakeaways:\n${log.takeaways?.map((t) => `• ${t}`).join('\n') || ''}\n\n#${log.category} ${log.tags?.map((t) => `#${t}`).join(' ') || ''}`;
     navigator.clipboard.writeText(text);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const formattedDate = new Date(log.study_date).toLocaleDateString('id-ID', {
+  const formattedDate = new Date(log.study_date).toLocaleDateString('en-US', {
     weekday: 'long',
-    day: 'numeric',
     month: 'long',
+    day: 'numeric',
     year: 'numeric',
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
       <div
-        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl bg-zinc-900 border border-zinc-800 shadow-2xl overflow-hidden"
+        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header bar */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 bg-zinc-950/50">
-          <div className="flex items-center gap-2 text-xs text-zinc-400">
-            <span className="font-medium text-zinc-200 bg-zinc-800 px-2 py-0.5 rounded">
+        {/* Header bar (GitHub Issue header style) */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--gh-border)] bg-[var(--gh-surface)]">
+          <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
+            <span className="font-semibold text-[var(--gh-text-primary)] border border-[var(--gh-border)] bg-[var(--gh-badge-bg)] px-2 py-0.5 rounded-full">
               {log.category}
             </span>
             <span>•</span>
-            <span>{formattedDate}</span>
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5" />
+              {formattedDate}
+            </span>
             {log.duration_minutes && (
               <>
                 <span>•</span>
-                <span>{log.duration_minutes}m</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  {log.duration_minutes}m
+                </span>
               </>
             )}
           </div>
@@ -83,8 +92,8 @@ export function LogDetailModal({
           <div className="flex items-center gap-1">
             <button
               onClick={() => onToggleFavorite(log.id, !!log.is_favorite)}
-              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-amber-400 transition-colors"
-              title="Favorit"
+              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-amber-500 transition-colors"
+              title="Star"
             >
               <Star
                 className={`w-4 h-4 ${
@@ -95,10 +104,10 @@ export function LogDetailModal({
 
             <button
               onClick={handleShare}
-              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
-              title="Salin Ringkasan"
+              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
+              title="Share Summary"
             >
-              {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Share2 className="w-4 h-4" />}
+              {copiedLink ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
             </button>
 
             <button
@@ -106,7 +115,7 @@ export function LogDetailModal({
                 onClose();
                 onEdit(log);
               }}
-              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
               title="Edit"
             >
               <Edit2 className="w-4 h-4" />
@@ -114,22 +123,22 @@ export function LogDetailModal({
 
             <button
               onClick={() => {
-                if (confirm(`Hapus catatan "${log.title}"?`)) {
+                if (confirm(`Delete "${log.title}"?`)) {
                   onDelete(log.id);
                   onClose();
                 }
               }}
-              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-rose-400 transition-colors"
-              title="Hapus"
+              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-rose-500 transition-colors"
+              title="Delete"
             >
               <Trash2 className="w-4 h-4" />
             </button>
 
-            <div className="w-px h-4 bg-zinc-800 mx-1" />
+            <div className="w-px h-4 bg-[var(--gh-border)] mx-1" />
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-md hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+              className="p-1 rounded hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -139,20 +148,20 @@ export function LogDetailModal({
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Title */}
-          <h1 className="text-xl font-bold text-zinc-100 tracking-tight leading-snug">
+          <h1 className="text-xl font-semibold text-[var(--gh-text-primary)] tracking-tight leading-snug">
             {log.title}
           </h1>
 
           {/* Key Takeaways Box */}
           {log.takeaways && log.takeaways.length > 0 && (
-            <div className="rounded-lg bg-zinc-950 border border-zinc-800 p-4 space-y-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Poin Kunci / Kesimpulan
+            <div className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-2">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[var(--gh-text-secondary)]">
+                Key Takeaways / Highlights
               </div>
-              <ul className="space-y-1.5 text-xs text-zinc-300">
+              <ul className="space-y-1.5 text-xs text-[var(--gh-text-primary)]">
                 {log.takeaways.map((point, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <span className="text-zinc-500 font-bold">•</span>
+                    <span className="text-[var(--gh-accent)] font-bold">•</span>
                     <span>{point}</span>
                   </li>
                 ))}
@@ -163,33 +172,33 @@ export function LogDetailModal({
           {/* Markdown Content */}
           <div className="prose max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {log.content || '_Tidak ada deskripsi tambahan._'}
+              {log.content || '_No additional description provided._'}
             </ReactMarkdown>
           </div>
 
           {/* Code Snippet Box */}
           {log.code_snippet && (
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-zinc-400">
+              <div className="flex items-center justify-between text-xs text-[var(--gh-text-secondary)]">
                 <span className="font-mono">{log.code_language || 'code'}</span>
                 <button
                   onClick={handleCopyCode}
-                  className="flex items-center gap-1 hover:text-zinc-200 transition-colors"
+                  className="flex items-center gap-1 hover:text-[var(--gh-text-primary)] transition-colors"
                 >
                   {copiedCode ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-emerald-400">Tersalin</span>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-500">Copied</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>Salin</span>
+                      <span>Copy</span>
                     </>
                   )}
                 </button>
               </div>
-              <pre className="rounded-lg bg-zinc-950 border border-zinc-800 p-3.5 overflow-x-auto text-xs font-mono text-zinc-200">
+              <pre className="rounded-md border border-[var(--gh-border)] bg-[var(--gh-code-bg)] p-3.5 overflow-x-auto text-xs font-mono text-[var(--gh-text-primary)]">
                 <code>{log.code_snippet}</code>
               </pre>
             </div>
@@ -197,8 +206,8 @@ export function LogDetailModal({
 
           {/* Tags */}
           {log.tags && log.tags.length > 0 && (
-            <div className="pt-3 border-t border-zinc-800 flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs text-zinc-500">Tags:</span>
+            <div className="pt-3 border-t border-[var(--gh-border-subtle)] flex items-center gap-1.5 flex-wrap">
+              <span className="text-xs text-[var(--gh-text-secondary)]">Tags:</span>
               {log.tags.map((tag) => (
                 <button
                   key={tag}
@@ -206,7 +215,7 @@ export function LogDetailModal({
                     onTagClick(tag);
                     onClose();
                   }}
-                  className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded transition-colors"
+                  className="text-xs bg-[var(--gh-badge-bg)] border border-[var(--gh-badge-border)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-accent)] px-2 py-0.5 rounded-full transition-colors"
                 >
                   #{tag}
                 </button>
