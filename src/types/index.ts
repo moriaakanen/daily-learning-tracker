@@ -4,6 +4,7 @@ export interface User {
   name: string;
   role?: string;
   avatar: string;
+  password?: string;
 }
 
 export interface FeedbackItem {
@@ -49,7 +50,7 @@ export type ViewMode = 'grid' | 'timeline' | 'compact';
 
 export type DateFilter = 'all' | 'today' | 'this-week' | 'this-month' | 'custom';
 
-export type UserScopeFilter = 'all' | 'mine' | string; // 'all' | 'mine' | author_id
+export type UserScopeFilter = 'all' | 'mine' | string;
 
 export interface FilterState {
   searchQuery: string;

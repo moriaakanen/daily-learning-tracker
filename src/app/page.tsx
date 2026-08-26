@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Plus,
   BookOpen,
-  GitPullRequest,
   Tag,
   PenSquare,
   Users,
@@ -38,7 +37,6 @@ import {
   setCurrentUser,
   logoutUser,
   getTeamUsers,
-  saveTeamUsers,
 } from '@/lib/auth';
 import { getSupabaseClient } from '@/lib/supabase';
 import { LearningLog, FilterState, ViewMode, User } from '@/types';
@@ -95,9 +93,10 @@ export default function Home() {
     setTeamUsers(getTeamUsers());
   }, []);
 
-  const handleSelectUser = (user: User) => {
+  const handleLoginSuccess = (user: User) => {
     setCurrentUserState(user);
     setCurrentUser(user);
+    setTeamUsers(getTeamUsers());
   };
 
   const handleLogout = () => {
@@ -106,13 +105,9 @@ export default function Home() {
     if (filter.userScope === 'mine') {
       setFilter((prev) => ({ ...prev, userScope: 'all' }));
     }
-  };
-
-  const handleUserCreated = (newUser: User) => {
-    const updated = [...teamUsers, newUser];
-    setTeamUsers(updated);
-    saveTeamUsers(updated);
-    setCurrentUserState(newUser);
+    if (activeTab === 'editor') {
+      setActiveTab('overview');
+    }
   };
 
   const categoriesList = useMemo(() => {
@@ -345,25 +340,27 @@ export default function Home() {
           <>
             {/* Guest Banner if not logged in */}
             {!currentUser && (
-              <div className="mb-6 p-3.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <Lock className="w-4 h-4 text-[var(--gh-accent)]" />
+              <div className="mb-6 p-4 rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center text-[var(--gh-accent)] shrink-0">
+                    <Lock className="w-4 h-4" />
+                  </div>
                   <div>
-                    <span className="font-semibold text-[var(--gh-text-primary)]">
-                      Mode Tamu / Jelajah:
-                    </span>{' '}
-                    <span className="text-[var(--gh-text-secondary)]">
-                      Anda dapat melihat semua catatan pembelajaran tim. Masuk akun untuk menulis catatan harian & memberi feedback.
-                    </span>
+                    <div className="font-semibold text-xs text-[var(--gh-text-primary)]">
+                      Portal Pembelajaran Tim (Mode Tamu)
+                    </div>
+                    <div className="text-[11px] text-[var(--gh-text-secondary)] mt-0.5">
+                      Silakan masuk dengan akun username dan password Anda untuk menulis catatan baru, upload gambar, dan memberi feedback.
+                    </div>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsUserModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-semibold transition-all shadow-xs shrink-0"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white font-bold transition-all shadow-sm shrink-0 text-xs"
                 >
                   <LogIn className="w-3.5 h-3.5" />
-                  <span>Masuk Sekarang</span>
+                  <span>Masuk ke Akun Anda</span>
                 </button>
               </div>
             )}
@@ -542,15 +539,13 @@ export default function Home() {
         onAddFeedback={handleAddFeedback}
       />
 
-      {/* User Login & Switch Modal */}
+      {/* Real Username & Password Login Modal */}
       <UserLoginModal
         isOpen={isUserModalOpen}
         onClose={() => setIsUserModalOpen(false)}
         currentUser={currentUser}
-        teamUsers={teamUsers}
-        onSelectUser={handleSelectUser}
+        onLoginSuccess={handleLoginSuccess}
         onLogout={handleLogout}
-        onUserCreated={handleUserCreated}
       />
 
       {/* Settings Modal */}
