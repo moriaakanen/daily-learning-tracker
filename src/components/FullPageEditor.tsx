@@ -16,10 +16,11 @@ import {
   LogIn,
   Lock,
   Plus,
+  Palette,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
-import { getTopicTheme } from '@/lib/topicTheme';
+import { getTopicTheme, getCardStyle, CARD_COLOR_PRESETS } from '@/lib/topicTheme';
 
 interface FullPageEditorProps {
   currentUser: User | null;
@@ -42,6 +43,7 @@ export function FullPageEditor({
 }: FullPageEditorProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Teknologi & Coding');
+  const [cardColor, setCardColor] = useState('auto');
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
   const [duration, setDuration] = useState(30);
   const [content, setContent] = useState('');
@@ -63,6 +65,7 @@ export function FullPageEditor({
     if (initialLog) {
       setTitle(initialLog.title || '');
       setCategory(initialLog.category || 'Teknologi & Coding');
+      setCardColor(initialLog.card_color || 'auto');
       setStudyDate(initialLog.study_date || new Date().toISOString().split('T')[0]);
       setDuration(initialLog.duration_minutes || 30);
       setContent(initialLog.content || '');
@@ -73,6 +76,7 @@ export function FullPageEditor({
     } else {
       setTitle('');
       setCategory('Teknologi & Coding');
+      setCardColor('auto');
       setStudyDate(new Date().toISOString().split('T')[0]);
       setDuration(30);
       setContent('');
@@ -86,15 +90,15 @@ export function FullPageEditor({
   // If user is not logged in, enforce login screen
   if (!currentUser) {
     return (
-      <div className="max-w-md mx-auto my-12 p-6 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center space-y-4 animate-in fade-in duration-200">
-        <div className="w-12 h-12 rounded-full bg-[var(--gh-badge-bg)] border border-[var(--gh-border)] flex items-center justify-center mx-auto text-[var(--gh-accent)]">
-          <Lock className="w-6 h-6" />
+      <div className="max-w-md mx-auto my-12 p-6 rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] text-center space-y-4 animate-in fade-in duration-200 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto text-xl">
+          🔒
         </div>
         <div className="space-y-1">
-          <h2 className="text-base font-semibold text-[var(--gh-text-primary)]">
-            🔐 Login Diperlukan
+          <h2 className="text-base font-bold text-[var(--gh-text-primary)]">
+            Login Diperlukan
           </h2>
-          <p className="text-xs text-[var(--gh-text-secondary)] leading-relaxed">
+          <p className="text-xs text-[var(--gh-text-secondary)] font-medium leading-relaxed">
             Sebelum dapat menulis atau memperbarui catatan pembelajaran harian, Anda harus masuk ke akun pengguna terlebih dahulu.
           </p>
         </div>
@@ -103,7 +107,7 @@ export function FullPageEditor({
           <button
             type="button"
             onClick={onOpenLogin}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <LogIn className="w-4 h-4" />
             <span>Masuk ke Akun Anda</span>
@@ -112,7 +116,7 @@ export function FullPageEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="w-full px-4 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
+            className="w-full px-4 py-2 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs font-bold text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
           >
             Kembali ke Beranda
           </button>
@@ -181,6 +185,7 @@ export function FullPageEditor({
       {
         title: title.trim(),
         category,
+        card_color: cardColor,
         study_date: studyDate,
         duration_minutes: Number(duration) || 30,
         takeaways: [],
@@ -198,7 +203,7 @@ export function FullPageEditor({
     );
   };
 
-  const currentTheme = getTopicTheme(category);
+  const currentTheme = getCardStyle(category, cardColor);
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-200">
@@ -208,13 +213,13 @@ export function FullPageEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer font-bold"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Kembali</span>
           </button>
           <div>
-            <h1 className="text-base font-bold text-[var(--gh-text-primary)] flex items-center gap-2">
+            <h1 className="text-base font-extrabold text-[var(--gh-text-primary)] flex items-center gap-2">
               <span className="text-base">{currentTheme.emoji}</span>
               <span>{initialLog ? 'Edit Catatan Belajar' : 'Tulis Catatan Pembelajaran Baru'}</span>
             </h1>
@@ -236,7 +241,7 @@ export function FullPageEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs font-medium text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs font-bold text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
           >
             Batal
           </button>
@@ -244,22 +249,23 @@ export function FullPageEditor({
           <button
             type="button"
             onClick={handleSubmit}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
           >
             <Check className="w-3.5 h-3.5" />
-            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan'}</span>
+            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan ✨'}</span>
           </button>
         </div>
       </div>
 
       {/* Main Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title & Topik */}
+        {/* Title & Topik & Card Color */}
         <div
-          className="rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-4 shadow-xs"
+          className="rounded-2xl border border-[var(--gh-border)] p-4 sm:p-5 space-y-4 shadow-xs transition-all"
           style={{
-            borderLeftWidth: '4px',
+            borderLeftWidth: '5px',
             borderLeftColor: currentTheme.borderLeft,
+            backgroundColor: currentTheme.cardBg !== 'transparent' ? currentTheme.cardBg : 'var(--gh-surface)',
           }}
         >
           <div className="space-y-1.5">
@@ -273,12 +279,12 @@ export function FullPageEditor({
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Contoh: Prinsip Pareto 80/20, Struktur DNA & Genetik, atau Memahami Index PostgreSQL"
-                className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3.5 py-2 text-sm text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-semibold"
+                className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3.5 py-2 text-sm text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-indigo-500 font-bold"
               />
               <button
                 type="button"
                 onClick={() => setIsFavorite(!isFavorite)}
-                className={`p-2.5 rounded-md border border-[var(--gh-border)] transition-colors cursor-pointer ${
+                className={`p-2.5 rounded-xl border border-[var(--gh-border)] transition-colors cursor-pointer ${
                   isFavorite
                     ? 'bg-amber-500/15 border-amber-500/40 text-amber-500 font-bold'
                     : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)]'
@@ -300,7 +306,7 @@ export function FullPageEditor({
                 <button
                   type="button"
                   onClick={() => setShowCustomTopicInput(true)}
-                  className="text-[11px] text-[var(--gh-accent)] hover:underline flex items-center gap-0.5 font-semibold cursor-pointer"
+                  className="text-[11px] text-indigo-500 hover:underline flex items-center gap-0.5 font-bold cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
                   <span>Tambah Topik</span>
@@ -316,12 +322,12 @@ export function FullPageEditor({
                     value={customTopicName}
                     onChange={(e) => setCustomTopicName(e.target.value)}
                     placeholder="Nama topik baru..."
-                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded px-2 py-1 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-[var(--gh-accent)] font-medium"
+                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-indigo-500 font-medium"
                   />
                   <button
                     type="button"
                     onClick={handleCreateCustomTopic}
-                    className="px-2.5 py-1 rounded bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
                   >
                     OK
                   </button>
@@ -343,7 +349,7 @@ export function FullPageEditor({
                       setCategory(e.target.value);
                     }
                   }}
-                  className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] font-medium focus:outline-none focus:border-[var(--gh-accent)] cursor-pointer"
+                  className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
                 >
                   {categories.map((cat) => {
                     const t = getTopicTheme(cat);
@@ -353,7 +359,7 @@ export function FullPageEditor({
                       </option>
                     );
                   })}
-                  <option value="__add_new__" className="font-bold text-[var(--gh-accent)]">
+                  <option value="__add_new__" className="font-bold text-indigo-500">
                     ✨ + Tambah Topik Baru...
                   </option>
                 </select>
@@ -368,7 +374,7 @@ export function FullPageEditor({
                 type="date"
                 value={studyDate}
                 onChange={(e) => setStudyDate(e.target.value)}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] font-medium focus:outline-none focus:border-[var(--gh-accent)]"
+                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500"
               />
             </div>
 
@@ -382,21 +388,61 @@ export function FullPageEditor({
                 step="5"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-3 py-1.5 text-xs text-[var(--gh-text-primary)] font-medium focus:outline-none focus:border-[var(--gh-accent)]"
+                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500"
               />
+            </div>
+          </div>
+
+          {/* Section: Custom Card Color Swatch Picker */}
+          <div className="pt-2 border-t border-[var(--gh-border-subtle)] space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
+                <Palette className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Warna Kartu & Aksen (Kostumisasi):</span>
+              </label>
+              <span className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
+                {CARD_COLOR_PRESETS.find((p) => p.id === cardColor)?.name || 'Kustom'}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {CARD_COLOR_PRESETS.map((preset) => {
+                const isSelected = cardColor === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => setCardColor(preset.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all border shrink-0 cursor-pointer ${
+                      isSelected
+                        ? 'ring-2 ring-indigo-500 shadow-xs scale-105'
+                        : 'hover:opacity-90'
+                    }`}
+                    style={{
+                      backgroundColor: preset.id === 'auto' ? 'var(--gh-bg)' : `${preset.color}20`,
+                      color: preset.id === 'auto' ? 'var(--gh-text-primary)' : preset.color,
+                      borderColor: preset.id === 'auto' ? 'var(--gh-border)' : `${preset.color}50`,
+                    }}
+                  >
+                    <span>{preset.emoji}</span>
+                    <span>{preset.name}</span>
+                    {isSelected && <Check className="w-3 h-3 ml-0.5" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Card Catatan Lengkap with Upload Buttons at the Bottom Right */}
-        <div className="rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3 shadow-xs">
+        <div className="rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 sm:p-5 space-y-3 shadow-xs">
           {/* Card Header */}
           <div className="border-b border-[var(--gh-border)] pb-2 flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <span>📝 Catatan Lengkap</span>
               </h3>
-              <p className="text-[11px] text-[var(--gh-text-secondary)]">
+              <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
                 Tuliskan semua hal yang Anda pelajari hari ini (teks bersih dan terstruktur)
               </p>
             </div>
@@ -409,7 +455,7 @@ export function FullPageEditor({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
-            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-sans leading-relaxed resize-y min-h-[260px]"
+            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed resize-y min-h-[260px]"
           />
 
           {/* Toolbar on Bottom Right of Card */}
@@ -432,7 +478,7 @@ export function FullPageEditor({
                 type="button"
                 disabled={isCompressing}
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-semibold cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
                 title="Upload gambar dari komputer"
               >
                 <span>📤</span>
@@ -442,7 +488,7 @@ export function FullPageEditor({
               <button
                 type="button"
                 onClick={() => setShowImageInput(!showImageInput)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-semibold cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
                 title="Sisipkan URL Gambar Web"
               >
                 <span>🔗</span>
@@ -453,19 +499,19 @@ export function FullPageEditor({
 
           {/* Quick URL Image Input Popup */}
           {showImageInput && (
-            <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md flex items-center gap-2 animate-in fade-in duration-150">
+            <div className="p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl flex items-center gap-2 animate-in fade-in duration-150 shadow-sm">
               <span>🌐</span>
               <input
                 type="url"
                 value={customImageUrl}
                 onChange={(e) => setCustomImageUrl(e.target.value)}
                 placeholder="Tempel link URL gambar (https://example.com/image.png)..."
-                className="flex-1 bg-transparent text-xs text-[var(--gh-text-primary)] focus:outline-none placeholder-[var(--gh-text-tertiary)]"
+                className="flex-1 bg-transparent text-xs text-[var(--gh-text-primary)] focus:outline-none placeholder-[var(--gh-text-tertiary)] font-medium"
               />
               <button
                 type="button"
                 onClick={handleAddImageUrl}
-                className="px-3 py-1 rounded bg-[var(--gh-accent)] hover:opacity-90 text-white text-xs font-bold cursor-pointer"
+                className="px-3.5 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer"
               >
                 Sisipkan
               </button>
@@ -481,13 +527,13 @@ export function FullPageEditor({
 
           {/* Attached Images Thumbnail Preview */}
           {imageUrls.length > 0 && (
-            <div className="space-y-1.5 p-3 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md mt-2">
+            <div className="space-y-1.5 p-3.5 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl mt-2">
               <div className="text-[11px] font-bold text-[var(--gh-text-secondary)] flex items-center gap-1">
                 <span>🖼️ Lampiran Gambar ({imageUrls.length}):</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                 {imageUrls.map((imgUrl, i) => (
-                  <div key={i} className="relative group rounded-lg border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)] h-28">
+                  <div key={i} className="relative group rounded-xl border border-[var(--gh-border)] overflow-hidden bg-[var(--gh-surface)] h-28 shadow-2xs">
                     <img src={imgUrl} alt={`Lampiran ${i + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
@@ -505,13 +551,13 @@ export function FullPageEditor({
         </div>
 
         {/* Optional Snippet / Quote Box */}
-        <div className="rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 space-y-3 shadow-xs">
+        <div className="rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 sm:p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <span>💻 Snippet Kode / Rumus / Kutipan (Opsional)</span>
               </h3>
-              <p className="text-[11px] text-[var(--gh-text-secondary)]">
+              <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
                 Bila materi memiliki kode pemrograman, rumus matematika, atau kutipan kalimat kunci
               </p>
             </div>
@@ -519,7 +565,7 @@ export function FullPageEditor({
             <select
               value={codeLanguage}
               onChange={(e) => setCodeLanguage(e.target.value)}
-              className="bg-[var(--gh-bg)] border border-[var(--gh-border)] text-[var(--gh-text-secondary)] text-[11px] font-medium rounded px-2 py-1 focus:outline-none cursor-pointer"
+              className="bg-[var(--gh-bg)] border border-[var(--gh-border)] text-[var(--gh-text-secondary)] text-[11px] font-bold rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
             >
               <option value="text">📄 Teks / Kutipan</option>
               <option value="javascript">⚡ JavaScript / TypeScript</option>
@@ -537,7 +583,7 @@ export function FullPageEditor({
             value={codeSnippet}
             onChange={(e) => setCodeSnippet(e.target.value)}
             placeholder="// Tuliskan snippet kode, kutipan penting, atau rumus di sini..."
-            className="w-full bg-[var(--gh-code-bg)] border border-[var(--gh-border)] rounded-md p-2.5 text-xs font-mono text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] resize-y"
+            className="w-full bg-[var(--gh-code-bg)] border border-[var(--gh-border)] rounded-xl p-3 text-xs font-mono text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-indigo-500 resize-y"
           />
         </div>
 
@@ -546,16 +592,16 @@ export function FullPageEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-md border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs font-medium text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
+            className="px-5 py-2.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs font-bold text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             type="submit"
-            className="flex items-center gap-1.5 px-5 py-2 rounded-md bg-[#1f883d] hover:bg-[#1a7f37] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
           >
             <Check className="w-4 h-4" />
-            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan Belajar'}</span>
+            <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan Belajar ✨'}</span>
           </button>
         </div>
       </form>

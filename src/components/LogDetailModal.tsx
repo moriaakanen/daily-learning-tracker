@@ -16,7 +16,7 @@ import {
   LogIn,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
-import { getTopicTheme } from '@/lib/topicTheme';
+import { getCardStyle } from '@/lib/topicTheme';
 
 interface LogDetailModalProps {
   log: LearningLog | null;
@@ -47,7 +47,7 @@ export function LogDetailModal({
   if (!log) return null;
 
   const isAuthor = currentUser && (!log.author_id || log.author_id === currentUser.id);
-  const theme = getTopicTheme(log.category);
+  const theme = getCardStyle(log.category, log.card_color);
 
   const handleCopyCode = () => {
     if (log.code_snippet) {

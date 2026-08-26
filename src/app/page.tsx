@@ -223,6 +223,12 @@ export default function Home() {
     if (selectedLog?.id === id) setSelectedLog(updated);
   };
 
+  const handleUpdateCardColor = async (id: string, color: string) => {
+    const updated = await updateLog(id, { card_color: color });
+    setLogs((prev) => prev.map((l) => (l.id === id ? { ...l, card_color: color } : l)));
+    if (selectedLog?.id === id) setSelectedLog((prev) => (prev ? { ...prev, card_color: color } : null));
+  };
+
   const handleAddFeedback = async (logId: string, content: string) => {
     if (!currentUser) {
       setIsUserModalOpen(true);
@@ -522,6 +528,7 @@ export default function Home() {
                       onEdit={handleEditEntry}
                       onDelete={handleDeleteLog}
                       onToggleFavorite={handleToggleFavorite}
+                      onUpdateCardColor={handleUpdateCardColor}
                     />
                   ))}
                 </div>

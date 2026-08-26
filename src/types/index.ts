@@ -30,6 +30,7 @@ export interface LearningLog {
   duration_minutes: number;
   resource_urls?: string[];
   image_urls?: string[];
+  card_color?: string; // Hex color code or 'auto'
   is_favorite?: boolean;
   author_id?: string;
   author_name?: string;
