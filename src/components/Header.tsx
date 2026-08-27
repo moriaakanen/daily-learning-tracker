@@ -90,16 +90,6 @@ export function Header({
               )}
             </div>
 
-            {/* Supabase Status Pill */}
-            <button
-              onClick={onOpenSettings}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] transition-all cursor-pointer shadow-2xs"
-              title={isSupabaseConnected ? 'Database PostgreSQL Supabase Terhubung' : 'Penyimpanan Lokal'}
-            >
-              <div className={`w-2 h-2 rounded-full ${isSupabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
-              <span>{isSupabaseConnected ? '⚡ Supabase' : '💾 Local'}</span>
-            </button>
-
             {/* Theme Toggle Button */}
             <ThemeToggle />
 
@@ -166,15 +156,6 @@ export function Header({
                 <span>Masuk</span>
               </button>
             )}
-
-            {/* Primary Action: New Entry (Cheerful Green/Indigo Button) */}
-            <button
-              onClick={onOpenNewLog}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-md shadow-emerald-500/25 active:scale-95 transition-all shrink-0 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tulis Catatan ✨</span>
-            </button>
           </div>
         </div>
       </div>

@@ -409,13 +409,6 @@ export default function Home() {
               <span>{editingLog ? 'Edit Catatan' : 'Tulis Baru'}</span>
             </button>
           </div>
-
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center gap-1 text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] px-2.5 py-1 rounded-full hover:bg-[var(--gh-bg)] transition-colors cursor-pointer text-xs font-semibold shrink-0"
-          >
-            <span>⚙️ Database</span>
-          </button>
         </div>
       </div>
 
@@ -455,8 +448,8 @@ export default function Home() {
                   onClick={handleOpenNewEntry}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Catat Hasil Belajar</span>
+                  <PenSquare className="w-3.5 h-3.5" />
+                  <span>Catat Hasil Belajar</span>
                 </button>
               </div>
             </div>
@@ -498,7 +491,7 @@ export default function Home() {
               teamUsers={teamUsers}
               currentUser={currentUser}
               onOpenLogin={() => setIsUserModalOpen(true)}
-              totalResultsCount={filteredLogs.length}
+              totalResultsCount={logs.length}
               onAddCategory={handleAddCustomCategory}
               onDeleteCategory={handleDeleteCustomCategory}
             />
