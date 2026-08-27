@@ -176,17 +176,83 @@ export function FullPageEditor({
     }
   };
 
+  // Toggle Blockquote ON / OFF (Cancelable)
+  const toggleBlockquote = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      execCmd('formatBlock', '<blockquote>');
+      return;
+    }
+
+    let node: Node | null = selection.anchorNode;
+    let isInsideBlockquote = false;
+    let blockquoteNode: HTMLElement | null = null;
+
+    while (node && node !== editorRef.current) {
+      if (node.nodeName === 'BLOCKQUOTE') {
+        isInsideBlockquote = true;
+        blockquoteNode = node as HTMLElement;
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    if (isInsideBlockquote) {
+      // Revert from blockquote back to standard paragraph <p>
+      document.execCommand('formatBlock', false, '<p>');
+
+      // Ensure clean unwrapping if blockquote container remains
+      if (blockquoteNode && blockquoteNode.parentNode && blockquoteNode.nodeName === 'BLOCKQUOTE') {
+        const parent = blockquoteNode.parentNode;
+        while (blockquoteNode.firstChild) {
+          parent.insertBefore(blockquoteNode.firstChild, blockquoteNode);
+        }
+        parent.removeChild(blockquoteNode);
+      }
+    } else {
+      document.execCommand('formatBlock', false, '<blockquote>');
+    }
+  };
+
+  // Toggle Heading ON / OFF (Cancelable)
+  const toggleHeading = (tag: 'h1' | 'h2' | 'h3') => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+
+    const selection = window.getSelection();
+    let isCurrentHeading = false;
+    if (selection && selection.rangeCount > 0) {
+      let node: Node | null = selection.anchorNode;
+      while (node && node !== editorRef.current) {
+        if (node.nodeName.toLowerCase() === tag) {
+          isCurrentHeading = true;
+          break;
+        }
+        node = node.parentNode;
+      }
+    }
+
+    if (isCurrentHeading) {
+      document.execCommand('formatBlock', false, '<p>');
+    } else {
+      document.execCommand('formatBlock', false, `<${tag}>`);
+    }
+  };
+
   // Font size / headings formatting
   const handleFontSize = (sizeOption: string) => {
     switch (sizeOption) {
       case 'h1':
-        execCmd('formatBlock', '<h1>');
+        toggleHeading('h1');
         break;
       case 'h2':
-        execCmd('formatBlock', '<h2>');
+        toggleHeading('h2');
         break;
       case 'h3':
-        execCmd('formatBlock', '<h3>');
+        toggleHeading('h3');
         break;
       case 'large':
         execCmd('fontSize', '5');
@@ -258,27 +324,27 @@ export function FullPageEditor({
         return;
       }
 
-      // Quote: Ctrl + Shift + 9 or Ctrl + Shift + Q
+      // Quote (Toggle on/off): Ctrl + Shift + 9 or Ctrl + Shift + Q
       if ((e.key === '9' || key === 'q' || e.code === 'Digit9') && e.shiftKey) {
         e.preventDefault();
-        execCmd('formatBlock', '<blockquote>');
+        toggleBlockquote();
         return;
       }
 
-      // Headings: Ctrl + 1, Ctrl + 2, Ctrl + 3, Ctrl + 0
+      // Headings (Toggle on/off): Ctrl + 1, Ctrl + 2, Ctrl + 3, Ctrl + 0
       if ((e.key === '1' || e.code === 'Digit1') && !e.shiftKey) {
         e.preventDefault();
-        execCmd('formatBlock', '<h1>');
+        toggleHeading('h1');
         return;
       }
       if ((e.key === '2' || e.code === 'Digit2') && !e.shiftKey) {
         e.preventDefault();
-        execCmd('formatBlock', '<h2>');
+        toggleHeading('h2');
         return;
       }
       if ((e.key === '3' || e.code === 'Digit3') && !e.shiftKey) {
         e.preventDefault();
-        execCmd('formatBlock', '<h3>');
+        toggleHeading('h3');
         return;
       }
       if ((e.key === '0' || e.code === 'Digit0') && !e.shiftKey) {
@@ -891,10 +957,10 @@ export function FullPageEditor({
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  execCmd('formatBlock', '<blockquote>');
+                  toggleBlockquote();
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Kutipan (Ctrl + Shift + 9)"
+                title="Kutipan / Batal Kutipan (Ctrl + Shift + 9)"
               >
                 <Quote className="w-3.5 h-3.5" />
               </button>
