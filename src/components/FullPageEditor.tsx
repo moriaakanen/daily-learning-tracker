@@ -405,7 +405,7 @@ export function FullPageEditor({
               </span>
             </div>
 
-            <div className="flex items-center gap-3 overflow-x-auto py-2.5 px-1 scrollbar-none">
+            <div className="flex items-center gap-3 overflow-x-auto py-3 px-3 scrollbar-none">
               {CARD_COLOR_PRESETS.map((preset) => {
                 const isSelected = cardColor === preset.id;
                 return (
@@ -415,8 +415,8 @@ export function FullPageEditor({
                     onClick={() => setCardColor(preset.id)}
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs ${
                       isSelected
-                        ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 scale-110 shadow-sm'
-                        : 'hover:scale-110 hover:shadow-xs opacity-90 hover:opacity-100'
+                        ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 scale-105 shadow-sm'
+                        : 'hover:scale-105 hover:shadow-xs opacity-90 hover:opacity-100'
                     }`}
                     style={{
                       background:
@@ -426,11 +426,9 @@ export function FullPageEditor({
                     }}
                     title={preset.name}
                   >
-                    {isSelected ? (
+                    {isSelected && (
                       <Check className="w-4 h-4 text-white stroke-[3] drop-shadow-xs animate-in zoom-in-75 duration-150" />
-                    ) : preset.id === 'auto' ? (
-                      <span className="text-[10px] drop-shadow-xs">🌈</span>
-                    ) : null}
+                    )}
                   </button>
                 );
               })}
