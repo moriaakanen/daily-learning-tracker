@@ -597,6 +597,7 @@ export default function Home() {
                       key={log.id}
                       log={log}
                       currentUser={currentUser}
+                      viewMode={viewMode}
                       onSelect={setSelectedLog}
                       onEdit={handleEditEntry}
                       onDelete={handleDeleteLog}
