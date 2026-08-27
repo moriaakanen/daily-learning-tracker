@@ -106,6 +106,7 @@ export function FullPageEditor({
   const [category, setCategory] = useState('');
   const [topicInput, setTopicInput] = useState('');
   const [isTopicOpen, setIsTopicOpen] = useState(false);
+  const [highlightedTopicIndex, setHighlightedTopicIndex] = useState<number>(-1);
   const [cardColor, setCardColor] = useState('auto');
 
   // Custom Styled Calendar State
@@ -285,6 +286,84 @@ export function FullPageEditor({
   const filteredCategories = categories.filter((c) =>
     c.toLowerCase().includes(topicInput.toLowerCase())
   );
+
+  const canCreateNewTopic =
+    topicInput.trim().length > 0 &&
+    !categories.some((c) => c.toLowerCase() === topicInput.trim().toLowerCase());
+
+  const totalTopicItems = filteredCategories.length + (canCreateNewTopic ? 1 : 0);
+
+  // Auto-scroll highlighted topic into view
+  useEffect(() => {
+    if (isTopicOpen && highlightedTopicIndex >= 0) {
+      const activeEl = document.getElementById(`topic-item-${highlightedTopicIndex}`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedTopicIndex, isTopicOpen]);
+
+  // Topic Combobox Keyboard Navigation (Arrow Down, Arrow Up, Enter, Escape)
+  const handleTopicKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (!isTopicOpen) {
+        setIsTopicOpen(true);
+        setHighlightedTopicIndex(0);
+      } else if (totalTopicItems > 0) {
+        setHighlightedTopicIndex((prev) => (prev + 1) % totalTopicItems);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (isTopicOpen && totalTopicItems > 0) {
+        setHighlightedTopicIndex((prev) => (prev - 1 + totalTopicItems) % totalTopicItems);
+      }
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      if (isTopicOpen) {
+        e.preventDefault();
+        if (highlightedTopicIndex >= 0 && highlightedTopicIndex < filteredCategories.length) {
+          const selected = filteredCategories[highlightedTopicIndex];
+          setCategory(selected);
+          setTopicInput(selected);
+          setIsTopicOpen(false);
+          setHighlightedTopicIndex(-1);
+        } else if (highlightedTopicIndex === filteredCategories.length && canCreateNewTopic) {
+          const newCat = topicInput.trim();
+          if (onAddCategory) onAddCategory(newCat);
+          setCategory(newCat);
+          setTopicInput(newCat);
+          setIsTopicOpen(false);
+          setHighlightedTopicIndex(-1);
+        } else if (filteredCategories.length > 0) {
+          const selected = filteredCategories[0];
+          setCategory(selected);
+          setTopicInput(selected);
+          setIsTopicOpen(false);
+          setHighlightedTopicIndex(-1);
+        } else if (canCreateNewTopic) {
+          const newCat = topicInput.trim();
+          if (onAddCategory) onAddCategory(newCat);
+          setCategory(newCat);
+          setTopicInput(newCat);
+          setIsTopicOpen(false);
+          setHighlightedTopicIndex(-1);
+        }
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      setIsTopicOpen(false);
+      setHighlightedTopicIndex(-1);
+      return;
+    }
+  };
 
   // Execute rich text formatting directly on selection
   const execCmd = (command: string, value: string | undefined = undefined) => {
@@ -768,14 +847,22 @@ export function FullPageEditor({
                       setTopicInput(e.target.value);
                       setCategory(e.target.value);
                       setIsTopicOpen(true);
+                      setHighlightedTopicIndex(-1);
                     }}
-                    onFocus={() => setIsTopicOpen(true)}
+                    onFocus={() => {
+                      setIsTopicOpen(true);
+                      setHighlightedTopicIndex(-1);
+                    }}
+                    onKeyDown={handleTopicKeyDown}
                     placeholder="Ketik atau pilih topik..."
                     className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl pl-9 pr-8 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition-all"
                   />
                   <button
                     type="button"
-                    onClick={() => setIsTopicOpen(!isTopicOpen)}
+                    onClick={() => {
+                      setIsTopicOpen(!isTopicOpen);
+                      setHighlightedTopicIndex(-1);
+                    }}
                     className="absolute right-2.5 text-[var(--gh-text-tertiary)] hover:text-[var(--gh-text-primary)] transition-colors p-1 cursor-pointer"
                   >
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isTopicOpen ? 'rotate-180 text-indigo-500' : ''}`} />
@@ -785,25 +872,33 @@ export function FullPageEditor({
                 {/* Floating Search Dropdown Results */}
                 {isTopicOpen && (
                   <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-xl shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
-                    <div className="text-[10px] font-bold text-[var(--gh-text-tertiary)] px-2 py-1 uppercase tracking-wider">
-                      Pilihan Topik Tersedia:
+                    <div className="text-[10px] font-bold text-[var(--gh-text-tertiary)] px-2 py-1 uppercase tracking-wider flex items-center justify-between">
+                      <span>Pilihan Topik Tersedia:</span>
+                      <span className="text-[9px] font-normal lowercase opacity-70">↑↓ navigasi keyboard</span>
                     </div>
 
                     {filteredCategories.length > 0 ? (
-                      filteredCategories.map((cat) => {
+                      filteredCategories.map((cat, idx) => {
                         const t = getTopicTheme(cat);
                         const isSelected = category.toLowerCase() === cat.toLowerCase();
+                        const isHighlighted = highlightedTopicIndex === idx;
+
                         return (
                           <button
                             key={cat}
+                            id={`topic-item-${idx}`}
                             type="button"
+                            onMouseEnter={() => setHighlightedTopicIndex(idx)}
                             onClick={() => {
                               setCategory(cat);
                               setTopicInput(cat);
                               setIsTopicOpen(false);
+                              setHighlightedTopicIndex(-1);
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all text-left cursor-pointer ${
-                              isSelected
+                              isHighlighted
+                                ? 'bg-indigo-500/25 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-500/40 shadow-2xs'
+                                : isSelected
                                 ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400'
                                 : 'hover:bg-[var(--gh-bg)] text-[var(--gh-text-primary)]'
                             }`}
@@ -823,20 +918,27 @@ export function FullPageEditor({
                     )}
 
                     {/* Quick Create New Topic Option if not an exact match */}
-                    {topicInput.trim() && !categories.some((c) => c.toLowerCase() === topicInput.trim().toLowerCase()) && (
+                    {canCreateNewTopic && (
                       <button
+                        id={`topic-item-${filteredCategories.length}`}
                         type="button"
+                        onMouseEnter={() => setHighlightedTopicIndex(filteredCategories.length)}
                         onClick={() => {
                           const newCat = topicInput.trim();
                           if (onAddCategory) onAddCategory(newCat);
                           setCategory(newCat);
                           setTopicInput(newCat);
                           setIsTopicOpen(false);
+                          setHighlightedTopicIndex(-1);
                         }}
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer text-left mt-1"
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer text-left mt-1 ${
+                          highlightedTopicIndex === filteredCategories.length
+                            ? 'bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/40 shadow-2xs'
+                            : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        }`}
                       >
                         <Plus className="w-3.5 h-3.5 shrink-0" />
-                        <span>Buat topik baru: &quot;{topicInput.trim()}&quot;</span>
+                        <span>Buat topik baru: &quot;{topicInput.trim()}&quot; (Enter)</span>
                       </button>
                     )}
                   </div>
