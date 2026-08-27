@@ -7,7 +7,7 @@ import {
   Settings,
   Search,
   LayoutGrid,
-  GitCommit,
+  Rows3,
   X,
   LogIn,
 } from 'lucide-react';
@@ -103,29 +103,32 @@ export function Header({
             {/* Theme Toggle Button */}
             <ThemeToggle />
 
-            {/* View Mode Grid/Timeline */}
+            {/* View Mode Grid / Vertikal Switcher */}
             <div className="hidden sm:flex items-center border border-[var(--gh-border)] rounded-full bg-[var(--gh-bg)] p-0.5 shadow-2xs">
               <button
                 onClick={() => onChangeViewMode('grid')}
-                className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                   viewMode === 'grid'
                     ? 'bg-indigo-500 text-white shadow-xs'
                     : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
                 }`}
-                title="Tampilan Kartu"
+                title="Tampilan Grid (Kotak)"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="text-[11px] hidden md:inline">Grid</span>
               </button>
+
               <button
-                onClick={() => onChangeViewMode('timeline')}
-                className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'timeline'
+                onClick={() => onChangeViewMode('vertical')}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  viewMode === 'vertical'
                     ? 'bg-indigo-500 text-white shadow-xs'
                     : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
                 }`}
-                title="Tampilan Timeline"
+                title="Tampilan Vertikal (List)"
               >
-                <GitCommit className="w-3.5 h-3.5" />
+                <Rows3 className="w-3.5 h-3.5" />
+                <span className="text-[11px] hidden md:inline">Vertikal</span>
               </button>
             </div>
 

@@ -138,11 +138,29 @@ export default function Home() {
     });
   };
 
+  const handleDeleteCustomCategory = (catToDelete: string) => {
+    const isDefault = DEFAULT_CATEGORIES.some(
+      (c) => c.name.toLowerCase() === catToDelete.toLowerCase()
+    );
+    if (isDefault) return; // Kategori topik default tidak bisa dihapus
+
+    setCustomCategories((prev) => {
+      const updated = prev.filter((c) => c.toLowerCase() !== catToDelete.toLowerCase());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('daily_learning_custom_categories', JSON.stringify(updated));
+      }
+      return updated;
+    });
+
+    if (filter.selectedCategory.toLowerCase() === catToDelete.toLowerCase()) {
+      setFilter((prev) => ({ ...prev, selectedCategory: 'All' }));
+    }
+  };
+
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
-    const customNames = logs.map((l) => l.category).filter(Boolean);
-    return Array.from(new Set([...defaultNames, ...customNames, ...customCategories]));
-  }, [logs, customCategories]);
+    return Array.from(new Set([...defaultNames, ...customCategories]));
+  }, [customCategories]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -453,11 +471,13 @@ export default function Home() {
               filter={filter}
               onFilterChange={handleFilterUpdates}
               categories={categoriesList}
+              defaultCategories={DEFAULT_CATEGORIES.map((c) => c.name)}
               teamUsers={teamUsers}
               currentUser={currentUser}
               onOpenLogin={() => setIsUserModalOpen(true)}
               totalResultsCount={filteredLogs.length}
               onAddCategory={handleAddCustomCategory}
+              onDeleteCategory={handleDeleteCustomCategory}
             />
 
             {/* Logs View */}
@@ -517,8 +537,14 @@ export default function Home() {
               />
             ) : (
               <div className="space-y-4 w-full">
-                {/* Single Column Vertical Feed - Fully Proportional with Container */}
-                <div className="grid grid-cols-1 gap-3 w-full">
+                {/* Responsive Grid View vs Vertical List Feed */}
+                <div
+                  className={
+                    viewMode === 'grid'
+                      ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full'
+                      : 'grid grid-cols-1 gap-3.5 w-full'
+                  }
+                >
                   {paginatedLogs.map((log) => (
                     <LogCard
                       key={log.id}

@@ -47,7 +47,7 @@ export interface Category {
   icon?: string;
 }
 
-export type ViewMode = 'grid' | 'timeline' | 'compact';
+export type ViewMode = 'grid' | 'vertical' | 'timeline' | 'compact';
 
 export type DateFilter = 'all' | 'today' | 'this-week' | 'this-month' | 'custom';
 

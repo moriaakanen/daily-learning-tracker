@@ -33,10 +33,26 @@ import {
   ChevronRight,
   AlertCircle,
   Sparkles,
+  Smile,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
 import { getTopicTheme, getCardStyle, CARD_COLOR_PRESETS } from '@/lib/topicTheme';
+
+const EMOJI_CATEGORIES = [
+  {
+    name: 'Belajar & Ide',
+    emojis: ['💡', '🧠', '📚', '📖', '📝', '✏️', '🔍', '🔬', '📊', '📈', '📌', '🏷️'],
+  },
+  {
+    name: 'Prestasi & Fokus',
+    emojis: ['🎯', '🚀', '🔥', '⭐', '🌟', '✨', '🏆', '🥇', '🎉', '👏', '✅', '💯'],
+  },
+  {
+    name: 'Ekspresi & Reaksi',
+    emojis: ['🌱', '🌿', '🌳', '🌺', '🎨', '🧩', '💻', '⚡', '💬', '💭', '👍', '❤️', '🤩', '😎', '☕', '🙌', '💯', '🚀'],
+  },
+];
 
 interface FullPageEditorProps {
   currentUser: User | null;
@@ -57,13 +73,13 @@ const WEEKDAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
 const FONT_COLORS = [
   { name: 'Default', value: 'inherit' },
-  { name: 'Merah', value: '#ef4444' },
-  { name: 'Biru', value: '#3b82f6' },
-  { name: 'Hijau', value: '#10b981' },
-  { name: 'Kuning Emas', value: '#f59e0b' },
-  { name: 'Ungu', value: '#8b5cf6' },
-  { name: 'Oranye', value: '#f97316' },
-  { name: 'Pink', value: '#ec4899' },
+  { name: 'Hitam / Gelap', value: '#1e293b' },
+  { name: 'Indigo / Ungu', value: '#6366f1' },
+  { name: 'Emerald / Hijau', value: '#10b981' },
+  { name: 'Sky / Biru', value: '#0ea5e9' },
+  { name: 'Rose / Merah', value: '#f43f5e' },
+  { name: 'Amber / Oranye', value: '#f59e0b' },
+  { name: 'Teal / Toska', value: '#14b8a6' },
 ];
 
 const HIGHLIGHT_COLORS = [
@@ -128,6 +144,7 @@ export function FullPageEditor({
   // Formatting popovers
   const [showColorPopover, setShowColorPopover] = useState(false);
   const [showHighlightPopover, setShowHighlightPopover] = useState(false);
+  const [showEmojiPopover, setShowEmojiPopover] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -391,6 +408,14 @@ export function FullPageEditor({
     } else {
       execCmd('fontName', fontFamily);
     }
+  };
+
+  // Insert emoji directly into visual editor canvas
+  const handleInsertEmoji = (emoji: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand('insertText', false, emoji);
+    setShowEmojiPopover(false);
   };
 
   // Toggle Blockquote ON / OFF (Cancelable)
@@ -1396,7 +1421,7 @@ export function FullPageEditor({
             </div>
 
             {/* 7. Extra Elements: Blockquote, Divider */}
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 border-r border-[var(--gh-border)] pr-1.5">
               <button
                 type="button"
                 onMouseDown={(e) => {
@@ -1420,6 +1445,68 @@ export function FullPageEditor({
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
+            </div>
+
+            {/* 8. Emoji Picker Popover */}
+            <div className="relative flex items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEmojiPopover(!showEmojiPopover);
+                  setShowColorPopover(false);
+                  setShowHighlightPopover(false);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  showEmojiPopover
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                    : 'hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)]'
+                }`}
+                title="Sisipkan Emoji Menarik"
+              >
+                <Smile className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px]">Emoji</span>
+              </button>
+
+              {showEmojiPopover && (
+                <div className="absolute left-0 top-8 z-30 p-2.5 rounded-xl border border-[var(--gh-border)] bg-[var(--gh-surface)] shadow-2xl w-64 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between text-[10px] font-bold text-[var(--gh-text-secondary)] border-b border-[var(--gh-border)] pb-1.5">
+                    <span>PILIH EMOJI SERU:</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPopover(false)}
+                      className="text-xs text-[var(--gh-text-tertiary)] hover:text-[var(--gh-text-primary)] cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                    {EMOJI_CATEGORIES.map((cat) => (
+                      <div key={cat.name} className="space-y-1">
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-[var(--gh-text-tertiary)]">
+                          {cat.name}
+                        </div>
+                        <div className="grid grid-cols-6 gap-1">
+                          {cat.emojis.map((em) => (
+                            <button
+                              key={em}
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleInsertEmoji(em);
+                              }}
+                              className="w-8 h-8 rounded-lg hover:bg-[var(--gh-bg)] flex items-center justify-center text-base hover:scale-125 transition-transform cursor-pointer"
+                              title={em}
+                            >
+                              {em}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
