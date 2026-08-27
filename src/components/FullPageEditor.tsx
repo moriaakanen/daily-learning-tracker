@@ -395,17 +395,17 @@ export function FullPageEditor({
 
           {/* Section: Custom Card Color Swatch Picker (Circular Shapes with Checkmark) */}
           <div className="pt-2.5 border-t border-[var(--gh-border-subtle)] space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <Palette className="w-3.5 h-3.5 text-indigo-500" />
                 <span>Pilih Warna Kartu:</span>
               </label>
-              <span className="text-[11px] font-semibold text-[var(--gh-text-secondary)]">
+              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
                 {CARD_COLOR_PRESETS.find((p) => p.id === cardColor)?.name || 'Otomatis Sesuai Topik'}
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5 overflow-x-auto py-1 scrollbar-none">
+            <div className="flex items-center gap-3 overflow-x-auto py-2.5 px-1 scrollbar-none">
               {CARD_COLOR_PRESETS.map((preset) => {
                 const isSelected = cardColor === preset.id;
                 return (

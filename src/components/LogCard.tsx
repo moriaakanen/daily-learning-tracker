@@ -143,7 +143,7 @@ export function LogCard({
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-1.5">
+                    <div className="grid grid-cols-5 gap-2 p-1">
                       {CARD_COLOR_PRESETS.map((preset) => {
                         const isSelected =
                           (preset.id === 'auto' && (!log.card_color || log.card_color === 'auto')) ||
