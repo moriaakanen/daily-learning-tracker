@@ -170,7 +170,8 @@ export default function Home() {
 
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
-    const allNames = Array.from(new Set([...defaultNames, ...customCategories]));
+    const logCategories = logs.map((l) => l.category?.trim()).filter(Boolean) as string[];
+    const allNames = Array.from(new Set([...defaultNames, ...logCategories, ...customCategories]));
 
     // Sort dynamically by most learned topic (descending count), then alphabetically
     return allNames.sort((a, b) => {
@@ -181,7 +182,7 @@ export default function Home() {
       }
       return a.localeCompare(b);
     });
-  }, [customCategories, categoryCounts]);
+  }, [customCategories, logs, categoryCounts]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();

@@ -1,7 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Star, ArrowUpDown, Users, User as UserIcon, Plus, X, Check } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import {
+  Star,
+  ArrowUpDown,
+  Users,
+  User as UserIcon,
+  Plus,
+  X,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  AlertTriangle,
+} from 'lucide-react';
 import { FilterState, DateFilter, User } from '@/types';
 import { getTopicTheme } from '@/lib/topicTheme';
 
@@ -33,6 +45,9 @@ export function FilterBar({
 }: FilterBarProps) {
   const [showAddTopic, setShowAddTopic] = useState(false);
   const [newTopicName, setNewTopicName] = useState('');
+  const [topicToDelete, setTopicToDelete] = useState<string | null>(null);
+
+  const topicScrollRef = useRef<HTMLDivElement>(null);
 
   const dateOptions: { label: string; value: DateFilter; emoji: string }[] = [
     { label: 'Semua Waktu', value: 'all', emoji: '🗓️' },
@@ -61,82 +76,118 @@ export function FilterBar({
     setShowAddTopic(false);
   };
 
+  const scrollTopicLeft = () => {
+    if (topicScrollRef.current) {
+      topicScrollRef.current.scrollBy({ left: -220, behavior: 'smooth' });
+    }
+  };
+
+  const scrollTopicRight = () => {
+    if (topicScrollRef.current) {
+      topicScrollRef.current.scrollBy({ left: 220, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="mb-4 space-y-2.5 w-full">
-      {/* Topik Labels bar with Emojis + Dynamic Counts + Tambah Topik + Hapus Topik Tambahan */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none w-full">
+      {/* Topik Labels Row with Scroll Buttons (< and >) */}
+      <div className="relative flex items-center w-full gap-1">
+        {/* Tombol Geser Kiri (<) */}
         <button
-          onClick={() => onFilterChange({ selectedCategory: 'All' })}
-          className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 cursor-pointer ${
-            filter.selectedCategory === 'All'
-              ? 'bg-[var(--gh-accent)] text-white border-[var(--gh-accent)] shadow-xs'
-              : 'bg-[var(--gh-surface)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-border)]'
-          }`}
+          type="button"
+          onClick={scrollTopicLeft}
+          className="p-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] shadow-xs shrink-0 transition-all cursor-pointer z-10 active:scale-95"
+          title="Geser daftar topik ke kiri (<)"
         >
-          <span>🌟</span>
-          <span>Semua Topik ({totalResultsCount})</span>
+          <ChevronLeft className="w-3.5 h-3.5" />
         </button>
 
-        {categories.map((cat) => {
-          const isSelected = filter.selectedCategory === cat;
-          const theme = getTopicTheme(cat);
-          const count = categoryCounts[cat] || 0;
-          const isDefault = defaultCategories.some(
-            (d) => d.toLowerCase() === cat.toLowerCase()
-          );
+        {/* Scrollable Topics Container */}
+        <div
+          ref={topicScrollRef}
+          className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none w-full scroll-smooth"
+        >
+          <button
+            onClick={() => onFilterChange({ selectedCategory: 'All' })}
+            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-1.5 cursor-pointer shrink-0 ${
+              filter.selectedCategory === 'All'
+                ? 'bg-[var(--gh-accent)] text-white border-[var(--gh-accent)] shadow-xs'
+                : 'bg-[var(--gh-surface)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-border)]'
+            }`}
+          >
+            <span>🌟</span>
+            <span>Semua Topik ({totalResultsCount})</span>
+          </button>
 
-          return (
-            <div
-              key={cat}
-              className={`relative flex items-center shrink-0 rounded-full border transition-all text-xs font-semibold whitespace-nowrap px-3 py-1 ${
-                isSelected ? 'shadow-xs font-bold' : 'hover:opacity-90'
-              }`}
-              style={{
-                backgroundColor: isSelected ? theme.color : theme.badgeBg,
-                color: isSelected ? '#ffffff' : theme.badgeText,
-                borderColor: isSelected ? theme.color : theme.badgeBorder,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => onFilterChange({ selectedCategory: cat })}
-                className="flex items-center gap-1.5 cursor-pointer"
+          {categories.map((cat) => {
+            const isSelected = filter.selectedCategory === cat;
+            const theme = getTopicTheme(cat);
+            const count = categoryCounts[cat] || 0;
+            const isDefault = defaultCategories.some(
+              (d) => d.toLowerCase() === cat.toLowerCase()
+            );
+
+            return (
+              <div
+                key={cat}
+                className={`relative flex items-center shrink-0 rounded-full border transition-all text-xs font-semibold whitespace-nowrap px-3 py-1 ${
+                  isSelected ? 'shadow-xs font-bold' : 'hover:opacity-90'
+                }`}
+                style={{
+                  backgroundColor: isSelected ? theme.color : theme.badgeBg,
+                  color: isSelected ? '#ffffff' : theme.badgeText,
+                  borderColor: isSelected ? theme.color : theme.badgeBorder,
+                }}
               >
-                <span>{theme.emoji}</span>
-                <span>{cat} ({count})</span>
-              </button>
-
-              {/* Delete button only for custom added categories */}
-              {!isDefault && onDeleteCategory && (
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm(`Hapus kategori topik tambahan "${cat}"?`)) {
-                      onDeleteCategory(cat);
-                    }
-                  }}
-                  className="ml-1.5 -mr-1 p-0.5 rounded-full bg-black/15 dark:bg-white/25 hover:bg-rose-500 hover:text-white text-current transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
-                  title={`Hapus kategori "${cat}" (Kategori Tambahan)`}
+                  onClick={() => onFilterChange({ selectedCategory: cat })}
+                  className="flex items-center gap-1.5 cursor-pointer"
                 >
-                  <X className="w-3 h-3 stroke-[2.5]" />
+                  <span>{theme.emoji}</span>
+                  <span>{cat} ({count})</span>
                 </button>
-              )}
-            </div>
-          );
-        })}
 
-        {/* Tombol Tambah Topik Baru */}
-        {onAddCategory && (
-          <button
-            onClick={() => setShowAddTopic(true)}
-            className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border border-dashed border-[var(--gh-border)] bg-[var(--gh-surface)] text-[var(--gh-accent)] hover:bg-[var(--gh-badge-bg)] transition-colors shrink-0 cursor-pointer"
-            title="Tambah Topik Kustom Baru"
-          >
-            <span>✨</span>
-            <span>+ Tambah Topik</span>
-          </button>
-        )}
+                {/* Delete button only for custom added categories */}
+                {!isDefault && onDeleteCategory && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setTopicToDelete(cat);
+                    }}
+                    className="ml-1.5 -mr-1 p-0.5 rounded-full bg-black/15 dark:bg-white/25 hover:bg-rose-500 hover:text-white text-current transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                    title={`Hapus kategori "${cat}" (Kategori Tambahan)`}
+                  >
+                    <X className="w-3 h-3 stroke-[2.5]" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Tombol Tambah Topik Baru */}
+          {onAddCategory && (
+            <button
+              onClick={() => setShowAddTopic(true)}
+              className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border border-dashed border-[var(--gh-border)] bg-[var(--gh-surface)] text-[var(--gh-accent)] hover:bg-[var(--gh-badge-bg)] transition-colors shrink-0 cursor-pointer"
+              title="Tambah Topik Kustom Baru"
+            >
+              <span>✨</span>
+              <span>+ Tambah Topik</span>
+            </button>
+          )}
+        </div>
+
+        {/* Tombol Geser Kanan (>) */}
+        <button
+          type="button"
+          onClick={scrollTopicRight}
+          className="p-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] shadow-xs shrink-0 transition-all cursor-pointer z-10 active:scale-95"
+          title="Geser daftar topik ke kanan (>)"
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* Modal / Dialog Tambah Topik Kustom */}
@@ -154,7 +205,7 @@ export function FilterBar({
             autoFocus
             value={newTopicName}
             onChange={(e) => setNewTopicName(e.target.value)}
-            placeholder="Misal: Psikologi, Sejarah, Desain UI..."
+            placeholder="Misal: Database, Psikologi, UI/UX..."
             className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-md px-2.5 py-1 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-[var(--gh-accent)] font-medium"
           />
           <button
@@ -171,6 +222,50 @@ export function FilterBar({
             <X className="w-4 h-4" />
           </button>
         </form>
+      )}
+
+      {/* Modal Konfirmasi Hapus Topik Berdesain Tema CSS Khusus */}
+      {topicToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-2xl p-5 max-w-sm w-full shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-lg shrink-0">
+                🗑️
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-[var(--gh-text-primary)]">
+                  Hapus Kategori Topik?
+                </h3>
+                <p className="text-xs text-[var(--gh-text-secondary)] leading-relaxed">
+                  Apakah Anda yakin ingin menghapus topik <strong className="text-[var(--gh-text-primary)]">&quot;{topicToDelete}&quot;</strong>? Catatan yang menggunakan topik ini akan tetap aman tersimpan.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--gh-border)]">
+              <button
+                type="button"
+                onClick={() => setTopicToDelete(null)}
+                className="px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs font-bold text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteCategory && topicToDelete) {
+                    onDeleteCategory(topicToDelete);
+                  }
+                  setTopicToDelete(null);
+                }}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-sm shadow-rose-500/20 transition-all cursor-pointer active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus Topik</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Filter Options Bar: Users + Date Filter + Favorit + Sort */}
