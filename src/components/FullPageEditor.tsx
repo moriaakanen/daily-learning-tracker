@@ -166,8 +166,13 @@ export function FullPageEditor({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Initialize or reset content in visual contentEditable canvas
+  const draftKey = initialLog ? `daily_learning_draft_${initialLog.id}` : 'daily_learning_draft_new';
+  const [draftStatus, setDraftStatus] = useState<string>('');
+
+  // Initialize, restore draft from localStorage, or reset content in visual editor
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     if (initialLog) {
       setTitle(initialLog.title || '');
       const initCat = initialLog.category || '';
@@ -192,8 +197,43 @@ export function FullPageEditor({
         editorRef.current.innerHTML = initialLog.content || '';
       }
     } else {
+      // Check if there is an unsaved draft in localStorage
+      const savedDraft = localStorage.getItem('daily_learning_draft_new');
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed.title || parsed.content || parsed.category || parsed.codeSnippet) {
+            setTitle(parsed.title || '');
+            setCategory(parsed.category || '');
+            setTopicInput(parsed.topicInput || parsed.category || '');
+            setCardColor(parsed.cardColor || 'auto');
+            const draftDate = parsed.studyDate || new Date().toISOString().split('T')[0];
+            setStudyDate(draftDate);
+            setDateInputVal(draftDate);
+            const parsedD = new Date(draftDate);
+            if (!isNaN(parsedD.getTime())) {
+              setCalViewDate(parsedD);
+            }
+            validateDateString(draftDate);
+            setDuration(parsed.duration || 30);
+            setCodeSnippet(parsed.codeSnippet || '');
+            setCodeLanguage(parsed.codeLanguage || 'javascript');
+            setIsFavorite(!!parsed.isFavorite);
+            setImageUrls(parsed.imageUrls || []);
+
+            if (editorRef.current) {
+              editorRef.current.innerHTML = parsed.content || '';
+            }
+            setDraftStatus('✨ Draf yang belum tersimpan dipulihkan otomatis!');
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing draft:', e);
+        }
+      }
+
+      // Default empty state
       setTitle('');
-      // Default topic is EMPTY as requested
       setCategory('');
       setTopicInput('');
       setCardColor('auto');
@@ -213,6 +253,52 @@ export function FullPageEditor({
       }
     }
   }, [initialLog]);
+
+  // Automatically save unsaved draft on every change to prevent data loss
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (initialLog) return; // Only auto-save draft for new notes
+
+    const currentContent = editorRef.current?.innerHTML || '';
+    if (title.trim() || category.trim() || currentContent.trim() || codeSnippet.trim() || imageUrls.length > 0) {
+      const draftData = {
+        title,
+        category,
+        topicInput,
+        cardColor,
+        studyDate,
+        duration,
+        codeSnippet,
+        codeLanguage,
+        isFavorite,
+        imageUrls,
+        content: currentContent,
+        savedAt: new Date().toLocaleTimeString(),
+      };
+      localStorage.setItem('daily_learning_draft_new', JSON.stringify(draftData));
+      setDraftStatus('💾 Tersimpan otomatis di peramban');
+    }
+  }, [title, category, topicInput, cardColor, studyDate, duration, codeSnippet, codeLanguage, isFavorite, imageUrls, initialLog]);
+
+  const handleDiscardDraft = () => {
+    if (confirm('Hapus draf catatan yang belum tersimpan dan mulai dengan form kosong?')) {
+      localStorage.removeItem('daily_learning_draft_new');
+      setTitle('');
+      setCategory('');
+      setTopicInput('');
+      setCardColor('auto');
+      const todayDate = new Date().toISOString().split('T')[0];
+      setStudyDate(todayDate);
+      setDateInputVal(todayDate);
+      setDuration(30);
+      setCodeSnippet('');
+      setImageUrls([]);
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '';
+      }
+      setDraftStatus('');
+    }
+  };
 
   // Strict Date Validation Rule
   const validateDateString = (val: string): boolean => {
@@ -706,6 +792,11 @@ export function FullPageEditor({
 
     const currentHtmlContent = editorRef.current ? editorRef.current.innerHTML : '';
 
+    // Remove saved draft from browser storage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(draftKey);
+    }
+
     onSave(
       {
         title: title.trim(),
@@ -770,10 +861,17 @@ export function FullPageEditor({
             <span>Kembali</span>
           </button>
           <div>
-            <h1 className="text-base font-extrabold text-[var(--gh-text-primary)] flex items-center gap-2">
-              <span className="text-base">{category ? currentTheme.emoji : '🌱'}</span>
-              <span>{initialLog ? 'Edit Catatan Belajar' : 'Tulis Catatan Pembelajaran Baru'}</span>
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base font-extrabold text-[var(--gh-text-primary)] flex items-center gap-2">
+                <span className="text-base">{category ? currentTheme.emoji : '🌱'}</span>
+                <span>{initialLog ? 'Edit Catatan Belajar' : 'Tulis Catatan Pembelajaran Baru'}</span>
+              </h1>
+              {draftStatus && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 animate-pulse">
+                  {draftStatus}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
               <span>Penulis:</span>
               <img
@@ -789,6 +887,17 @@ export function FullPageEditor({
         </div>
 
         <div className="flex items-center gap-2">
+          {!initialLog && draftStatus && (
+            <button
+              type="button"
+              onClick={handleDiscardDraft}
+              className="px-3 py-1.5 rounded-full border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 text-xs font-bold transition-colors cursor-pointer"
+              title="Hapus draf yang tersimpan di peramban"
+            >
+              Buang Draf
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onCancel}

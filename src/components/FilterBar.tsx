@@ -10,6 +10,7 @@ interface FilterBarProps {
   onFilterChange: (updates: Partial<FilterState>) => void;
   categories: string[];
   defaultCategories?: string[];
+  categoryCounts?: Record<string, number>;
   teamUsers: User[];
   currentUser: User | null;
   onOpenLogin: () => void;
@@ -23,6 +24,7 @@ export function FilterBar({
   onFilterChange,
   categories,
   defaultCategories = [],
+  categoryCounts = {},
   currentUser,
   onOpenLogin,
   totalResultsCount,
@@ -61,7 +63,7 @@ export function FilterBar({
 
   return (
     <div className="mb-4 space-y-2.5 w-full">
-      {/* Topik Labels bar with Emojis + Tambah Topik + Hapus Topik Tambahan */}
+      {/* Topik Labels bar with Emojis + Dynamic Counts + Tambah Topik + Hapus Topik Tambahan */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none w-full">
         <button
           onClick={() => onFilterChange({ selectedCategory: 'All' })}
@@ -78,27 +80,30 @@ export function FilterBar({
         {categories.map((cat) => {
           const isSelected = filter.selectedCategory === cat;
           const theme = getTopicTheme(cat);
+          const count = categoryCounts[cat] || 0;
           const isDefault = defaultCategories.some(
             (d) => d.toLowerCase() === cat.toLowerCase()
           );
 
           return (
-            <div key={cat} className="relative flex items-center shrink-0">
+            <div
+              key={cat}
+              className={`relative flex items-center shrink-0 rounded-full border transition-all text-xs font-semibold whitespace-nowrap px-3 py-1 ${
+                isSelected ? 'shadow-xs font-bold' : 'hover:opacity-90'
+              }`}
+              style={{
+                backgroundColor: isSelected ? theme.color : theme.badgeBg,
+                color: isSelected ? '#ffffff' : theme.badgeText,
+                borderColor: isSelected ? theme.color : theme.badgeBorder,
+              }}
+            >
               <button
+                type="button"
                 onClick={() => onFilterChange({ selectedCategory: cat })}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border transition-all flex items-center gap-1.5 cursor-pointer ${
-                  !isDefault && onDeleteCategory ? 'pr-6' : ''
-                } ${
-                  isSelected ? 'shadow-xs font-bold' : 'hover:opacity-90'
-                }`}
-                style={{
-                  backgroundColor: isSelected ? theme.color : theme.badgeBg,
-                  color: isSelected ? '#ffffff' : theme.badgeText,
-                  borderColor: isSelected ? theme.color : theme.badgeBorder,
-                }}
+                className="flex items-center gap-1.5 cursor-pointer"
               >
                 <span>{theme.emoji}</span>
-                <span>{cat}</span>
+                <span>{cat} ({count})</span>
               </button>
 
               {/* Delete button only for custom added categories */}
@@ -111,10 +116,10 @@ export function FilterBar({
                       onDeleteCategory(cat);
                     }
                   }}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-black/20 text-current opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+                  className="ml-1.5 -mr-1 p-0.5 rounded-full bg-black/15 dark:bg-white/25 hover:bg-rose-500 hover:text-white text-current transition-colors cursor-pointer inline-flex items-center justify-center shadow-2xs"
                   title={`Hapus kategori "${cat}" (Kategori Tambahan)`}
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3 h-3 stroke-[2.5]" />
                 </button>
               )}
             </div>

@@ -34,6 +34,7 @@ export function StatsOverview({ stats, logs }: StatsOverviewProps) {
   const [selectedYear, setSelectedYear] = useState<number>(currentDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number>(currentDate.getMonth()); // 0 - 11
   const [selectedDateDetail, setSelectedDateDetail] = useState<string | null>(null);
+  const todayStr = new Date().toISOString().split('T')[0];
 
   // Map of logs by date
   const dateLogsMap = useMemo(() => {
@@ -357,26 +358,34 @@ export function StatsOverview({ stats, logs }: StatsOverviewProps) {
                   }
                 }
 
+                const isFuture = day.dateString > todayStr;
                 const isSelected = selectedDateDetail === day.dateString;
 
                 return (
                   <button
                     key={day.dateString}
                     type="button"
+                    disabled={isFuture}
                     onClick={() => {
-                      if (day.logsCount > 0) {
+                      if (!isFuture) {
                         setSelectedDateDetail(
                           selectedDateDetail === day.dateString ? null : day.dateString
                         );
                       }
                     }}
-                    className={`relative h-8 rounded-lg border text-xs flex flex-col items-center justify-center transition-all cursor-pointer ${bgStyle} ${
-                      isSelected ? 'ring-2 ring-indigo-500 scale-105 z-10' : 'hover:scale-105'
+                    className={`relative h-8 rounded-lg border text-xs flex flex-col items-center justify-center transition-all ${bgStyle} ${
+                      isFuture
+                        ? 'opacity-30 cursor-not-allowed border-dashed'
+                        : 'cursor-pointer hover:scale-105'
+                    } ${
+                      isSelected ? 'ring-2 ring-indigo-500 scale-105 z-10' : ''
                     } ${day.isToday ? 'ring-1 ring-amber-400' : ''}`}
                     title={
-                      day.logsCount > 0
+                      isFuture
+                        ? `${day.dateString}: Tanggal masa depan`
+                        : day.logsCount > 0
                         ? `${day.dateString}: ${day.logsCount} catatan, ${day.totalMinutes} menit belajar`
-                        : `${day.dateString}: Belum ada catatan`
+                        : `${day.dateString}: Klik untuk melihat detail`
                     }
                   >
                     <span className="text-[11px] font-semibold">{day.dayNumber}</span>
@@ -416,19 +425,26 @@ export function StatsOverview({ stats, logs }: StatsOverviewProps) {
               </div>
 
               <div className="space-y-1.5">
-                {activeDateLogs.map((l) => (
-                  <div
-                    key={l.id}
-                    className="p-2 rounded-lg bg-[var(--gh-surface)] border border-[var(--gh-border)] flex items-center justify-between text-xs"
-                  >
-                    <div className="truncate font-semibold text-[var(--gh-text-primary)]">
-                      {l.title}
+                {activeDateLogs.length > 0 ? (
+                  activeDateLogs.map((l) => (
+                    <div
+                      key={l.id}
+                      className="p-2 rounded-lg bg-[var(--gh-surface)] border border-[var(--gh-border)] flex items-center justify-between text-xs"
+                    >
+                      <div className="truncate font-semibold text-[var(--gh-text-primary)]">
+                        {l.title}
+                      </div>
+                      <div className="text-[10px] font-bold text-emerald-500 shrink-0 ml-2">
+                        ⏱️ {l.duration_minutes}m
+                      </div>
                     </div>
-                    <div className="text-[10px] font-bold text-emerald-500 shrink-0 ml-2">
-                      ⏱️ {l.duration_minutes}m
-                    </div>
+                  ))
+                ) : (
+                  <div className="py-3 px-3 rounded-lg bg-[var(--gh-surface)] border border-[var(--gh-border)] text-center text-xs text-[var(--gh-text-secondary)] font-medium flex items-center justify-center gap-2">
+                    <span>🌱</span>
+                    <span>Tidak ada catatan/jurnal</span>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}

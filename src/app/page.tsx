@@ -47,7 +47,7 @@ export default function Home() {
   const [logs, setLogs] = useState<LearningLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('vertical');
 
   // User Auth State
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
@@ -157,10 +157,31 @@ export default function Home() {
     }
   };
 
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    logs.forEach((log) => {
+      const cat = log.category?.trim();
+      if (cat) {
+        counts[cat] = (counts[cat] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [logs]);
+
   const categoriesList = useMemo(() => {
     const defaultNames = DEFAULT_CATEGORIES.map((c) => c.name);
-    return Array.from(new Set([...defaultNames, ...customCategories]));
-  }, [customCategories]);
+    const allNames = Array.from(new Set([...defaultNames, ...customCategories]));
+
+    // Sort dynamically by most learned topic (descending count), then alphabetically
+    return allNames.sort((a, b) => {
+      const countA = categoryCounts[a] || 0;
+      const countB = categoryCounts[b] || 0;
+      if (countB !== countA) {
+        return countB - countA; // Topics with highest logs appear first on the left
+      }
+      return a.localeCompare(b);
+    });
+  }, [customCategories, categoryCounts]);
 
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -472,6 +493,7 @@ export default function Home() {
               onFilterChange={handleFilterUpdates}
               categories={categoriesList}
               defaultCategories={DEFAULT_CATEGORIES.map((c) => c.name)}
+              categoryCounts={categoryCounts}
               teamUsers={teamUsers}
               currentUser={currentUser}
               onOpenLogin={() => setIsUserModalOpen(true)}
