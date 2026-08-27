@@ -17,7 +17,24 @@ import {
   Lock,
   Plus,
   Palette,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  List,
+  ListOrdered,
+  ListChecks,
+  Quote,
+  Code,
+  Highlighter,
+  Type,
+  Minus,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
 import { getTopicTheme, getCardStyle, CARD_COLOR_PRESETS } from '@/lib/topicTheme';
@@ -31,6 +48,25 @@ interface FullPageEditorProps {
   onCancel: () => void;
   onAddCategory?: (newCategory: string) => void;
 }
+
+const FONT_COLORS = [
+  { name: 'Default', value: '' },
+  { name: 'Merah', value: '#ef4444' },
+  { name: 'Biru', value: '#3b82f6' },
+  { name: 'Hijau', value: '#10b981' },
+  { name: 'Kuning Emas', value: '#f59e0b' },
+  { name: 'Ungu', value: '#8b5cf6' },
+  { name: 'Oranye', value: '#f97316' },
+  { name: 'Pink', value: '#ec4899' },
+];
+
+const HIGHLIGHT_COLORS = [
+  { name: 'Kuning Stabilo', value: '#fef08a', text: '#713f12' },
+  { name: 'Hijau Stabilo', value: '#bbf7d0', text: '#14532d' },
+  { name: 'Biru Stabilo', value: '#bae6fd', text: '#0c4a6e' },
+  { name: 'Pink Stabilo', value: '#fbcfe8', text: '#831843' },
+  { name: 'Ungu Stabilo', value: '#e9d5ff', text: '#581c87' },
+];
 
 export function FullPageEditor({
   currentUser,
@@ -54,12 +90,18 @@ export function FullPageEditor({
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
-  // New Custom Topic modal inside editor
+  // Formatting popovers
+  const [showColorPopover, setShowColorPopover] = useState(false);
+  const [showHighlightPopover, setShowHighlightPopover] = useState(false);
+
+  // Custom Topic modal inside editor
   const [showCustomTopicInput, setShowCustomTopicInput] = useState(false);
   const [customTopicName, setCustomTopicName] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (initialLog) {
@@ -86,6 +128,108 @@ export function FullPageEditor({
       setImageUrls([]);
     }
   }, [initialLog]);
+
+  // Helper to wrap selected text in textarea
+  const applyInlineFormatting = (prefix: string, suffix: string = '', defaultPlaceholder: string = 'teks') => {
+    if (!textareaRef.current) return;
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    const textToInsert = selected || defaultPlaceholder;
+    const newContent =
+      textarea.value.substring(0, start) +
+      prefix +
+      textToInsert +
+      suffix +
+      textarea.value.substring(end);
+
+    setContent(newContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      if (selected) {
+        textarea.setSelectionRange(start, start + prefix.length + textToInsert.length + suffix.length);
+      } else {
+        textarea.setSelectionRange(start + prefix.length, start + prefix.length + textToInsert.length);
+      }
+    }, 0);
+  };
+
+  // Helper for block/line formatting (List, Numbering, Headings, Quote)
+  const applyLineFormatting = (prefix: string, defaultPlaceholder: string = 'Tulis poin di sini') => {
+    if (!textareaRef.current) return;
+    const textarea = textareaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start);
+    const after = textarea.value.substring(end);
+    const selected = textarea.value.substring(start, end) || defaultPlaceholder;
+
+    const lines = selected.split('\n');
+    const formatted = lines
+      .map((line, idx) => {
+        const clean = line.replace(/^(\d+\.|\-|\- \[[ x]\]|>|#+)\s*/, '');
+        if (prefix === '1. ') {
+          return `${idx + 1}. ${clean}`;
+        }
+        return `${prefix}${clean}`;
+      })
+      .join('\n');
+
+    setContent(before + formatted + after);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, start + formatted.length);
+    }, 0);
+  };
+
+  // Helper for font color formatting
+  const applyFontColor = (colorHex: string) => {
+    if (!colorHex) return;
+    applyInlineFormatting(`<span style="color: ${colorHex}">`, '</span>', 'teks berwarna');
+    setShowColorPopover(false);
+  };
+
+  // Helper for highlight formatting
+  const applyHighlight = (bgHex: string, textColor: string) => {
+    applyInlineFormatting(
+      `<mark style="background-color: ${bgHex}; color: ${textColor}; padding: 0.1rem 0.35rem; border-radius: 0.25rem;">`,
+      '</mark>',
+      'teks sorotan'
+    );
+    setShowHighlightPopover(false);
+  };
+
+  // Helper for font family formatting
+  const applyFontFamily = (fontFamily: string) => {
+    if (!fontFamily || fontFamily === 'default') return;
+    applyInlineFormatting(`<span style="font-family: ${fontFamily}">`, '</span>', 'teks dengan font khusus');
+  };
+
+  // Helper for font size / headings
+  const applyFontSize = (sizeOption: string) => {
+    switch (sizeOption) {
+      case 'h1':
+        applyLineFormatting('# ', 'Judul Utama (H1)');
+        break;
+      case 'h2':
+        applyLineFormatting('## ', 'Sub Judul (H2)');
+        break;
+      case 'h3':
+        applyLineFormatting('### ', 'Poin Penting (H3)');
+        break;
+      case 'large':
+        applyInlineFormatting('<span style="font-size: 1.25em; font-weight: 600;">', '</span>', 'Teks Berukuran Besar');
+        break;
+      case 'small':
+        applyInlineFormatting('<small>', '</small>', 'Teks Berukuran Kecil');
+        break;
+      default:
+        break;
+    }
+  };
 
   // If user is not logged in, enforce login screen
   if (!currentUser) {
@@ -436,29 +580,279 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Card Catatan Lengkap with Upload Buttons at the Bottom Right */}
+        {/* Card Catatan Lengkap with Rich Essential Formatting Toolbar */}
         <div className="rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 sm:p-5 space-y-3 shadow-xs">
-          {/* Card Header */}
-          <div className="border-b border-[var(--gh-border)] pb-2 flex items-center justify-between">
+          {/* Card Header & Preview Switch */}
+          <div className="border-b border-[var(--gh-border)] pb-2.5 flex items-center justify-between gap-2">
             <div>
               <h3 className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <span>📝 Catatan Lengkap</span>
               </h3>
               <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
-                Tuliskan semua hal yang Anda pelajari hari ini (teks bersih dan terstruktur)
+                Gunakan toolbar di bawah untuk mengatur font, ukuran, warna, penomoran, dan gaya teks
               </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
+                showPreview
+                  ? 'bg-indigo-500 text-white border-indigo-600 shadow-xs'
+                  : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-border)]'
+              }`}
+              title="Lihat Pratinjau Teks Format"
+            >
+              {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              <span>{showPreview ? 'Sembunyikan Preview' : 'Pratinjau Format'}</span>
+            </button>
+          </div>
+
+          {/* Essential Formatting Toolbar */}
+          <div className="p-2 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl flex flex-wrap items-center gap-1.5 shadow-2xs">
+            {/* 1. Font Family Selector */}
+            <div className="flex items-center gap-1 border-r border-[var(--gh-border)] pr-1.5">
+              <Type className="w-3.5 h-3.5 text-[var(--gh-text-secondary)] ml-1" />
+              <select
+                onChange={(e) => {
+                  applyFontFamily(e.target.value);
+                  e.target.value = 'default';
+                }}
+                defaultValue="default"
+                className="bg-transparent border-none text-[11px] font-bold text-[var(--gh-text-primary)] focus:outline-none cursor-pointer py-1"
+                title="Pilih Jenis Font"
+              >
+                <option value="default" className="bg-[var(--gh-surface)]">Font: Sans</option>
+                <option value="serif" className="bg-[var(--gh-surface)]">Font: Serif</option>
+                <option value="'JetBrains Mono', monospace" className="bg-[var(--gh-surface)]">Font: Monospace</option>
+                <option value="cursive" className="bg-[var(--gh-surface)]">Font: Tulisan Tangan</option>
+              </select>
+            </div>
+
+            {/* 2. Ukuran Font / Heading Selector */}
+            <div className="flex items-center gap-1 border-r border-[var(--gh-border)] pr-1.5">
+              <select
+                onChange={(e) => {
+                  applyFontSize(e.target.value);
+                  e.target.value = 'normal';
+                }}
+                defaultValue="normal"
+                className="bg-transparent border-none text-[11px] font-bold text-[var(--gh-text-primary)] focus:outline-none cursor-pointer py-1"
+                title="Ukuran Font & Heading"
+              >
+                <option value="normal" className="bg-[var(--gh-surface)]">Ukuran: Normal</option>
+                <option value="h1" className="bg-[var(--gh-surface)]">H1 - Judul Besar</option>
+                <option value="h2" className="bg-[var(--gh-surface)]">H2 - Sub Judul</option>
+                <option value="h3" className="bg-[var(--gh-surface)]">H3 - Poin Penting</option>
+                <option value="large" className="bg-[var(--gh-surface)]">Teks Besar</option>
+                <option value="small" className="bg-[var(--gh-surface)]">Teks Kecil</option>
+              </select>
+            </div>
+
+            {/* 3. Basic Inline Text Styling */}
+            <div className="flex items-center gap-0.5 border-r border-[var(--gh-border)] pr-1.5">
+              <button
+                type="button"
+                onClick={() => applyInlineFormatting('**', '**', 'teks tebal')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] font-bold transition-colors cursor-pointer"
+                title="Tebal (Bold) - **teks**"
+              >
+                <Bold className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyInlineFormatting('*', '*', 'teks miring')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Miring (Italic) - *teks*"
+              >
+                <Italic className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyInlineFormatting('<u>', '</u>', 'teks bergaris bawah')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Garis Bawah (Underline) - <u>teks</u>"
+              >
+                <Underline className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyInlineFormatting('~~', '~~', 'teks dicoret')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Coret (Strikethrough) - ~~teks~~"
+              >
+                <Strikethrough className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* 4. Numbering, Bullets, Checklist */}
+            <div className="flex items-center gap-0.5 border-r border-[var(--gh-border)] pr-1.5">
+              <button
+                type="button"
+                onClick={() => applyLineFormatting('1. ', 'Poin penomoran')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Penomoran (Numbered List) - 1. 2. 3."
+              >
+                <ListOrdered className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyLineFormatting('- ', 'Poin daftar')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Daftar Poin (Bullet List) - •"
+              >
+                <List className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyLineFormatting('- [ ] ', 'Tugas yang harus diselesaikan')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Daftar Tugas (Checklist) - [ ]"
+              >
+                <ListChecks className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* 5. Font Color Picker Popover */}
+            <div className="relative flex items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowColorPopover(!showColorPopover);
+                  setShowHighlightPopover(false);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  showColorPopover
+                    ? 'bg-indigo-500/15 text-indigo-500'
+                    : 'hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)]'
+                }`}
+                title="Warna Font Teks"
+              >
+                <Palette className="w-3.5 h-3.5 text-indigo-500" />
+                <span className="text-[11px]">Warna Font</span>
+              </button>
+
+              {showColorPopover && (
+                <div className="absolute left-0 top-8 z-30 p-2 rounded-xl border border-[var(--gh-border)] bg-[var(--gh-surface)] shadow-xl w-48 space-y-1.5 animate-in fade-in duration-150">
+                  <div className="text-[10px] font-bold text-[var(--gh-text-secondary)] px-1">
+                    Pilih Warna Tulisan:
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 p-1">
+                    {FONT_COLORS.map((col) => (
+                      <button
+                        key={col.name}
+                        type="button"
+                        onClick={() => applyFontColor(col.value)}
+                        className="w-7 h-7 rounded-full border border-black/10 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer shadow-2xs"
+                        style={{ backgroundColor: col.value || 'var(--gh-text-primary)' }}
+                        title={col.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 6. Highlighter / Stabilo Popover */}
+            <div className="relative flex items-center border-r border-[var(--gh-border)] pr-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHighlightPopover(!showHighlightPopover);
+                  setShowColorPopover(false);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  showHighlightPopover
+                    ? 'bg-amber-500/15 text-amber-600'
+                    : 'hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)]'
+                }`}
+                title="Stabilo / Highlight Teks"
+              >
+                <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[11px]">Stabilo</span>
+              </button>
+
+              {showHighlightPopover && (
+                <div className="absolute left-0 top-8 z-30 p-2 rounded-xl border border-[var(--gh-border)] bg-[var(--gh-surface)] shadow-xl w-44 space-y-1.5 animate-in fade-in duration-150">
+                  <div className="text-[10px] font-bold text-[var(--gh-text-secondary)] px-1">
+                    Warna Stabilo:
+                  </div>
+                  <div className="grid grid-cols-5 gap-1.5 p-1">
+                    {HIGHLIGHT_COLORS.map((hl) => (
+                      <button
+                        key={hl.name}
+                        type="button"
+                        onClick={() => applyHighlight(hl.value, hl.text)}
+                        className="w-6 h-6 rounded-md border border-black/10 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer shadow-2xs"
+                        style={{ backgroundColor: hl.value }}
+                        title={hl.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 7. Extra Elements: Blockquote, Code, Divider */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => applyLineFormatting('> ', 'Kutipan penting yang menginspirasi...')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Kutipan (Blockquote) - > teks"
+              >
+                <Quote className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyInlineFormatting('`', '`', 'kode_singkat')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Kode Singkat (Inline Code) - `kode`"
+              >
+                <Code className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => applyInlineFormatting('\n\n---\n\n', '', '')}
+                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                title="Garis Pembatas Horizontal (---)"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Clean Writing Textarea */}
-          <textarea
-            rows={14}
-            required
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Tuliskan materi pembelajaran, catatan penting, atau hal menarik yang Anda pelajari hari ini..."
-            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed resize-y min-h-[260px]"
-          />
+          {/* Live Preview Panel or Textarea */}
+          {showPreview ? (
+            <div className="w-full bg-[var(--gh-bg)] border border-indigo-500/30 rounded-xl p-4 text-xs min-h-[260px] max-h-[420px] overflow-y-auto space-y-2">
+              <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider pb-1 border-b border-[var(--gh-border-subtle)] flex items-center justify-between">
+                <span>👁️ Pratinjau Tampilan Format Catatan</span>
+                <span className="text-[var(--gh-text-tertiary)] font-normal">Sesuai dengan hasil terbit</span>
+              </div>
+              <div className="prose max-w-none text-xs leading-relaxed pt-1">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                  {content || '_Belum ada teks catatan yang ditulis._'}
+                </ReactMarkdown>
+              </div>
+            </div>
+          ) : (
+            <textarea
+              ref={textareaRef}
+              rows={14}
+              required
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Tuliskan materi pembelajaran, catatan penting, atau gunakan toolbar di atas untuk memberi warna, penomoran, font, dan format menarik..."
+              className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed resize-y min-h-[260px]"
+            />
+          )}
 
           {/* Toolbar on Bottom Right of Card */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
