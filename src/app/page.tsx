@@ -47,15 +47,46 @@ export default function Home() {
   const [logs, setLogs] = useState<LearningLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('vertical');
+  // View mode (persisted in localStorage)
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('daily_learning_view_mode') as ViewMode;
+      if (savedMode && ['vertical', 'grid', 'timeline', 'compact'].includes(savedMode)) {
+        return savedMode;
+      }
+    }
+    return 'vertical';
+  });
+
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('daily_learning_view_mode', mode);
+    }
+  };
 
   // User Auth State
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
   const [teamUsers, setTeamUsers] = useState<User[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
-  // Navigation tab
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+  // Navigation tab (persisted in localStorage across page refresh)
+  const [activeTab, setActiveTabState] = useState<ActiveTab>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTab = localStorage.getItem('daily_learning_active_tab') as ActiveTab;
+      if (savedTab && ['overview', 'logs', 'editor'].includes(savedTab)) {
+        return savedTab;
+      }
+    }
+    return 'overview';
+  });
+
+  const setActiveTab = (tab: ActiveTab) => {
+    setActiveTabState(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('daily_learning_active_tab', tab);
+    }
+  };
 
   // Editing state
   const [editingLog, setEditingLog] = useState<LearningLog | null>(null);
