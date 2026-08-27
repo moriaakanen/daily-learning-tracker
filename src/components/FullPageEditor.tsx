@@ -29,7 +29,10 @@ import {
   Minus,
   Keyboard,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
@@ -44,6 +47,13 @@ interface FullPageEditorProps {
   onCancel: () => void;
   onAddCategory?: (newCategory: string) => void;
 }
+
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+const WEEKDAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
 const FONT_COLORS = [
   { name: 'Default', value: 'inherit' },
@@ -93,12 +103,18 @@ export function FullPageEditor({
   onAddCategory,
 }: FullPageEditorProps) {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Teknologi & Coding');
-  const [topicInput, setTopicInput] = useState('Teknologi & Coding');
+  const [category, setCategory] = useState('');
+  const [topicInput, setTopicInput] = useState('');
   const [isTopicOpen, setIsTopicOpen] = useState(false);
   const [cardColor, setCardColor] = useState('auto');
+
+  // Custom Styled Calendar State
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dateInputVal, setDateInputVal] = useState(new Date().toISOString().split('T')[0]);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calViewDate, setCalViewDate] = useState<Date>(new Date());
   const [dateError, setDateError] = useState('');
+
   const [duration, setDuration] = useState(30);
   const [codeSnippet, setCodeSnippet] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
@@ -116,12 +132,16 @@ export function FullPageEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const topicContainerRef = useRef<HTMLDivElement>(null);
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
 
-  // Close topic dropdown on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (topicContainerRef.current && !topicContainerRef.current.contains(e.target as Node)) {
         setIsTopicOpen(false);
+      }
+      if (calendarContainerRef.current && !calendarContainerRef.current.contains(e.target as Node)) {
+        setIsCalendarOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -132,12 +152,17 @@ export function FullPageEditor({
   useEffect(() => {
     if (initialLog) {
       setTitle(initialLog.title || '');
-      const initCat = initialLog.category || 'Teknologi & Coding';
+      const initCat = initialLog.category || '';
       setCategory(initCat);
       setTopicInput(initCat);
       setCardColor(initialLog.card_color || 'auto');
       const initDate = initialLog.study_date || new Date().toISOString().split('T')[0];
       setStudyDate(initDate);
+      setDateInputVal(initDate);
+      const parsed = new Date(initDate);
+      if (!isNaN(parsed.getTime())) {
+        setCalViewDate(parsed);
+      }
       validateDateString(initDate);
       setDuration(initialLog.duration_minutes || 30);
       setCodeSnippet(initialLog.code_snippet || '');
@@ -150,11 +175,14 @@ export function FullPageEditor({
       }
     } else {
       setTitle('');
-      setCategory('Teknologi & Coding');
-      setTopicInput('Teknologi & Coding');
+      // Default topic is EMPTY as requested
+      setCategory('');
+      setTopicInput('');
       setCardColor('auto');
       const todayDate = new Date().toISOString().split('T')[0];
       setStudyDate(todayDate);
+      setDateInputVal(todayDate);
+      setCalViewDate(new Date());
       validateDateString(todayDate);
       setDuration(30);
       setCodeSnippet('');
@@ -177,7 +205,7 @@ export function FullPageEditor({
 
     const parts = val.split('-');
     if (parts.length !== 3) {
-      setDateError('Format tanggal tidak valid (YYYY-MM-DD)');
+      setDateError('Format tanggal tidak valid (harus YYYY-MM-DD)');
       return false;
     }
 
@@ -206,19 +234,51 @@ export function FullPageEditor({
     return true;
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDateInputDirectChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setStudyDate(val);
-    validateDateString(val);
+    setDateInputVal(val);
+    if (validateDateString(val)) {
+      setStudyDate(val);
+      const parsed = new Date(val);
+      if (!isNaN(parsed.getTime())) {
+        setCalViewDate(parsed);
+      }
+    }
   };
 
   const handleDateBlur = () => {
-    if (!validateDateString(studyDate)) {
-      // Auto-fallback to today if completely broken
-      const today = new Date().toISOString().split('T')[0];
-      setStudyDate(today);
+    if (!validateDateString(dateInputVal)) {
+      setDateInputVal(studyDate);
       setDateError('');
     }
+  };
+
+  const handleSelectCalendarDay = (d: number, m: number, y: number) => {
+    const formatted = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    setStudyDate(formatted);
+    setDateInputVal(formatted);
+    setDateError('');
+    setIsCalendarOpen(false);
+  };
+
+  const handleSelectToday = () => {
+    const today = new Date();
+    const formatted = today.toISOString().split('T')[0];
+    setStudyDate(formatted);
+    setDateInputVal(formatted);
+    setCalViewDate(today);
+    setDateError('');
+    setIsCalendarOpen(false);
+  };
+
+  const handleCalPrevMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCalViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const handleCalNextMonth = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCalViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
   // Filter categories based on search input
@@ -526,7 +586,12 @@ export function FullPageEditor({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert('Mohon masukkan judul catatan belajar.');
+      alert('Mohon masukkan judul materi atau catatan belajar.');
+      return;
+    }
+
+    if (!category.trim()) {
+      alert('Mohon pilih atau ketik topik materi terlebih dahulu.');
       return;
     }
 
@@ -540,7 +605,7 @@ export function FullPageEditor({
     onSave(
       {
         title: title.trim(),
-        category: category.trim() || 'Umum',
+        category: category.trim(),
         card_color: cardColor,
         study_date: studyDate,
         duration_minutes: Number(duration) || 30,
@@ -559,7 +624,33 @@ export function FullPageEditor({
     );
   };
 
-  const currentTheme = getCardStyle(category, cardColor);
+  const currentTheme = getCardStyle(category || 'Umum', cardColor);
+
+  // Compute Custom Calendar Matrix for Current Month
+  const calYear = calViewDate.getFullYear();
+  const calMonth = calViewDate.getMonth();
+  const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
+  const daysInCurMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(calYear, calMonth, 0).getDate();
+
+  const prevDays = [];
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    prevDays.push(daysInPrevMonth - i);
+  }
+
+  const curDays = [];
+  for (let i = 1; i <= daysInCurMonth; i++) {
+    curDays.push(i);
+  }
+
+  const totalGrid = prevDays.length + curDays.length > 35 ? 42 : 35;
+  const nextDays = [];
+  const nextCount = totalGrid - (prevDays.length + curDays.length);
+  for (let i = 1; i <= nextCount; i++) {
+    nextDays.push(i);
+  }
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   return (
     <div className="w-full space-y-6 animate-in fade-in duration-200">
@@ -576,7 +667,7 @@ export function FullPageEditor({
           </button>
           <div>
             <h1 className="text-base font-extrabold text-[var(--gh-text-primary)] flex items-center gap-2">
-              <span className="text-base">{currentTheme.emoji}</span>
+              <span className="text-base">{category ? currentTheme.emoji : '🌱'}</span>
               <span>{initialLog ? 'Edit Catatan Belajar' : 'Tulis Catatan Pembelajaran Baru'}</span>
             </h1>
             <div className="flex items-center gap-2 text-xs text-[var(--gh-text-secondary)]">
@@ -621,8 +712,8 @@ export function FullPageEditor({
           className="rounded-2xl border border-[var(--gh-border)] p-4 sm:p-5 space-y-4 shadow-xs transition-all"
           style={{
             borderLeftWidth: '5px',
-            borderLeftColor: currentTheme.borderLeft,
-            backgroundColor: currentTheme.cardBg !== 'transparent' ? currentTheme.cardBg : 'var(--gh-surface)',
+            borderLeftColor: category ? currentTheme.borderLeft : '#6366f1',
+            backgroundColor: category && currentTheme.cardBg !== 'transparent' ? currentTheme.cardBg : 'var(--gh-surface)',
           }}
         >
           <div className="space-y-1.5">
@@ -653,13 +744,13 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Meta Grid: Topik Searchable Combobox + Styled Date Picker + Duration */}
+          {/* Meta Grid: Topik Searchable Combobox + Custom Beautiful Calendar Dropdown + Duration */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {/* 1. Custom Searchable & Typable Topic Combobox */}
+            {/* 1. Custom Searchable & Typable Topic Combobox (Empty default) */}
             <div className="space-y-1" ref={topicContainerRef}>
               <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center justify-between">
                 <span className="flex items-center gap-1">
-                  <span>🏷️ Topik</span>
+                  <span>🏷️ Topik</span> <span className="text-rose-500">*</span>
                   <span className="text-[10px] text-[var(--gh-text-tertiary)] font-normal">(Ketik / Pilih)</span>
                 </span>
               </label>
@@ -667,17 +758,19 @@ export function FullPageEditor({
               <div className="relative">
                 <div className="relative flex items-center">
                   <span className="absolute left-3 text-sm pointer-events-none drop-shadow-xs">
-                    {getTopicTheme(category).emoji}
+                    {category ? getTopicTheme(category).emoji : '🏷️'}
                   </span>
                   <input
                     type="text"
+                    required
                     value={topicInput}
                     onChange={(e) => {
                       setTopicInput(e.target.value);
+                      setCategory(e.target.value);
                       setIsTopicOpen(true);
                     }}
                     onFocus={() => setIsTopicOpen(true)}
-                    placeholder="Cari atau ketik topik..."
+                    placeholder="Ketik atau pilih topik..."
                     className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl pl-9 pr-8 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition-all"
                   />
                   <button
@@ -693,7 +786,7 @@ export function FullPageEditor({
                 {isTopicOpen && (
                   <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-xl shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
                     <div className="text-[10px] font-bold text-[var(--gh-text-tertiary)] px-2 py-1 uppercase tracking-wider">
-                      Pilihan Topik:
+                      Pilihan Topik Tersedia:
                     </div>
 
                     {filteredCategories.length > 0 ? (
@@ -725,7 +818,7 @@ export function FullPageEditor({
                       })
                     ) : (
                       <div className="p-2 text-center text-xs text-[var(--gh-text-tertiary)] font-medium">
-                        Tidak ada topik yang cocok
+                        Tidak ada topik &quot;{topicInput}&quot;
                       </div>
                     )}
 
@@ -751,33 +844,162 @@ export function FullPageEditor({
               </div>
             </div>
 
-            {/* 2. Custom Styled Date Picker with Strict Range & Format Validation */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1">
+            {/* 2. Custom CSS Styled Interactive Calendar Dropdown with Real-Time Validation */}
+            <div className="space-y-1" ref={calendarContainerRef}>
+              <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center justify-between">
                 <span>📅 Tanggal Belajar</span>
+                <span className="text-[10px] text-indigo-500 font-bold">
+                  {new Date(studyDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
               </label>
+
               <div className="relative">
                 <div className="relative flex items-center">
-                  <Calendar className="absolute left-3 w-3.5 h-3.5 text-indigo-500 pointer-events-none" />
+                  <button
+                    type="button"
+                    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                    className="absolute left-2.5 p-1 text-indigo-500 hover:scale-110 transition-transform cursor-pointer"
+                    title="Buka Kalender Visual"
+                  >
+                    <Calendar className="w-4 h-4" />
+                  </button>
+
                   <input
-                    type="date"
-                    min="2000-01-01"
-                    max="2099-12-31"
-                    value={studyDate}
-                    onChange={handleDateChange}
+                    type="text"
+                    value={dateInputVal}
+                    onChange={handleDateInputDirectChange}
+                    onFocus={() => setIsCalendarOpen(true)}
                     onBlur={handleDateBlur}
-                    className={`w-full bg-[var(--gh-bg)] border rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:ring-2 shadow-2xs cursor-pointer transition-all ${
+                    placeholder="YYYY-MM-DD"
+                    className={`w-full bg-[var(--gh-bg)] border rounded-xl pl-9 pr-8 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:ring-2 shadow-2xs cursor-pointer transition-all ${
                       dateError
                         ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20'
                         : 'border-[var(--gh-border)] focus:border-indigo-500 focus:ring-indigo-500/20'
                     }`}
                   />
+
+                  <button
+                    type="button"
+                    onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                    className="absolute right-2.5 text-[var(--gh-text-tertiary)] hover:text-[var(--gh-text-primary)] transition-colors p-1 cursor-pointer"
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isCalendarOpen ? 'rotate-180 text-indigo-500' : ''}`} />
+                  </button>
                 </div>
+
                 {dateError && (
                   <p className="text-[10px] text-rose-500 font-bold pt-1 flex items-center gap-1 animate-in fade-in duration-150">
                     <AlertCircle className="w-3 h-3 shrink-0" />
                     <span>{dateError}</span>
                   </p>
+                )}
+
+                {/* Beautiful Floating Interactive Calendar Dropdown Card */}
+                {isCalendarOpen && (
+                  <div className="absolute left-0 right-0 sm:right-auto sm:w-72 top-full mt-1.5 z-40 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-2xl shadow-2xl p-3.5 space-y-3 animate-in fade-in zoom-in-95 duration-150">
+                    {/* Calendar Month & Year Navigation Header */}
+                    <div className="flex items-center justify-between border-b border-[var(--gh-border)] pb-2">
+                      <button
+                        type="button"
+                        onClick={handleCalPrevMonth}
+                        className="p-1.5 rounded-lg hover:bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                        title="Bulan Sebelumnya"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+
+                      <div className="text-xs font-extrabold text-[var(--gh-text-primary)] tracking-tight">
+                        {MONTH_NAMES[calMonth]} {calYear}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleCalNextMonth}
+                        className="p-1.5 rounded-lg hover:bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+                        title="Bulan Berikutnya"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Day of Week Headers */}
+                    <div className="grid grid-cols-7 gap-1 text-center">
+                      {WEEKDAYS.map((wd, i) => (
+                        <span
+                          key={wd}
+                          className={`text-[10px] font-bold ${
+                            i === 0 ? 'text-rose-500' : i === 6 ? 'text-amber-500' : 'text-[var(--gh-text-tertiary)]'
+                          }`}
+                        >
+                          {wd}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Day Grid Cells */}
+                    <div className="grid grid-cols-7 gap-1 text-center">
+                      {/* Previous month overflow days */}
+                      {prevDays.map((d) => (
+                        <span key={`prev-${d}`} className="h-7 flex items-center justify-center text-[11px] text-[var(--gh-text-tertiary)] opacity-30 font-medium select-none">
+                          {d}
+                        </span>
+                      ))}
+
+                      {/* Current month days */}
+                      {curDays.map((d) => {
+                        const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        const isSelected = studyDate === dateStr;
+                        const isToday = todayStr === dateStr;
+
+                        return (
+                          <button
+                            key={`cur-${d}`}
+                            type="button"
+                            onClick={() => handleSelectCalendarDay(d, calMonth, calYear)}
+                            className={`h-7 w-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition-all cursor-pointer relative ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30 scale-105'
+                                : isToday
+                                ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 font-extrabold hover:bg-indigo-500/25'
+                                : 'text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)] hover:scale-105'
+                            }`}
+                          >
+                            <span>{d}</span>
+                            {isToday && !isSelected && (
+                              <span className="absolute bottom-0.5 w-1 h-1 rounded-full bg-indigo-500" />
+                            )}
+                          </button>
+                        );
+                      })}
+
+                      {/* Next month overflow days */}
+                      {nextDays.map((d) => (
+                        <span key={`next-${d}`} className="h-7 flex items-center justify-center text-[11px] text-[var(--gh-text-tertiary)] opacity-30 font-medium select-none">
+                          {d}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Quick Action Footer: Hari Ini & Tutup */}
+                    <div className="pt-2 border-t border-[var(--gh-border)] flex items-center justify-between text-xs">
+                      <button
+                        type="button"
+                        onClick={handleSelectToday}
+                        className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>Pilih Hari Ini</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsCalendarOpen(false)}
+                        className="px-2.5 py-1 rounded-lg bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-[10px] font-bold text-[var(--gh-text-secondary)] transition-colors cursor-pointer"
+                      >
+                        Tutup
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
