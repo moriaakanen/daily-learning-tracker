@@ -28,6 +28,8 @@ import {
   Type,
   Minus,
   Keyboard,
+  ChevronDown,
+  AlertCircle,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
@@ -92,8 +94,11 @@ export function FullPageEditor({
 }: FullPageEditorProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Teknologi & Coding');
+  const [topicInput, setTopicInput] = useState('Teknologi & Coding');
+  const [isTopicOpen, setIsTopicOpen] = useState(false);
   const [cardColor, setCardColor] = useState('auto');
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dateError, setDateError] = useState('');
   const [duration, setDuration] = useState(30);
   const [codeSnippet, setCodeSnippet] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
@@ -108,20 +113,32 @@ export function FullPageEditor({
   const [showHighlightPopover, setShowHighlightPopover] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
-  // Custom Topic modal inside editor
-  const [showCustomTopicInput, setShowCustomTopicInput] = useState(false);
-  const [customTopicName, setCustomTopicName] = useState('');
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const topicContainerRef = useRef<HTMLDivElement>(null);
+
+  // Close topic dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (topicContainerRef.current && !topicContainerRef.current.contains(e.target as Node)) {
+        setIsTopicOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Initialize or reset content in visual contentEditable canvas
   useEffect(() => {
     if (initialLog) {
       setTitle(initialLog.title || '');
-      setCategory(initialLog.category || 'Teknologi & Coding');
+      const initCat = initialLog.category || 'Teknologi & Coding';
+      setCategory(initCat);
+      setTopicInput(initCat);
       setCardColor(initialLog.card_color || 'auto');
-      setStudyDate(initialLog.study_date || new Date().toISOString().split('T')[0]);
+      const initDate = initialLog.study_date || new Date().toISOString().split('T')[0];
+      setStudyDate(initDate);
+      validateDateString(initDate);
       setDuration(initialLog.duration_minutes || 30);
       setCodeSnippet(initialLog.code_snippet || '');
       setCodeLanguage(initialLog.code_language || 'javascript');
@@ -134,8 +151,11 @@ export function FullPageEditor({
     } else {
       setTitle('');
       setCategory('Teknologi & Coding');
+      setTopicInput('Teknologi & Coding');
       setCardColor('auto');
-      setStudyDate(new Date().toISOString().split('T')[0]);
+      const todayDate = new Date().toISOString().split('T')[0];
+      setStudyDate(todayDate);
+      validateDateString(todayDate);
       setDuration(30);
       setCodeSnippet('');
       setCodeLanguage('javascript');
@@ -147,6 +167,64 @@ export function FullPageEditor({
       }
     }
   }, [initialLog]);
+
+  // Strict Date Validation Rule
+  const validateDateString = (val: string): boolean => {
+    if (!val) {
+      setDateError('Tanggal belajar tidak boleh kosong');
+      return false;
+    }
+
+    const parts = val.split('-');
+    if (parts.length !== 3) {
+      setDateError('Format tanggal tidak valid (YYYY-MM-DD)');
+      return false;
+    }
+
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10);
+    const day = parseInt(parts[2], 10);
+
+    if (isNaN(year) || year < 2000 || year > 2099) {
+      setDateError('Tahun harus antara 2000 - 2099');
+      return false;
+    }
+
+    if (isNaN(month) || month < 1 || month > 12) {
+      setDateError('Bulan tidak valid (harus 1 - 12)');
+      return false;
+    }
+
+    // Determine max days in month (accounting for leap years)
+    const maxDaysInMonth = new Date(year, month, 0).getDate();
+    if (isNaN(day) || day < 1 || day > maxDaysInMonth) {
+      setDateError(`Tanggal untuk bulan ${month} maksimal ${maxDaysInMonth}`);
+      return false;
+    }
+
+    setDateError('');
+    return true;
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setStudyDate(val);
+    validateDateString(val);
+  };
+
+  const handleDateBlur = () => {
+    if (!validateDateString(studyDate)) {
+      // Auto-fallback to today if completely broken
+      const today = new Date().toISOString().split('T')[0];
+      setStudyDate(today);
+      setDateError('');
+    }
+  };
+
+  // Filter categories based on search input
+  const filteredCategories = categories.filter((c) =>
+    c.toLowerCase().includes(topicInput.toLowerCase())
+  );
 
   // Execute rich text formatting directly on selection
   const execCmd = (command: string, value: string | undefined = undefined) => {
@@ -201,10 +279,8 @@ export function FullPageEditor({
     }
 
     if (isInsideBlockquote) {
-      // Revert from blockquote back to standard paragraph <p>
       document.execCommand('formatBlock', false, '<p>');
 
-      // Ensure clean unwrapping if blockquote container remains
       if (blockquoteNode && blockquoteNode.parentNode && blockquoteNode.nodeName === 'BLOCKQUOTE') {
         const parent = blockquoteNode.parentNode;
         while (blockquoteNode.firstChild) {
@@ -447,22 +523,15 @@ export function FullPageEditor({
     setImageUrls(imageUrls.filter((_, i) => i !== index));
   };
 
-  const handleCreateCustomTopic = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = customTopicName.trim();
-    if (!trimmed) return;
-    if (onAddCategory) {
-      onAddCategory(trimmed);
-    }
-    setCategory(trimmed);
-    setCustomTopicName('');
-    setShowCustomTopicInput(false);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       alert('Mohon masukkan judul catatan belajar.');
+      return;
+    }
+
+    if (!validateDateString(studyDate)) {
+      alert(`Tanggal belajar tidak valid: ${dateError}`);
       return;
     }
 
@@ -471,7 +540,7 @@ export function FullPageEditor({
     onSave(
       {
         title: title.trim(),
-        category,
+        category: category.trim() || 'Umum',
         card_color: cardColor,
         study_date: studyDate,
         duration_minutes: Number(duration) || 30,
@@ -584,100 +653,151 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Meta Grid: Topik with Emoji + Date + Duration */}
+          {/* Meta Grid: Topik Searchable Combobox + Styled Date Picker + Duration */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1">
+            {/* 1. Custom Searchable & Typable Topic Combobox */}
+            <div className="space-y-1" ref={topicContainerRef}>
+              <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center justify-between">
+                <span className="flex items-center gap-1">
                   <span>🏷️ Topik</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setShowCustomTopicInput(true)}
-                  className="text-[11px] text-indigo-500 hover:underline flex items-center gap-0.5 font-bold cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Tambah Topik</span>
-                </button>
-              </div>
+                  <span className="text-[10px] text-[var(--gh-text-tertiary)] font-normal">(Ketik / Pilih)</span>
+                </span>
+              </label>
 
-              {showCustomTopicInput ? (
-                <div className="flex items-center gap-1.5 pt-0.5 animate-in fade-in duration-150">
+              <div className="relative">
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-sm pointer-events-none drop-shadow-xs">
+                    {getTopicTheme(category).emoji}
+                  </span>
                   <input
                     type="text"
-                    required
-                    autoFocus
-                    value={customTopicName}
-                    onChange={(e) => setCustomTopicName(e.target.value)}
-                    placeholder="Nama topik baru..."
-                    className="flex-1 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-lg px-2.5 py-1.5 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-indigo-500 font-medium"
+                    value={topicInput}
+                    onChange={(e) => {
+                      setTopicInput(e.target.value);
+                      setIsTopicOpen(true);
+                    }}
+                    onFocus={() => setIsTopicOpen(true)}
+                    placeholder="Cari atau ketik topik..."
+                    className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl pl-9 pr-8 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition-all"
                   />
                   <button
                     type="button"
-                    onClick={handleCreateCustomTopic}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer"
+                    onClick={() => setIsTopicOpen(!isTopicOpen)}
+                    className="absolute right-2.5 text-[var(--gh-text-tertiary)] hover:text-[var(--gh-text-primary)] transition-colors p-1 cursor-pointer"
                   >
-                    OK
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomTopicInput(false)}
-                    className="p-1 text-[var(--gh-text-secondary)] cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${isTopicOpen ? 'rotate-180 text-indigo-500' : ''}`} />
                   </button>
                 </div>
-              ) : (
-                <select
-                  value={category}
-                  onChange={(e) => {
-                    if (e.target.value === '__add_new__') {
-                      setShowCustomTopicInput(true);
-                    } else {
-                      setCategory(e.target.value);
-                    }
-                  }}
-                  className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500 cursor-pointer"
-                >
-                  {categories.map((cat) => {
-                    const t = getTopicTheme(cat);
-                    return (
-                      <option key={cat} value={cat} className="bg-[var(--gh-bg)]">
-                        {t.emoji} {cat}
-                      </option>
-                    );
-                  })}
-                  <option value="__add_new__" className="font-bold text-indigo-500">
-                    ✨ + Tambah Topik Baru...
-                  </option>
-                </select>
-              )}
+
+                {/* Floating Search Dropdown Results */}
+                {isTopicOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-[var(--gh-surface)] border border-[var(--gh-border)] rounded-xl shadow-xl max-h-56 overflow-y-auto p-1.5 space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="text-[10px] font-bold text-[var(--gh-text-tertiary)] px-2 py-1 uppercase tracking-wider">
+                      Pilihan Topik:
+                    </div>
+
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map((cat) => {
+                        const t = getTopicTheme(cat);
+                        const isSelected = category.toLowerCase() === cat.toLowerCase();
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                              setCategory(cat);
+                              setTopicInput(cat);
+                              setIsTopicOpen(false);
+                            }}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all text-left cursor-pointer ${
+                              isSelected
+                                ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400'
+                                : 'hover:bg-[var(--gh-bg)] text-[var(--gh-text-primary)]'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{t.emoji}</span>
+                              <span>{cat}</span>
+                            </span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-indigo-500 stroke-[3]" />}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="p-2 text-center text-xs text-[var(--gh-text-tertiary)] font-medium">
+                        Tidak ada topik yang cocok
+                      </div>
+                    )}
+
+                    {/* Quick Create New Topic Option if not an exact match */}
+                    {topicInput.trim() && !categories.some((c) => c.toLowerCase() === topicInput.trim().toLowerCase()) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newCat = topicInput.trim();
+                          if (onAddCategory) onAddCategory(newCat);
+                          setCategory(newCat);
+                          setTopicInput(newCat);
+                          setIsTopicOpen(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 transition-all cursor-pointer text-left mt-1"
+                      >
+                        <Plus className="w-3.5 h-3.5 shrink-0" />
+                        <span>Buat topik baru: &quot;{topicInput.trim()}&quot;</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* 2. Custom Styled Date Picker with Strict Range & Format Validation */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1">
                 <span>📅 Tanggal Belajar</span>
               </label>
-              <input
-                type="date"
-                value={studyDate}
-                onChange={(e) => setStudyDate(e.target.value)}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500"
-              />
+              <div className="relative">
+                <div className="relative flex items-center">
+                  <Calendar className="absolute left-3 w-3.5 h-3.5 text-indigo-500 pointer-events-none" />
+                  <input
+                    type="date"
+                    min="2000-01-01"
+                    max="2099-12-31"
+                    value={studyDate}
+                    onChange={handleDateChange}
+                    onBlur={handleDateBlur}
+                    className={`w-full bg-[var(--gh-bg)] border rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:ring-2 shadow-2xs cursor-pointer transition-all ${
+                      dateError
+                        ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20'
+                        : 'border-[var(--gh-border)] focus:border-indigo-500 focus:ring-indigo-500/20'
+                    }`}
+                  />
+                </div>
+                {dateError && (
+                  <p className="text-[10px] text-rose-500 font-bold pt-1 flex items-center gap-1 animate-in fade-in duration-150">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{dateError}</span>
+                  </p>
+                )}
+              </div>
             </div>
 
+            {/* 3. Duration Input */}
             <div className="space-y-1">
               <label className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1">
                 <span>⏱️ Durasi Belajar (Menit)</span>
               </label>
-              <input
-                type="number"
-                min="5"
-                step="5"
-                value={duration}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl px-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500"
-              />
+              <div className="relative flex items-center">
+                <Clock className="absolute left-3 w-3.5 h-3.5 text-indigo-500 pointer-events-none" />
+                <input
+                  type="number"
+                  min="5"
+                  step="5"
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--gh-text-primary)] font-bold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition-all"
+                />
+              </div>
             </div>
           </div>
 
@@ -1021,7 +1141,7 @@ export function FullPageEditor({
               <button
                 type="button"
                 onClick={() => setShowImageInput(!showImageInput)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
                 title="Sisipkan URL Gambar Web"
               >
                 <span>🔗</span>

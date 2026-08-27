@@ -113,12 +113,45 @@ body {
   line-height: 1.7;
 }
 
-.prose h1, .prose h2, .prose h3, .prose h4 {
-  color: var(--gh-text-primary);
-  font-weight: 700;
+.prose h1 {
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.25;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  color: var(--gh-text-primary);
+  border-bottom: 1px solid var(--gh-border-subtle);
+  padding-bottom: 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.prose h2 {
+  font-size: 1.35rem;
+  font-weight: 750;
+  line-height: 1.3;
+  margin-top: 1.1rem;
+  margin-bottom: 0.4rem;
+  color: var(--gh-text-primary);
+  letter-spacing: -0.015em;
+}
+
+.prose h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-top: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: var(--gh-text-primary);
   letter-spacing: -0.01em;
+}
+
+.prose h4 {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.4;
+  margin-top: 0.75rem;
+  margin-bottom: 0.3rem;
+  color: var(--gh-text-primary);
 }
 
 .prose p {
