@@ -3,75 +3,83 @@
 import React from 'react';
 import {
   Sparkles,
-  Plus,
   Settings,
   Search,
   LayoutGrid,
   Rows3,
   X,
   LogIn,
+  Menu,
 } from 'lucide-react';
 import { ViewMode, User } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   currentUser: User | null;
-  onOpenNewLog: () => void;
+  onOpenNewLog?: () => void;
   onOpenSettings: () => void;
   onOpenUserModal: () => void;
+  onOpenMobileSidebar?: () => void;
   viewMode: ViewMode;
   onChangeViewMode: (mode: ViewMode) => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  isSupabaseConnected: boolean;
-  totalLogsCount: number;
+  isSupabaseConnected?: boolean;
+  totalLogsCount?: number;
 }
 
 export function Header({
   currentUser,
-  onOpenNewLog,
   onOpenSettings,
   onOpenUserModal,
+  onOpenMobileSidebar,
   viewMode,
   onChangeViewMode,
   searchQuery,
   onSearchChange,
-  isSupabaseConnected,
-  totalLogsCount,
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--gh-border)] bg-[var(--gh-surface)]/90 backdrop-blur-md transition-all">
+    <header className="sticky top-0 z-30 border-b border-[var(--gh-border)] bg-[var(--gh-surface)]/90 backdrop-blur-md transition-all">
       {/* Top Navbar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="w-full px-4 sm:px-6">
         <div className="flex items-center justify-between h-16 gap-3">
-          {/* Left: Cheerful Logo & Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 p-0.5 shadow-sm shadow-emerald-500/20 flex items-center justify-center animate-float-slow shrink-0">
-              <div className="w-full h-full bg-[var(--gh-surface)] rounded-[14px] flex items-center justify-center text-xl">
-                🌱
+          {/* Left: Mobile Menu Toggle & Brand (on mobile) */}
+          <div className="flex items-center gap-2.5">
+            {onOpenMobileSidebar && (
+              <button
+                type="button"
+                onClick={onOpenMobileSidebar}
+                className="md:hidden p-2 rounded-xl border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-primary)] transition-colors cursor-pointer shadow-2xs"
+                title="Buka Menu Sidebar"
+              >
+                <Menu className="w-4 h-4" />
+              </button>
+            )}
+
+            <div className="flex md:hidden items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-400 to-indigo-500 p-0.5 shadow-xs flex items-center justify-center shrink-0">
+                <div className="w-full h-full bg-[var(--gh-surface)] rounded-[10px] flex items-center justify-center text-sm">
+                  🌱
+                </div>
               </div>
+              <span className="font-extrabold text-sm tracking-tight text-[var(--gh-text-primary)]">
+                Daily<span className="text-emerald-500">Learn</span>
+              </span>
             </div>
 
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm sm:text-base tracking-tight text-[var(--gh-text-primary)]">
-                  Daily<span className="text-emerald-500">Learn</span>
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <Sparkles className="w-3 h-3 text-amber-400 animate-pulse-glow" />
-                  <span>v2.0 Cheerful</span>
-                </span>
-              </div>
-              <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium hidden sm:block">
-                Ruang belajar & journaling harian yang menyenangkan ✨
-              </p>
+            {/* Desktop Brand Greeting */}
+            <div className="hidden md:flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span>Ruang Belajar Interaktif</span>
+              </span>
             </div>
           </div>
 
-          {/* Right Tools: Search, Theme Toggle, User Profile, Settings, New Entry */}
+          {/* Right Tools: Search, Theme Toggle, Grid/Vertical Switcher, Settings, User Profile */}
           <div className="flex items-center gap-2">
             {/* Search Input */}
-            <div className="relative hidden md:block w-44 lg:w-52">
+            <div className="relative w-36 sm:w-48 md:w-56">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--gh-text-tertiary)]" />
               <input
                 type="text"
@@ -94,7 +102,7 @@ export function Header({
             <ThemeToggle />
 
             {/* View Mode Grid / Vertikal Switcher */}
-            <div className="hidden sm:flex items-center border border-[var(--gh-border)] rounded-full bg-[var(--gh-bg)] p-0.5 shadow-2xs">
+            <div className="flex items-center border border-[var(--gh-border)] rounded-full bg-[var(--gh-bg)] p-0.5 shadow-2xs">
               <button
                 onClick={() => onChangeViewMode('grid')}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
@@ -105,7 +113,7 @@ export function Header({
                 title="Tampilan Grid (Kotak)"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="text-[11px] hidden md:inline">Grid</span>
+                <span className="text-[11px] hidden sm:inline">Grid</span>
               </button>
 
               <button
@@ -118,7 +126,7 @@ export function Header({
                 title="Tampilan Vertikal (List)"
               >
                 <Rows3 className="w-3.5 h-3.5" />
-                <span className="text-[11px] hidden md:inline">Vertikal</span>
+                <span className="text-[11px] hidden sm:inline">Vertikal</span>
               </button>
             </div>
 

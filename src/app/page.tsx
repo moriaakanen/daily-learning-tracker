@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
+import { Sidebar, ActiveTab } from '@/components/Sidebar';
 import { StatsOverview } from '@/components/StatsOverview';
 import { FilterBar } from '@/components/FilterBar';
 import { LogCard } from '@/components/LogCard';
@@ -41,12 +42,11 @@ import {
 import { getSupabaseClient } from '@/lib/supabase';
 import { LearningLog, FilterState, ViewMode, User } from '@/types';
 
-type ActiveTab = 'overview' | 'logs' | 'editor';
-
 export default function Home() {
   const [logs, setLogs] = useState<LearningLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   // View mode (persisted in localStorage)
   const [viewMode, setViewModeState] = useState<ViewMode>(() => {
     if (typeof window !== 'undefined') {
@@ -344,107 +344,47 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--gh-bg)] text-[var(--gh-text-primary)] transition-colors">
-      {/* GitHub Top Header */}
-      <Header
+    <div className="min-h-screen flex bg-[var(--gh-bg)] text-[var(--gh-text-primary)] transition-colors">
+      {/* Cheerful Left Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        filter={filter}
+        onFilterChange={handleFilterUpdates}
         currentUser={currentUser}
-        onOpenNewLog={handleOpenNewEntry}
+        logsCount={logs.length}
+        myLogsCount={currentUser ? logs.filter((l) => l.author_id === currentUser.id).length : 0}
+        currentStreak={stats.currentStreak}
+        onOpenNewEntry={handleOpenNewEntry}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenUserModal={() => setIsUserModalOpen(true)}
-        viewMode={viewMode}
-        onChangeViewMode={setViewMode}
-        searchQuery={filter.searchQuery}
-        onSearchChange={(q) => {
-          handleFilterUpdates({ searchQuery: q });
-          if (activeTab === 'editor') setActiveTab('logs');
-        }}
-        isSupabaseConnected={isSupabaseConnected}
-        totalLogsCount={logs.length}
+        onOpenLogin={() => setIsUserModalOpen(true)}
+        onLogout={handleLogout}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
       />
 
-      {/* Cheerful Navigation Bar */}
-      <div className="border-b border-[var(--gh-border)] bg-[var(--gh-surface)] px-4 sm:px-6 shadow-2xs">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 text-xs font-bold py-2 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                activeTab === 'overview'
-                  ? 'bg-emerald-500 text-white shadow-xs'
-                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
-              }`}
-            >
-              <span>📊</span>
-              <span>Overview & Kalender</span>
-            </button>
+      {/* Main Content Area (offset by sidebar width on desktop) */}
+      <div className="flex-1 flex flex-col md:pl-64 min-w-0">
+        {/* Top Header */}
+        <Header
+          currentUser={currentUser}
+          onOpenNewLog={handleOpenNewEntry}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenUserModal={() => setIsUserModalOpen(true)}
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          viewMode={viewMode}
+          onChangeViewMode={setViewMode}
+          searchQuery={filter.searchQuery}
+          onSearchChange={(q) => {
+            handleFilterUpdates({ searchQuery: q });
+            if (activeTab === 'editor') setActiveTab('logs');
+          }}
+          isSupabaseConnected={isSupabaseConnected}
+          totalLogsCount={logs.length}
+        />
 
-            <button
-              onClick={() => {
-                setFilter((prev) => ({ ...prev, userScope: 'all' }));
-                setActiveTab('logs');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                activeTab === 'logs' && filter.userScope === 'all'
-                  ? 'bg-indigo-500 text-white shadow-xs'
-                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
-              }`}
-            >
-              <span>👥</span>
-              <span>Feed Tim</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                activeTab === 'logs' && filter.userScope === 'all'
-                  ? 'bg-white/20 text-white'
-                  : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)]'
-              }`}>
-                {logs.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                if (!currentUser) {
-                  setIsUserModalOpen(true);
-                  return;
-                }
-                setFilter((prev) => ({ ...prev, userScope: 'mine' }));
-                setActiveTab('logs');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                activeTab === 'logs' && filter.userScope === 'mine'
-                  ? 'bg-purple-500 text-white shadow-xs'
-                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
-              }`}
-            >
-              <span>👤</span>
-              <span>Catatan Saya</span>
-              {currentUser && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                  activeTab === 'logs' && filter.userScope === 'mine'
-                    ? 'bg-white/20 text-white'
-                    : 'bg-[var(--gh-badge-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-badge-border)]'
-                }`}>
-                  {logs.filter((l) => l.author_id === currentUser.id).length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={handleOpenNewEntry}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
-                activeTab === 'editor'
-                  ? 'bg-amber-500 text-white shadow-xs'
-                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)]'
-              }`}
-            >
-              <span>✍️</span>
-              <span>{editingLog ? 'Edit Catatan' : 'Tulis Baru'}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Container */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
+        {/* Main Container */}
+        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
         {/* Full Page Editor Tab */}
         {activeTab === 'editor' ? (
           <FullPageEditor
@@ -714,6 +654,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      </div>
 
       {/* Reading & Feedback Modal */}
       <LogDetailModal
