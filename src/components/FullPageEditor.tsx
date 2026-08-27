@@ -27,6 +27,7 @@ import {
   Highlighter,
   Type,
   Minus,
+  Keyboard,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
@@ -62,6 +63,24 @@ const HIGHLIGHT_COLORS = [
   { name: 'Ungu Stabilo', value: '#e9d5ff' },
 ];
 
+const SHORTCUTS_LIST = [
+  { key: 'Ctrl + B', label: 'Tebal (Bold)' },
+  { key: 'Ctrl + I', label: 'Miring (Italic)' },
+  { key: 'Ctrl + U', label: 'Garis Bawah (Underline)' },
+  { key: 'Ctrl + Shift + X', label: 'Coret (Strikethrough)' },
+  { key: 'Ctrl + 1', label: 'Judul Besar (Heading 1)' },
+  { key: 'Ctrl + 2', label: 'Sub-Judul (Heading 2)' },
+  { key: 'Ctrl + 3', label: 'Poin Penting (Heading 3)' },
+  { key: 'Ctrl + 0', label: 'Teks Normal (Paragraf)' },
+  { key: 'Ctrl + Shift + 7', label: 'Daftar Penomoran (1. 2. 3.)' },
+  { key: 'Ctrl + Shift + 8', label: 'Daftar Poin (Bullet •)' },
+  { key: 'Ctrl + Shift + 9', label: 'Kutipan (Blockquote)' },
+  { key: 'Ctrl + Shift + H', label: 'Stabilo Cepat (Kuning)' },
+  { key: 'Tab / Shift + Tab', label: 'Indent / Outdent Teks' },
+  { key: 'Ctrl + S', label: 'Simpan / Terbitkan Catatan' },
+  { key: 'Ctrl + Z / Ctrl + Y', label: 'Undo / Redo' },
+];
+
 export function FullPageEditor({
   currentUser,
   initialLog,
@@ -87,6 +106,7 @@ export function FullPageEditor({
   // Formatting popovers
   const [showColorPopover, setShowColorPopover] = useState(false);
   const [showHighlightPopover, setShowHighlightPopover] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
 
   // Custom Topic modal inside editor
   const [showCustomTopicInput, setShowCustomTopicInput] = useState(false);
@@ -178,6 +198,111 @@ export function FullPageEditor({
       default:
         execCmd('formatBlock', '<p>');
         break;
+    }
+  };
+
+  // Comprehensive Keyboard Shortcuts Handler (Word Processor standard)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isCtrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
+
+    if (isCtrlOrCmd) {
+      const key = e.key.toLowerCase();
+
+      // Bold: Ctrl + B
+      if (key === 'b' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        execCmd('bold');
+        return;
+      }
+
+      // Italic: Ctrl + I
+      if (key === 'i' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        execCmd('italic');
+        return;
+      }
+
+      // Underline: Ctrl + U
+      if (key === 'u' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        execCmd('underline');
+        return;
+      }
+
+      // Strikethrough: Ctrl + Shift + X or Ctrl + Shift + S
+      if ((key === 'x' || key === 's') && e.shiftKey) {
+        e.preventDefault();
+        execCmd('strikeThrough');
+        return;
+      }
+
+      // Highlight / Stabilo: Ctrl + Shift + H
+      if (key === 'h' && e.shiftKey) {
+        e.preventDefault();
+        handleHighlight('#fef08a');
+        return;
+      }
+
+      // Numbered list: Ctrl + Shift + 7 or Ctrl + Shift + O
+      if ((e.key === '7' || key === 'o' || e.code === 'Digit7') && e.shiftKey) {
+        e.preventDefault();
+        execCmd('insertOrderedList');
+        return;
+      }
+
+      // Bullet list: Ctrl + Shift + 8 or Ctrl + Shift + U
+      if ((e.key === '8' || key === 'u' || e.code === 'Digit8') && e.shiftKey) {
+        e.preventDefault();
+        execCmd('insertUnorderedList');
+        return;
+      }
+
+      // Quote: Ctrl + Shift + 9 or Ctrl + Shift + Q
+      if ((e.key === '9' || key === 'q' || e.code === 'Digit9') && e.shiftKey) {
+        e.preventDefault();
+        execCmd('formatBlock', '<blockquote>');
+        return;
+      }
+
+      // Headings: Ctrl + 1, Ctrl + 2, Ctrl + 3, Ctrl + 0
+      if ((e.key === '1' || e.code === 'Digit1') && !e.shiftKey) {
+        e.preventDefault();
+        execCmd('formatBlock', '<h1>');
+        return;
+      }
+      if ((e.key === '2' || e.code === 'Digit2') && !e.shiftKey) {
+        e.preventDefault();
+        execCmd('formatBlock', '<h2>');
+        return;
+      }
+      if ((e.key === '3' || e.code === 'Digit3') && !e.shiftKey) {
+        e.preventDefault();
+        execCmd('formatBlock', '<h3>');
+        return;
+      }
+      if ((e.key === '0' || e.code === 'Digit0') && !e.shiftKey) {
+        e.preventDefault();
+        execCmd('formatBlock', '<p>');
+        return;
+      }
+
+      // Save note shortcut: Ctrl + S
+      if (key === 's' && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        handleSubmit(e as unknown as React.FormEvent);
+        return;
+      }
+    }
+
+    // Tab key: Indent / Outdent
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        execCmd('outdent');
+      } else {
+        execCmd('indent');
+      }
     }
   };
 
@@ -346,6 +471,7 @@ export function FullPageEditor({
             type="button"
             onClick={handleSubmit}
             className="flex items-center gap-1.5 px-5 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+            title="Simpan Catatan (Ctrl + S)"
           >
             <Check className="w-3.5 h-3.5" />
             <span>{initialLog ? 'Simpan Perubahan' : 'Terbitkan Catatan ✨'}</span>
@@ -532,18 +658,28 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Card Catatan Lengkap with True Visual WYSIWYG Editor */}
+        {/* Card Catatan Lengkap with True Visual WYSIWYG Editor & Keyboard Shortcuts */}
         <div className="rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 sm:p-5 space-y-3 shadow-xs">
-          {/* Card Header */}
-          <div className="border-b border-[var(--gh-border)] pb-2 flex items-center justify-between gap-2">
+          {/* Card Header & Shortcut Cheatsheet Button */}
+          <div className="border-b border-[var(--gh-border)] pb-2.5 flex items-center justify-between gap-2">
             <div>
               <h3 className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <span>📝 Catatan Lengkap</span>
               </h3>
               <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
-                Tulis langsung dengan gaya visual — teks langsung terformat tanpa kode tag!
+                Tulis langsung dengan gaya visual — mendukung pintasan keyboard seperti di Word / Google Docs!
               </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowShortcutsModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-all cursor-pointer shadow-2xs shrink-0"
+              title="Lihat Daftar Pintasan Keyboard"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Pintasan Keyboard</span>
+            </button>
           </div>
 
           {/* Visual Formatting Toolbar */}
@@ -572,18 +708,18 @@ export function FullPageEditor({
                 onChange={(e) => handleFontSize(e.target.value)}
                 defaultValue="normal"
                 className="bg-transparent border-none text-[11px] font-bold text-[var(--gh-text-primary)] focus:outline-none cursor-pointer py-1"
-                title="Ukuran Font & Heading"
+                title="Ukuran Font & Heading (Ctrl + 1/2/3/0)"
               >
-                <option value="normal" className="bg-[var(--gh-surface)]">Ukuran: Normal</option>
-                <option value="h1" className="bg-[var(--gh-surface)]">H1 - Judul Besar</option>
-                <option value="h2" className="bg-[var(--gh-surface)]">H2 - Sub Judul</option>
-                <option value="h3" className="bg-[var(--gh-surface)]">H3 - Poin Penting</option>
+                <option value="normal" className="bg-[var(--gh-surface)]">Normal (Ctrl + 0)</option>
+                <option value="h1" className="bg-[var(--gh-surface)]">H1 - Judul Besar (Ctrl + 1)</option>
+                <option value="h2" className="bg-[var(--gh-surface)]">H2 - Sub Judul (Ctrl + 2)</option>
+                <option value="h3" className="bg-[var(--gh-surface)]">H3 - Poin Penting (Ctrl + 3)</option>
                 <option value="large" className="bg-[var(--gh-surface)]">Teks Besar</option>
                 <option value="small" className="bg-[var(--gh-surface)]">Teks Kecil</option>
               </select>
             </div>
 
-            {/* 3. Basic Inline Text Styling */}
+            {/* 3. Basic Inline Text Styling with Shortcut Tooltips */}
             <div className="flex items-center gap-0.5 border-r border-[var(--gh-border)] pr-1.5">
               <button
                 type="button"
@@ -592,7 +728,7 @@ export function FullPageEditor({
                   execCmd('bold');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] font-bold transition-colors cursor-pointer"
-                title="Tebal (Bold)"
+                title="Tebal (Ctrl + B)"
               >
                 <Bold className="w-3.5 h-3.5" />
               </button>
@@ -604,7 +740,7 @@ export function FullPageEditor({
                   execCmd('italic');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Miring (Italic)"
+                title="Miring (Ctrl + I)"
               >
                 <Italic className="w-3.5 h-3.5" />
               </button>
@@ -616,7 +752,7 @@ export function FullPageEditor({
                   execCmd('underline');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Garis Bawah (Underline)"
+                title="Garis Bawah (Ctrl + U)"
               >
                 <Underline className="w-3.5 h-3.5" />
               </button>
@@ -628,7 +764,7 @@ export function FullPageEditor({
                   execCmd('strikeThrough');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Coret (Strikethrough)"
+                title="Coret (Ctrl + Shift + X)"
               >
                 <Strikethrough className="w-3.5 h-3.5" />
               </button>
@@ -643,7 +779,7 @@ export function FullPageEditor({
                   execCmd('insertOrderedList');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Penomoran (Numbered List) - 1. 2. 3."
+                title="Penomoran (Ctrl + Shift + 7)"
               >
                 <ListOrdered className="w-3.5 h-3.5" />
               </button>
@@ -655,7 +791,7 @@ export function FullPageEditor({
                   execCmd('insertUnorderedList');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Daftar Poin (Bullet List) - •"
+                title="Daftar Poin (Ctrl + Shift + 8)"
               >
                 <List className="w-3.5 h-3.5" />
               </button>
@@ -717,7 +853,7 @@ export function FullPageEditor({
                     ? 'bg-amber-500/15 text-amber-600'
                     : 'hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)]'
                 }`}
-                title="Stabilo / Highlight Teks"
+                title="Stabilo (Ctrl + Shift + H)"
               >
                 <Highlighter className="w-3.5 h-3.5 text-amber-500" />
                 <span className="text-[11px]">Stabilo</span>
@@ -758,7 +894,7 @@ export function FullPageEditor({
                   execCmd('formatBlock', '<blockquote>');
                 }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Kutipan (Blockquote)"
+                title="Kutipan (Ctrl + Shift + 9)"
               >
                 <Quote className="w-3.5 h-3.5" />
               </button>
@@ -777,19 +913,22 @@ export function FullPageEditor({
             </div>
           </div>
 
-          {/* Visual WYSIWYG ContentEditable Writing Canvas */}
+          {/* Visual WYSIWYG ContentEditable Writing Canvas with Full Keyboard Shortcut Support */}
           <div
             ref={editorRef}
             contentEditable
             suppressContentEditableWarning
-            data-placeholder="Tuliskan materi pembelajaran, catatan penting, atau gunakan toolbar di atas untuk memberi warna, penomoran, font, dan format visual secara langsung..."
+            onKeyDown={handleKeyDown}
+            data-placeholder="Tuliskan materi pembelajaran, catatan penting, atau gunakan toolbar & shortcut keyboard (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+1/2/3, dll)..."
             className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-4 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed min-h-[280px] max-h-[500px] overflow-y-auto prose max-w-none shadow-2xs"
           />
 
           {/* Toolbar on Bottom Right of Card */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <div className="text-[11px] text-[var(--gh-text-tertiary)] flex items-center gap-1 font-medium">
+            <div className="text-[11px] text-[var(--gh-text-tertiary)] flex items-center gap-2 font-medium">
               <span>{isCompressing ? '⏳ Mengompresi gambar...' : `🖼️ ${imageUrls.length} gambar dilampirkan`}</span>
+              <span>•</span>
+              <span className="text-[10px] text-[var(--gh-text-secondary)]">💡 Tekan <kbd className="px-1 py-0.5 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded text-[10px] font-mono">Ctrl+S</kbd> untuk simpan</span>
             </div>
 
             {/* Upload & URL Buttons on Bottom Right */}
@@ -816,7 +955,7 @@ export function FullPageEditor({
               <button
                 type="button"
                 onClick={() => setShowImageInput(!showImageInput)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
                 title="Sisipkan URL Gambar Web"
               >
                 <span>🔗</span>
@@ -933,6 +1072,70 @@ export function FullPageEditor({
           </button>
         </div>
       </form>
+
+      {/* Keyboard Shortcuts Cheat Sheet Modal */}
+      {showShortcutsModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setShowShortcutsModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-lg rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-5 space-y-4 shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-[var(--gh-border)] pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500">
+                  <Keyboard className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--gh-text-primary)]">
+                    Pintasan Keyboard (Keyboard Shortcuts)
+                  </h3>
+                  <p className="text-[11px] text-[var(--gh-text-secondary)]">
+                    Gunakan shortcut pengolah kata standar saat mengetik catatan
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowShortcutsModal(false)}
+                className="p-1 rounded-lg text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-bg)] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Shortcut Grid Table */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[60vh] overflow-y-auto pr-1">
+              {SHORTCUTS_LIST.map((sc, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--gh-bg)] border border-[var(--gh-border)] text-xs"
+                >
+                  <span className="text-[var(--gh-text-secondary)] font-medium text-[11px] truncate pr-2">
+                    {sc.label}
+                  </span>
+                  <kbd className="px-2 py-0.5 rounded-md bg-[var(--gh-surface)] border border-[var(--gh-border)] text-[10px] font-mono font-bold text-[var(--gh-text-primary)] shrink-0 shadow-2xs">
+                    {sc.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-[var(--gh-border)] flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setShowShortcutsModal(false)}
+                className="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all cursor-pointer"
+              >
+                Mengerti, Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
