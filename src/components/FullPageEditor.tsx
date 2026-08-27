@@ -23,18 +23,11 @@ import {
   Strikethrough,
   List,
   ListOrdered,
-  ListChecks,
   Quote,
-  Code,
   Highlighter,
   Type,
   Minus,
-  Eye,
-  EyeOff,
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
 import { getTopicTheme, getCardStyle, CARD_COLOR_PRESETS } from '@/lib/topicTheme';
@@ -50,7 +43,7 @@ interface FullPageEditorProps {
 }
 
 const FONT_COLORS = [
-  { name: 'Default', value: '' },
+  { name: 'Default', value: 'inherit' },
   { name: 'Merah', value: '#ef4444' },
   { name: 'Biru', value: '#3b82f6' },
   { name: 'Hijau', value: '#10b981' },
@@ -61,11 +54,12 @@ const FONT_COLORS = [
 ];
 
 const HIGHLIGHT_COLORS = [
-  { name: 'Kuning Stabilo', value: '#fef08a', text: '#713f12' },
-  { name: 'Hijau Stabilo', value: '#bbf7d0', text: '#14532d' },
-  { name: 'Biru Stabilo', value: '#bae6fd', text: '#0c4a6e' },
-  { name: 'Pink Stabilo', value: '#fbcfe8', text: '#831843' },
-  { name: 'Ungu Stabilo', value: '#e9d5ff', text: '#581c87' },
+  { name: 'Hapus Stabilo', value: 'transparent' },
+  { name: 'Kuning Stabilo', value: '#fef08a' },
+  { name: 'Hijau Stabilo', value: '#bbf7d0' },
+  { name: 'Biru Stabilo', value: '#bae6fd' },
+  { name: 'Pink Stabilo', value: '#fbcfe8' },
+  { name: 'Ungu Stabilo', value: '#e9d5ff' },
 ];
 
 export function FullPageEditor({
@@ -82,7 +76,6 @@ export function FullPageEditor({
   const [cardColor, setCardColor] = useState('auto');
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
   const [duration, setDuration] = useState(30);
-  const [content, setContent] = useState('');
   const [codeSnippet, setCodeSnippet] = useState('');
   const [codeLanguage, setCodeLanguage] = useState('javascript');
   const [isFavorite, setIsFavorite] = useState(false);
@@ -90,7 +83,6 @@ export function FullPageEditor({
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
 
   // Formatting popovers
   const [showColorPopover, setShowColorPopover] = useState(false);
@@ -101,8 +93,9 @@ export function FullPageEditor({
   const [customTopicName, setCustomTopicName] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
+  // Initialize or reset content in visual contentEditable canvas
   useEffect(() => {
     if (initialLog) {
       setTitle(initialLog.title || '');
@@ -110,123 +103,80 @@ export function FullPageEditor({
       setCardColor(initialLog.card_color || 'auto');
       setStudyDate(initialLog.study_date || new Date().toISOString().split('T')[0]);
       setDuration(initialLog.duration_minutes || 30);
-      setContent(initialLog.content || '');
       setCodeSnippet(initialLog.code_snippet || '');
       setCodeLanguage(initialLog.code_language || 'javascript');
       setIsFavorite(!!initialLog.is_favorite);
       setImageUrls(initialLog.image_urls || []);
+
+      if (editorRef.current) {
+        editorRef.current.innerHTML = initialLog.content || '';
+      }
     } else {
       setTitle('');
       setCategory('Teknologi & Coding');
       setCardColor('auto');
       setStudyDate(new Date().toISOString().split('T')[0]);
       setDuration(30);
-      setContent('');
       setCodeSnippet('');
       setCodeLanguage('javascript');
       setIsFavorite(false);
       setImageUrls([]);
+
+      if (editorRef.current) {
+        editorRef.current.innerHTML = '';
+      }
     }
   }, [initialLog]);
 
-  // Helper to wrap selected text in textarea
-  const applyInlineFormatting = (prefix: string, suffix: string = '', defaultPlaceholder: string = 'teks') => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = textarea.value.substring(start, end);
-    const textToInsert = selected || defaultPlaceholder;
-    const newContent =
-      textarea.value.substring(0, start) +
-      prefix +
-      textToInsert +
-      suffix +
-      textarea.value.substring(end);
-
-    setContent(newContent);
-
-    setTimeout(() => {
-      textarea.focus();
-      if (selected) {
-        textarea.setSelectionRange(start, start + prefix.length + textToInsert.length + suffix.length);
-      } else {
-        textarea.setSelectionRange(start + prefix.length, start + prefix.length + textToInsert.length);
-      }
-    }, 0);
+  // Execute rich text formatting directly on selection
+  const execCmd = (command: string, value: string | undefined = undefined) => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    document.execCommand(command, false, value);
   };
 
-  // Helper for block/line formatting (List, Numbering, Headings, Quote)
-  const applyLineFormatting = (prefix: string, defaultPlaceholder: string = 'Tulis poin di sini') => {
-    if (!textareaRef.current) return;
-    const textarea = textareaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const before = textarea.value.substring(0, start);
-    const after = textarea.value.substring(end);
-    const selected = textarea.value.substring(start, end) || defaultPlaceholder;
-
-    const lines = selected.split('\n');
-    const formatted = lines
-      .map((line, idx) => {
-        const clean = line.replace(/^(\d+\.|\-|\- \[[ x]\]|>|#+)\s*/, '');
-        if (prefix === '1. ') {
-          return `${idx + 1}. ${clean}`;
-        }
-        return `${prefix}${clean}`;
-      })
-      .join('\n');
-
-    setContent(before + formatted + after);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start, start + formatted.length);
-    }, 0);
-  };
-
-  // Helper for font color formatting
-  const applyFontColor = (colorHex: string) => {
-    if (!colorHex) return;
-    applyInlineFormatting(`<span style="color: ${colorHex}">`, '</span>', 'teks berwarna');
+  // Font color formatting
+  const handleFontColor = (colorHex: string) => {
+    execCmd('foreColor', colorHex);
     setShowColorPopover(false);
   };
 
-  // Helper for highlight formatting
-  const applyHighlight = (bgHex: string, textColor: string) => {
-    applyInlineFormatting(
-      `<mark style="background-color: ${bgHex}; color: ${textColor}; padding: 0.1rem 0.35rem; border-radius: 0.25rem;">`,
-      '</mark>',
-      'teks sorotan'
-    );
+  // Highlighter formatting
+  const handleHighlight = (bgHex: string) => {
+    execCmd('hiliteColor', bgHex);
     setShowHighlightPopover(false);
   };
 
-  // Helper for font family formatting
-  const applyFontFamily = (fontFamily: string) => {
-    if (!fontFamily || fontFamily === 'default') return;
-    applyInlineFormatting(`<span style="font-family: ${fontFamily}">`, '</span>', 'teks dengan font khusus');
+  // Font family formatting
+  const handleFontFamily = (fontFamily: string) => {
+    if (!fontFamily || fontFamily === 'default') {
+      execCmd('fontName', 'Plus Jakarta Sans');
+    } else {
+      execCmd('fontName', fontFamily);
+    }
   };
 
-  // Helper for font size / headings
-  const applyFontSize = (sizeOption: string) => {
+  // Font size / headings formatting
+  const handleFontSize = (sizeOption: string) => {
     switch (sizeOption) {
       case 'h1':
-        applyLineFormatting('# ', 'Judul Utama (H1)');
+        execCmd('formatBlock', '<h1>');
         break;
       case 'h2':
-        applyLineFormatting('## ', 'Sub Judul (H2)');
+        execCmd('formatBlock', '<h2>');
         break;
       case 'h3':
-        applyLineFormatting('### ', 'Poin Penting (H3)');
+        execCmd('formatBlock', '<h3>');
         break;
       case 'large':
-        applyInlineFormatting('<span style="font-size: 1.25em; font-weight: 600;">', '</span>', 'Teks Berukuran Besar');
+        execCmd('fontSize', '5');
         break;
       case 'small':
-        applyInlineFormatting('<small>', '</small>', 'Teks Berukuran Kecil');
+        execCmd('fontSize', '2');
         break;
+      case 'normal':
       default:
+        execCmd('formatBlock', '<p>');
         break;
     }
   };
@@ -325,6 +275,8 @@ export function FullPageEditor({
       return;
     }
 
+    const currentHtmlContent = editorRef.current ? editorRef.current.innerHTML : '';
+
     onSave(
       {
         title: title.trim(),
@@ -334,7 +286,7 @@ export function FullPageEditor({
         duration_minutes: Number(duration) || 30,
         takeaways: [],
         tags: [],
-        content: content.trim(),
+        content: currentHtmlContent,
         code_snippet: codeSnippet.trim() || undefined,
         code_language: codeLanguage,
         image_urls: imageUrls,
@@ -580,44 +532,28 @@ export function FullPageEditor({
           </div>
         </div>
 
-        {/* Card Catatan Lengkap with Rich Essential Formatting Toolbar */}
+        {/* Card Catatan Lengkap with True Visual WYSIWYG Editor */}
         <div className="rounded-2xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-4 sm:p-5 space-y-3 shadow-xs">
-          {/* Card Header & Preview Switch */}
-          <div className="border-b border-[var(--gh-border)] pb-2.5 flex items-center justify-between gap-2">
+          {/* Card Header */}
+          <div className="border-b border-[var(--gh-border)] pb-2 flex items-center justify-between gap-2">
             <div>
               <h3 className="text-xs font-bold text-[var(--gh-text-primary)] flex items-center gap-1.5">
                 <span>📝 Catatan Lengkap</span>
               </h3>
               <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
-                Gunakan toolbar di bawah untuk mengatur font, ukuran, warna, penomoran, dan gaya teks
+                Tulis langsung dengan gaya visual — teks langsung terformat tanpa kode tag!
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowPreview(!showPreview)}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer shadow-2xs ${
-                showPreview
-                  ? 'bg-indigo-500 text-white border-indigo-600 shadow-xs'
-                  : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] border-[var(--gh-border)]'
-              }`}
-              title="Lihat Pratinjau Teks Format"
-            >
-              {showPreview ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span>{showPreview ? 'Sembunyikan Preview' : 'Pratinjau Format'}</span>
-            </button>
           </div>
 
-          {/* Essential Formatting Toolbar */}
+          {/* Visual Formatting Toolbar */}
           <div className="p-2 bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl flex flex-wrap items-center gap-1.5 shadow-2xs">
             {/* 1. Font Family Selector */}
             <div className="flex items-center gap-1 border-r border-[var(--gh-border)] pr-1.5">
               <Type className="w-3.5 h-3.5 text-[var(--gh-text-secondary)] ml-1" />
               <select
-                onChange={(e) => {
-                  applyFontFamily(e.target.value);
-                  e.target.value = 'default';
-                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => handleFontFamily(e.target.value)}
                 defaultValue="default"
                 className="bg-transparent border-none text-[11px] font-bold text-[var(--gh-text-primary)] focus:outline-none cursor-pointer py-1"
                 title="Pilih Jenis Font"
@@ -632,10 +568,8 @@ export function FullPageEditor({
             {/* 2. Ukuran Font / Heading Selector */}
             <div className="flex items-center gap-1 border-r border-[var(--gh-border)] pr-1.5">
               <select
-                onChange={(e) => {
-                  applyFontSize(e.target.value);
-                  e.target.value = 'normal';
-                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onChange={(e) => handleFontSize(e.target.value)}
                 defaultValue="normal"
                 className="bg-transparent border-none text-[11px] font-bold text-[var(--gh-text-primary)] focus:outline-none cursor-pointer py-1"
                 title="Ukuran Font & Heading"
@@ -653,46 +587,61 @@ export function FullPageEditor({
             <div className="flex items-center gap-0.5 border-r border-[var(--gh-border)] pr-1.5">
               <button
                 type="button"
-                onClick={() => applyInlineFormatting('**', '**', 'teks tebal')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('bold');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] font-bold transition-colors cursor-pointer"
-                title="Tebal (Bold) - **teks**"
+                title="Tebal (Bold)"
               >
                 <Bold className="w-3.5 h-3.5" />
               </button>
 
               <button
                 type="button"
-                onClick={() => applyInlineFormatting('*', '*', 'teks miring')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('italic');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Miring (Italic) - *teks*"
+                title="Miring (Italic)"
               >
                 <Italic className="w-3.5 h-3.5" />
               </button>
 
               <button
                 type="button"
-                onClick={() => applyInlineFormatting('<u>', '</u>', 'teks bergaris bawah')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('underline');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Garis Bawah (Underline) - <u>teks</u>"
+                title="Garis Bawah (Underline)"
               >
                 <Underline className="w-3.5 h-3.5" />
               </button>
 
               <button
                 type="button"
-                onClick={() => applyInlineFormatting('~~', '~~', 'teks dicoret')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('strikeThrough');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Coret (Strikethrough) - ~~teks~~"
+                title="Coret (Strikethrough)"
               >
                 <Strikethrough className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* 4. Numbering, Bullets, Checklist */}
+            {/* 4. Numbering, Bullets */}
             <div className="flex items-center gap-0.5 border-r border-[var(--gh-border)] pr-1.5">
               <button
                 type="button"
-                onClick={() => applyLineFormatting('1. ', 'Poin penomoran')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('insertOrderedList');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
                 title="Penomoran (Numbered List) - 1. 2. 3."
               >
@@ -701,20 +650,14 @@ export function FullPageEditor({
 
               <button
                 type="button"
-                onClick={() => applyLineFormatting('- ', 'Poin daftar')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('insertUnorderedList');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
                 title="Daftar Poin (Bullet List) - •"
               >
                 <List className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => applyLineFormatting('- [ ] ', 'Tugas yang harus diselesaikan')}
-                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Daftar Tugas (Checklist) - [ ]"
-              >
-                <ListChecks className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -747,9 +690,12 @@ export function FullPageEditor({
                       <button
                         key={col.name}
                         type="button"
-                        onClick={() => applyFontColor(col.value)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleFontColor(col.value);
+                        }}
                         className="w-7 h-7 rounded-full border border-black/10 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer shadow-2xs"
-                        style={{ backgroundColor: col.value || 'var(--gh-text-primary)' }}
+                        style={{ backgroundColor: col.value === 'inherit' ? 'var(--gh-text-primary)' : col.value }}
                         title={col.name}
                       />
                     ))}
@@ -782,77 +728,63 @@ export function FullPageEditor({
                   <div className="text-[10px] font-bold text-[var(--gh-text-secondary)] px-1">
                     Warna Stabilo:
                   </div>
-                  <div className="grid grid-cols-5 gap-1.5 p-1">
+                  <div className="grid grid-cols-3 gap-1.5 p-1">
                     {HIGHLIGHT_COLORS.map((hl) => (
                       <button
                         key={hl.name}
                         type="button"
-                        onClick={() => applyHighlight(hl.value, hl.text)}
-                        className="w-6 h-6 rounded-md border border-black/10 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer shadow-2xs"
-                        style={{ backgroundColor: hl.value }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleHighlight(hl.value);
+                        }}
+                        className="h-6 rounded-md border border-black/10 flex items-center justify-center hover:scale-105 transition-transform cursor-pointer shadow-2xs text-[10px] font-bold px-1"
+                        style={{ backgroundColor: hl.value === 'transparent' ? 'var(--gh-bg)' : hl.value, color: hl.value === 'transparent' ? 'var(--gh-text-secondary)' : '#000000' }}
                         title={hl.name}
-                      />
+                      >
+                        {hl.value === 'transparent' ? 'Reset' : ''}
+                      </button>
                     ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 7. Extra Elements: Blockquote, Code, Divider */}
+            {/* 7. Extra Elements: Blockquote, Divider */}
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
-                onClick={() => applyLineFormatting('> ', 'Kutipan penting yang menginspirasi...')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('formatBlock', '<blockquote>');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Kutipan (Blockquote) - > teks"
+                title="Kutipan (Blockquote)"
               >
                 <Quote className="w-3.5 h-3.5" />
               </button>
 
               <button
                 type="button"
-                onClick={() => applyInlineFormatting('`', '`', 'kode_singkat')}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  execCmd('insertHorizontalRule');
+                }}
                 className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Kode Singkat (Inline Code) - `kode`"
-              >
-                <Code className="w-3.5 h-3.5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => applyInlineFormatting('\n\n---\n\n', '', '')}
-                className="p-1.5 rounded-lg hover:bg-[var(--gh-surface)] text-[var(--gh-text-primary)] transition-colors cursor-pointer"
-                title="Garis Pembatas Horizontal (---)"
+                title="Garis Pembatas Horizontal"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Live Preview Panel or Textarea */}
-          {showPreview ? (
-            <div className="w-full bg-[var(--gh-bg)] border border-indigo-500/30 rounded-xl p-4 text-xs min-h-[260px] max-h-[420px] overflow-y-auto space-y-2">
-              <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider pb-1 border-b border-[var(--gh-border-subtle)] flex items-center justify-between">
-                <span>👁️ Pratinjau Tampilan Format Catatan</span>
-                <span className="text-[var(--gh-text-tertiary)] font-normal">Sesuai dengan hasil terbit</span>
-              </div>
-              <div className="prose max-w-none text-xs leading-relaxed pt-1">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                  {content || '_Belum ada teks catatan yang ditulis._'}
-                </ReactMarkdown>
-              </div>
-            </div>
-          ) : (
-            <textarea
-              ref={textareaRef}
-              rows={14}
-              required
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Tuliskan materi pembelajaran, catatan penting, atau gunakan toolbar di atas untuk memberi warna, penomoran, font, dan format menarik..."
-              className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-3.5 text-xs text-[var(--gh-text-primary)] placeholder-[var(--gh-text-tertiary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed resize-y min-h-[260px]"
-            />
-          )}
+          {/* Visual WYSIWYG ContentEditable Writing Canvas */}
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            data-placeholder="Tuliskan materi pembelajaran, catatan penting, atau gunakan toolbar di atas untuk memberi warna, penomoran, font, dan format visual secara langsung..."
+            className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-4 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed min-h-[280px] max-h-[500px] overflow-y-auto prose max-w-none shadow-2xs"
+          />
 
           {/* Toolbar on Bottom Right of Card */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -884,7 +816,7 @@ export function FullPageEditor({
               <button
                 type="button"
                 onClick={() => setShowImageInput(!showImageInput)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-xs text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors font-bold cursor-pointer shadow-2xs"
                 title="Sisipkan URL Gambar Web"
               >
                 <span>🔗</span>

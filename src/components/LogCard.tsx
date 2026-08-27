@@ -45,10 +45,12 @@ export function LogCard({
   const commentCount = log.feedback ? log.feedback.length : 0;
   const imageCount = log.image_urls ? log.image_urls.length : 0;
 
-  // Clean snippet content preview
+  // Clean snippet content preview (strips markdown & HTML tags)
   const cleanContent = (log.content || '')
+    .replace(/<[^>]*>/g, ' ')
     .replace(/!\[.*?\]\(.*?\)/g, '')
     .replace(/^#+\s+/gm, '')
+    .replace(/\s+/g, ' ')
     .trim();
 
   const isLongContent = cleanContent.length > 120;

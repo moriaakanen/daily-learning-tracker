@@ -182,3 +182,11 @@ body {
   max-height: 400px;
   object-fit: cover;
 }
+
+/* Rich Editor Placeholder */
+[contenteditable][data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--gh-text-tertiary);
+  pointer-events: none;
+  display: block;
+}
