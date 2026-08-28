@@ -103,6 +103,11 @@ CREATE TABLE IF NOT EXISTS public.learning_logs (
     study_date DATE NOT NULL DEFAULT CURRENT_DATE,
     duration_minutes INTEGER DEFAULT 30,
     resource_urls TEXT[] DEFAULT '{}',
+    image_urls TEXT[] DEFAULT '{}',
+    card_color TEXT DEFAULT 'auto',
+    author_id TEXT,
+    author_name TEXT,
+    author_avatar TEXT,
     is_favorite BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

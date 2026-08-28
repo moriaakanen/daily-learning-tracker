@@ -138,8 +138,11 @@ export async function getAllLogs(): Promise<LearningLog[]> {
     try {
       const remote = await fetchRemoteLogs();
       if (remote && remote.length > 0) {
-        saveLocalLogs(remote);
-        return remote;
+        const local = getLocalLogs();
+        const localOnly = local.filter((l) => l.id.startsWith('local-') || l.id.startsWith('sample-'));
+        const merged = [...remote, ...localOnly.filter((loc) => !remote.some((r) => r.id === loc.id))];
+        saveLocalLogs(merged);
+        return merged;
       }
     } catch (err) {
       console.warn('Failed fetching from Supabase, falling back to local storage', err);
@@ -183,20 +186,7 @@ export async function updateLog(id: string, updates: Partial<LearningLog>): Prom
   const supabase = getSupabaseClient();
   const now = new Date().toISOString();
 
-  if (supabase && !id.startsWith('local-') && !id.startsWith('sample-')) {
-    try {
-      const remoteUpdated = await updateRemoteLog(id, updates);
-      if (remoteUpdated) {
-        const local = getLocalLogs();
-        const nextLogs = local.map((l) => (l.id === id ? { ...l, ...remoteUpdated } : l));
-        saveLocalLogs(nextLogs);
-        return remoteUpdated;
-      }
-    } catch (err) {
-      console.warn('Failed updating on Supabase, applying locally', err);
-    }
-  }
-
+  // 1. Immediately update localStorage
   const local = getLocalLogs();
   let updatedItem: LearningLog | undefined;
   const nextLogs = local.map((l) => {
@@ -206,8 +196,22 @@ export async function updateLog(id: string, updates: Partial<LearningLog>): Prom
     }
     return l;
   });
-
   saveLocalLogs(nextLogs);
+
+  // 2. If connected to Supabase and not a local draft, update remote database
+  if (supabase && !id.startsWith('local-') && !id.startsWith('sample-')) {
+    try {
+      const remoteUpdated = await updateRemoteLog(id, updates);
+      if (remoteUpdated) {
+        const refreshedLocal = getLocalLogs().map((l) => (l.id === id ? { ...l, ...remoteUpdated } : l));
+        saveLocalLogs(refreshedLocal);
+        return remoteUpdated;
+      }
+    } catch (err) {
+      console.warn('Failed updating on Supabase, applied locally:', err);
+    }
+  }
+
   return updatedItem || { ...local[0], ...updates };
 }
 
