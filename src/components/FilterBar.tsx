@@ -268,52 +268,23 @@ export function FilterBar({
         </div>
       )}
 
-      {/* Filter Options Bar: Users + Date Filter + Favorit + Sort */}
+      {/* Filter Options Bar: Date Filter (Left) + Favorit & Sort (Right) */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[var(--gh-border-subtle)]">
-        {/* Left: User Scope & Date Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* User Scope (Semua vs Catatan Saya) */}
-          <div className="flex items-center rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] p-0.5 text-xs shadow-2xs">
+        {/* Left: Date Filter Pills */}
+        <div className="flex items-center rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] p-0.5 text-xs shadow-2xs overflow-x-auto">
+          {dateOptions.map((opt) => (
             <button
-              onClick={() => onFilterChange({ userScope: 'all' })}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                filter.userScope === 'all'
+              key={opt.value}
+              onClick={() => onFilterChange({ dateFilter: opt.value })}
+              className={`px-2.5 py-1 rounded-md transition-all whitespace-nowrap cursor-pointer ${
+                filter.dateFilter === opt.value
                   ? 'bg-[var(--gh-accent)] text-white font-bold shadow-2xs'
                   : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
-              <span>Semua</span>
+              <span>{opt.label}</span>
             </button>
-            <button
-              onClick={handleMineClick}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                filter.userScope === 'mine'
-                  ? 'bg-[var(--gh-accent)] text-white font-bold shadow-2xs'
-                  : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-              }`}
-            >
-              <UserIcon className="w-3.5 h-3.5" />
-              <span>Catatan Saya</span>
-            </button>
-          </div>
-
-          {/* Date Filter Pills */}
-          <div className="flex items-center rounded-lg border border-[var(--gh-border)] bg-[var(--gh-surface)] p-0.5 text-xs shadow-2xs overflow-x-auto">
-            {dateOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => onFilterChange({ dateFilter: opt.value })}
-                className={`px-2.5 py-1 rounded-md transition-all whitespace-nowrap cursor-pointer ${
-                  filter.dateFilter === opt.value
-                    ? 'bg-[var(--gh-accent)] text-white font-bold shadow-2xs'
-                    : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)]'
-                }`}
-              >
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
 
         {/* Right: Favorit Star + Urutan Sort */}

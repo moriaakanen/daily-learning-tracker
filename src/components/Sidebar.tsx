@@ -52,21 +52,14 @@ export function Sidebar({
   isOpenMobile,
   onCloseMobile,
 }: SidebarProps) {
-  const isBerandaActive = activeTab === 'overview';
-  const isCatatanTemanActive = activeTab === 'logs' && filter.userScope === 'all';
+  const isBerandaActive = activeTab === 'overview' || (activeTab === 'logs' && filter.userScope === 'all');
   const isCatatanSayaActive = activeTab === 'logs' && filter.userScope === 'mine';
   const isKuisActive = activeTab === 'quiz';
   const isCatatHasilBelajarActive = activeTab === 'editor';
 
   const handleSelectBeranda = () => {
-    setActiveTab('overview');
-    onCloseMobile();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleSelectCatatanTeman = () => {
     onFilterChange({ userScope: 'all' });
-    setActiveTab('logs');
+    setActiveTab('overview');
     onCloseMobile();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -148,7 +141,7 @@ export function Sidebar({
             Menu Utama
           </div>
 
-          {/* 1. Beranda */}
+          {/* 1. Beranda (Catatan Teman & Catatan Saya) */}
           <button
             onClick={handleSelectBeranda}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
@@ -169,36 +162,10 @@ export function Sidebar({
               </div>
               <span className="text-xs">Beranda</span>
             </div>
-            {isBerandaActive && (
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            )}
-          </button>
-
-          {/* 2. Catatan Teman */}
-          <button
-            onClick={handleSelectCatatanTeman}
-            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-              isCatatanTemanActive
-                ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 shadow-xs'
-                : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-surface-hover)] border border-transparent'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-colors ${
-                  isCatatanTemanActive
-                    ? 'bg-indigo-500 text-white shadow-sm shadow-indigo-500/30'
-                    : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-border)]'
-                }`}
-              >
-                <Users className="w-4 h-4" />
-              </div>
-              <span className="text-xs">Catatan Teman</span>
-            </div>
             <span
               className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
-                isCatatanTemanActive
-                  ? 'bg-indigo-500 text-white border-indigo-500'
+                isBerandaActive
+                  ? 'bg-emerald-500 text-white border-emerald-500'
                   : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] border-[var(--gh-border)]'
               }`}
             >
@@ -206,7 +173,7 @@ export function Sidebar({
             </span>
           </button>
 
-          {/* 3. Catatan Saya */}
+          {/* 2. Catatan Saya */}
           <button
             onClick={handleSelectCatatanSaya}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
@@ -240,7 +207,7 @@ export function Sidebar({
             )}
           </button>
 
-          {/* 4. Kuis Review & Flashcard (Fitur Baru) */}
+          {/* 3. Kuis Review & Flashcard */}
           <button
             onClick={handleSelectKuis}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
