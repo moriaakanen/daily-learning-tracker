@@ -57,7 +57,7 @@ export function GuestLandingPage({
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-lg tracking-tight text-[var(--gh-text-primary)]">
-                Daily<span className="text-emerald-500">Learn</span>
+                Remo<span className="text-emerald-500">ra</span>
               </span>
               <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <Sparkles className="w-2.5 h-2.5 text-amber-400" />
@@ -329,7 +329,7 @@ export function GuestLandingPage({
       {/* 6. FOOTER */}
       <footer className="border-t border-[var(--gh-border)] bg-[var(--gh-surface)] py-6 px-4 sm:px-8 text-center text-xs text-[var(--gh-text-tertiary)] flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span>🌱 <strong>DailyLearn</strong> — Daily Learning Tracker &amp; Active Recall</span>
+          <span>🌱 <strong>Remora</strong> — Jurnal Belajar Harian &amp; Active Recall</span>
         </div>
         <div className="flex items-center gap-3 font-semibold">
           <button

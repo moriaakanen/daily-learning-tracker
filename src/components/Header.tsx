@@ -63,7 +63,7 @@ export function Header({
                 </div>
               </div>
               <span className="font-extrabold text-sm tracking-tight text-[var(--gh-text-primary)]">
-                Daily<span className="text-emerald-500">Learn</span>
+                Remo<span className="text-emerald-500">ra</span>
               </span>
             </div>
 

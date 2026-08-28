@@ -110,7 +110,7 @@ export function UserLoginModal({
           <div className="flex items-center gap-2">
             <BookMarked className="w-5 h-5 text-[var(--gh-accent)]" />
             <span className="font-semibold text-xs tracking-wide text-[var(--gh-text-primary)]">
-              Daily LearnLog
+              Remora
             </span>
           </div>
 

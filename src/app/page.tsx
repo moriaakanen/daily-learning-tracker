@@ -747,7 +747,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-[var(--gh-text-tertiary)]" />
-            <span>&copy; {new Date().getFullYear()} Daily LearnLog • GitHub Primer Style</span>
+            <span>&copy; {new Date().getFullYear()} Remora • Jurnal Belajar &amp; Active Recall</span>
           </div>
           <div className="flex items-center gap-4 text-[var(--gh-accent)]">
             {currentUser ? (
