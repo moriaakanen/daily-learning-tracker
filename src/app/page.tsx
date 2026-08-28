@@ -20,6 +20,7 @@ import { TimelineView } from '@/components/TimelineView';
 import { LogDetailModal } from '@/components/LogDetailModal';
 import { FullPageEditor } from '@/components/FullPageEditor';
 import { QuizView } from '@/components/QuizView';
+import { GuestLandingPage } from '@/components/GuestLandingPage';
 import { UserLoginModal } from '@/components/UserLoginModal';
 import { SettingsModal } from '@/components/SettingsModal';
 import {
@@ -68,6 +69,7 @@ export default function Home() {
 
   // User Auth State
   const [currentUser, setCurrentUserState] = useState<User | null>(null);
+  const [isGuestExploring, setIsGuestExploring] = useState(false);
   const [teamUsers, setTeamUsers] = useState<User[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
@@ -128,12 +130,15 @@ export default function Home() {
   const handleLoginSuccess = (user: User) => {
     setCurrentUserState(user);
     setCurrentUser(user);
+    setIsGuestExploring(false);
+    setIsUserModalOpen(false);
     setTeamUsers(getTeamUsers());
   };
 
   const handleLogout = () => {
     logoutUser();
     setCurrentUserState(null);
+    setIsGuestExploring(false);
     if (filter.userScope === 'mine') {
       setFilter((prev) => ({ ...prev, userScope: 'all' }));
     }
@@ -344,6 +349,42 @@ export default function Home() {
     saveLocalLogs(INITIAL_LOGS);
   };
 
+  // If user is guest (not logged in) and not explicitly exploring yet, show the cheerful Medium-style GuestLandingPage
+  if (!currentUser && !isGuestExploring) {
+    return (
+      <>
+        <GuestLandingPage
+          teamUsers={teamUsers}
+          onSelectUserLogin={handleLoginSuccess}
+          onOpenCustomLogin={() => setIsUserModalOpen(true)}
+          onExploreAsGuest={() => setIsGuestExploring(true)}
+          totalLogsCount={logs.length}
+        />
+
+        {isUserModalOpen && (
+          <UserLoginModal
+            isOpen={isUserModalOpen}
+            onClose={() => setIsUserModalOpen(false)}
+            currentUser={currentUser}
+            onLoginSuccess={handleLoginSuccess}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {isSettingsOpen && (
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            logs={logs}
+            onImportLogs={handleImportLogs}
+            onResetSampleData={handleResetSampleData}
+            onSupabaseStatusChange={loadData}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen flex bg-[var(--gh-bg)] text-[var(--gh-text-primary)] transition-colors">
       {/* Cheerful Left Sidebar */}
@@ -434,30 +475,39 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Guest Banner if not logged in */}
+            {/* Guest Banner if exploring without login */}
             {!currentUser && (
-              <div className="mb-6 p-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs">
+              <div className="mb-6 p-4 rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-lg shrink-0">
-                    🔑
+                  <div className="w-9 h-9 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-base shrink-0">
+                    👀
                   </div>
                   <div>
-                    <div className="font-bold text-xs text-[var(--gh-text-primary)]">
-                      Portal Pembelajaran Tim (Mode Baca)
+                    <div className="font-extrabold text-xs text-[var(--gh-text-primary)]">
+                      Menjelajah dalam Mode Baca Publik
                     </div>
                     <div className="text-[11px] text-[var(--gh-text-secondary)] mt-0.5 font-medium">
-                      Masuk dengan username dan password Anda untuk mulai mencatat materi harian, upload foto, dan diskusi seru!
+                      Masuk ke akun tim untuk mulai mencatat materi baru, upload gambar, dan berdiskusi.
                     </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsUserModalOpen(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-sm shrink-0 text-xs cursor-pointer"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span>Masuk Sekarang</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsGuestExploring(false)}
+                    className="px-3 py-1.5 rounded-full border border-[var(--gh-border)] bg-[var(--gh-surface)] hover:bg-[var(--gh-surface-hover)] text-[var(--gh-text-secondary)] font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Halaman Depan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsUserModalOpen(true)}
+                    className="flex items-center gap-1 px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-xs text-xs cursor-pointer"
+                  >
+                    <LogIn className="w-3 h-3" />
+                    <span>Masuk Akun</span>
+                  </button>
+                </div>
               </div>
             )}
 
