@@ -34,6 +34,7 @@ import {
   AlertCircle,
   Sparkles,
   Smile,
+  Trash2,
 } from 'lucide-react';
 import { LearningLog, User } from '@/types';
 import { compressImage } from '@/lib/imageUtils';
@@ -168,10 +169,84 @@ export function FullPageEditor({
 
   const draftKey = initialLog ? `daily_learning_draft_${initialLog.id}` : 'daily_learning_draft_new';
   const [draftStatus, setDraftStatus] = useState<string>('');
+  const [showDiscardModal, setShowDiscardModal] = useState(false);
+
+  // Helper to save draft to localStorage immediately on any change or input
+  const saveDraftToLocalStorage = () => {
+    if (typeof window === 'undefined') return;
+    const currentContent = editorRef.current?.innerHTML || '';
+    if (title.trim() || category.trim() || currentContent.trim() || codeSnippet.trim() || imageUrls.length > 0) {
+      const draftData = {
+        title,
+        category,
+        topicInput,
+        cardColor,
+        studyDate,
+        duration,
+        codeSnippet,
+        codeLanguage,
+        isFavorite,
+        imageUrls,
+        content: currentContent,
+        savedAt: new Date().toLocaleTimeString(),
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draftData));
+      setDraftStatus('💾 Draf tersimpan otomatis');
+    }
+  };
+
+  // Automatically save unsaved draft on every change to prevent data loss
+  useEffect(() => {
+    saveDraftToLocalStorage();
+  }, [title, category, topicInput, cardColor, studyDate, duration, codeSnippet, codeLanguage, isFavorite, imageUrls]);
+
+  // Hook into beforeunload to guarantee draft is saved before browser refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveDraftToLocalStorage();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [title, category, topicInput, cardColor, studyDate, duration, codeSnippet, codeLanguage, isFavorite, imageUrls]);
 
   // Initialize, restore draft from localStorage, or reset content in visual editor
   useEffect(() => {
     if (typeof window === 'undefined') return;
+
+    // Check if there is an unsaved draft in localStorage for this note
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.title || parsed.content || parsed.category || parsed.codeSnippet) {
+          setTitle(parsed.title || initialLog?.title || '');
+          setCategory(parsed.category || initialLog?.category || '');
+          setTopicInput(parsed.topicInput || parsed.category || initialLog?.category || '');
+          setCardColor(parsed.cardColor || initialLog?.card_color || 'auto');
+          const draftDate = parsed.studyDate || initialLog?.study_date || new Date().toISOString().split('T')[0];
+          setStudyDate(draftDate);
+          setDateInputVal(draftDate);
+          const parsedD = new Date(draftDate);
+          if (!isNaN(parsedD.getTime())) {
+            setCalViewDate(parsedD);
+          }
+          validateDateString(draftDate);
+          setDuration(parsed.duration || initialLog?.duration_minutes || 30);
+          setCodeSnippet(parsed.codeSnippet || initialLog?.code_snippet || '');
+          setCodeLanguage(parsed.codeLanguage || initialLog?.code_language || 'javascript');
+          setIsFavorite(parsed.isFavorite !== undefined ? !!parsed.isFavorite : !!initialLog?.is_favorite);
+          setImageUrls(parsed.imageUrls || initialLog?.image_urls || []);
+
+          if (editorRef.current) {
+            editorRef.current.innerHTML = parsed.content || initialLog?.content || '';
+          }
+          setDraftStatus('✨ Draf tersimpan dipulihkan!');
+          return;
+        }
+      } catch (e) {
+        console.error('Error parsing draft:', e);
+      }
+    }
 
     if (initialLog) {
       setTitle(initialLog.title || '');
@@ -197,41 +272,6 @@ export function FullPageEditor({
         editorRef.current.innerHTML = initialLog.content || '';
       }
     } else {
-      // Check if there is an unsaved draft in localStorage
-      const savedDraft = localStorage.getItem('daily_learning_draft_new');
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          if (parsed.title || parsed.content || parsed.category || parsed.codeSnippet) {
-            setTitle(parsed.title || '');
-            setCategory(parsed.category || '');
-            setTopicInput(parsed.topicInput || parsed.category || '');
-            setCardColor(parsed.cardColor || 'auto');
-            const draftDate = parsed.studyDate || new Date().toISOString().split('T')[0];
-            setStudyDate(draftDate);
-            setDateInputVal(draftDate);
-            const parsedD = new Date(draftDate);
-            if (!isNaN(parsedD.getTime())) {
-              setCalViewDate(parsedD);
-            }
-            validateDateString(draftDate);
-            setDuration(parsed.duration || 30);
-            setCodeSnippet(parsed.codeSnippet || '');
-            setCodeLanguage(parsed.codeLanguage || 'javascript');
-            setIsFavorite(!!parsed.isFavorite);
-            setImageUrls(parsed.imageUrls || []);
-
-            if (editorRef.current) {
-              editorRef.current.innerHTML = parsed.content || '';
-            }
-            setDraftStatus('✨ Draf yang belum tersimpan dipulihkan otomatis!');
-            return;
-          }
-        } catch (e) {
-          console.error('Error parsing draft:', e);
-        }
-      }
-
       // Default empty state
       setTitle('');
       setCategory('');
@@ -252,37 +292,31 @@ export function FullPageEditor({
         editorRef.current.innerHTML = '';
       }
     }
-  }, [initialLog]);
-
-  // Automatically save unsaved draft on every change to prevent data loss
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (initialLog) return; // Only auto-save draft for new notes
-
-    const currentContent = editorRef.current?.innerHTML || '';
-    if (title.trim() || category.trim() || currentContent.trim() || codeSnippet.trim() || imageUrls.length > 0) {
-      const draftData = {
-        title,
-        category,
-        topicInput,
-        cardColor,
-        studyDate,
-        duration,
-        codeSnippet,
-        codeLanguage,
-        isFavorite,
-        imageUrls,
-        content: currentContent,
-        savedAt: new Date().toLocaleTimeString(),
-      };
-      localStorage.setItem('daily_learning_draft_new', JSON.stringify(draftData));
-      setDraftStatus('💾 Tersimpan otomatis di peramban');
-    }
-  }, [title, category, topicInput, cardColor, studyDate, duration, codeSnippet, codeLanguage, isFavorite, imageUrls, initialLog]);
+  }, [initialLog, draftKey]);
 
   const handleDiscardDraft = () => {
-    if (confirm('Hapus draf catatan yang belum tersimpan dan mulai dengan form kosong?')) {
-      localStorage.removeItem('daily_learning_draft_new');
+    setShowDiscardModal(true);
+  };
+
+  const confirmDiscardDraft = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(draftKey);
+    }
+    if (initialLog) {
+      setTitle(initialLog.title || '');
+      setCategory(initialLog.category || '');
+      setTopicInput(initialLog.category || '');
+      setCardColor(initialLog.card_color || 'auto');
+      const initDate = initialLog.study_date || new Date().toISOString().split('T')[0];
+      setStudyDate(initDate);
+      setDateInputVal(initDate);
+      setDuration(initialLog.duration_minutes || 30);
+      setCodeSnippet(initialLog.code_snippet || '');
+      setImageUrls(initialLog.image_urls || []);
+      if (editorRef.current) {
+        editorRef.current.innerHTML = initialLog.content || '';
+      }
+    } else {
       setTitle('');
       setCategory('');
       setTopicInput('');
@@ -296,8 +330,9 @@ export function FullPageEditor({
       if (editorRef.current) {
         editorRef.current.innerHTML = '';
       }
-      setDraftStatus('');
     }
+    setDraftStatus('');
+    setShowDiscardModal(false);
   };
 
   // Strict Date Validation Rule
@@ -385,10 +420,11 @@ export function FullPageEditor({
     setCalViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  // Filter categories based on search input
-  const filteredCategories = categories.filter((c) =>
-    c.toLowerCase().includes(topicInput.toLowerCase())
-  );
+  // Show all categories when opening or if input matches current selected category, otherwise filter by search term
+  const isInputMatchingCategory = category && topicInput.trim().toLowerCase() === category.trim().toLowerCase();
+  const filteredCategories = isInputMatchingCategory || !topicInput.trim()
+    ? categories
+    : categories.filter((c) => c.toLowerCase().includes(topicInput.toLowerCase()));
 
   const canCreateNewTopic =
     topicInput.trim().length > 0 &&
@@ -983,9 +1019,10 @@ export function FullPageEditor({
                       setIsTopicOpen(true);
                       setHighlightedTopicIndex(-1);
                     }}
-                    onFocus={() => {
+                    onFocus={(e) => {
                       setIsTopicOpen(true);
                       setHighlightedTopicIndex(-1);
+                      e.target.select();
                     }}
                     onKeyDown={handleTopicKeyDown}
                     placeholder="Ketik atau pilih topik..."
@@ -1625,6 +1662,9 @@ export function FullPageEditor({
             contentEditable
             suppressContentEditableWarning
             onKeyDown={handleKeyDown}
+            onInput={saveDraftToLocalStorage}
+            onKeyUp={saveDraftToLocalStorage}
+            onBlur={saveDraftToLocalStorage}
             data-placeholder="Tuliskan materi pembelajaran, catatan penting, atau gunakan toolbar & shortcut keyboard (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+1/2/3, dll)..."
             className="w-full bg-[var(--gh-bg)] border border-[var(--gh-border)] rounded-xl p-4 text-xs text-[var(--gh-text-primary)] focus:outline-none focus:border-indigo-500 font-sans leading-relaxed min-h-[280px] max-h-[500px] overflow-y-auto prose max-w-none shadow-2xs"
           />
@@ -1837,6 +1877,51 @@ export function FullPageEditor({
                 className="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all cursor-pointer"
               >
                 Mengerti, Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom CSS Modal: Konfirmasi Buang Draf */}
+      {showDiscardModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setShowDiscardModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm rounded-3xl border border-[var(--gh-border)] bg-[var(--gh-surface)] p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-xl shrink-0 text-rose-500">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-[var(--gh-text-primary)]">
+                  Buang Draf Catatan?
+                </h3>
+                <p className="text-xs text-[var(--gh-text-secondary)] leading-relaxed font-medium">
+                  Perubahan catatan yang belum tersimpan akan dihapus dari peramban dan formulir akan dikosongkan.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--gh-border)]">
+              <button
+                type="button"
+                onClick={() => setShowDiscardModal(false)}
+                className="px-4 py-2 rounded-full border border-[var(--gh-border)] bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] text-xs font-bold text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDiscardDraft}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white text-xs font-bold shadow-md shadow-rose-500/25 transition-all cursor-pointer active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Buang Draf</span>
               </button>
             </div>
           </div>
