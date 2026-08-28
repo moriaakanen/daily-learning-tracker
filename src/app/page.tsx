@@ -23,6 +23,7 @@ import { QuizView } from '@/components/QuizView';
 import { GuestLandingPage } from '@/components/GuestLandingPage';
 import { UserLoginModal } from '@/components/UserLoginModal';
 import { SettingsModal } from '@/components/SettingsModal';
+import { MemoraMascot } from '@/components/MemoraMascot';
 import {
   getAllLogs,
   createLog,
@@ -785,6 +786,14 @@ export default function Home() {
         </div>
       </footer>
       </div>
+
+      {/* Floating Animated Memora Mascot Companion (Right Side) */}
+      <MemoraMascot
+        currentStreak={stats.currentStreak}
+        totalLogsCount={logs.length}
+        onNavigateTab={setActiveTab}
+        onOpenNewEntry={handleOpenNewEntry}
+      />
 
       {/* Reading & Feedback Modal */}
       <LogDetailModal
