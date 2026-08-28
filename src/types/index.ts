@@ -81,3 +81,50 @@ export interface SupabaseConfig {
   anonKey: string;
   isConnected: boolean;
 }
+
+// =========================================================================
+// QUIZ & FLASHCARD TYPES
+// =========================================================================
+
+export type QuizMode = 'multiple_choice' | 'flashcard';
+
+export interface QuizOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+}
+
+export interface QuizQuestion {
+  id: string;
+  sourceLogId: string;
+  sourceLogTitle: string;
+  category: string;
+  type: 'definition' | 'purpose' | 'takeaway' | 'term_identification' | 'comparison' | 'rule';
+  question: string;
+  options: QuizOption[];
+  correctAnswerText: string;
+  explanation: string;
+}
+
+export interface FlashcardItem {
+  id: string;
+  sourceLogId: string;
+  sourceLogTitle: string;
+  category: string;
+  frontPrompt: string;
+  backAnswer: string;
+  takeaways?: string[];
+  codeSnippet?: string;
+  codeLanguage?: string;
+}
+
+export interface QuizAnswerRecord {
+  questionId: string;
+  selectedOptionId: string | null;
+  isCorrect: boolean;
+  sourceLogId: string;
+  sourceLogTitle: string;
+  question: string;
+  correctAnswerText: string;
+  explanation: string;
+}

@@ -19,6 +19,7 @@ import { LogCard } from '@/components/LogCard';
 import { TimelineView } from '@/components/TimelineView';
 import { LogDetailModal } from '@/components/LogDetailModal';
 import { FullPageEditor } from '@/components/FullPageEditor';
+import { QuizView } from '@/components/QuizView';
 import { UserLoginModal } from '@/components/UserLoginModal';
 import { SettingsModal } from '@/components/SettingsModal';
 import {
@@ -74,7 +75,7 @@ export default function Home() {
   const [activeTab, setActiveTabState] = useState<ActiveTab>(() => {
     if (typeof window !== 'undefined') {
       const savedTab = localStorage.getItem('daily_learning_active_tab') as ActiveTab;
-      if (savedTab && ['overview', 'logs', 'editor'].includes(savedTab)) {
+      if (savedTab && ['overview', 'logs', 'editor', 'quiz'].includes(savedTab)) {
         return savedTab;
       }
     }
@@ -395,6 +396,14 @@ export default function Home() {
             onSave={handleCreateOrUpdateLog}
             onCancel={() => setActiveTab('overview')}
             onAddCategory={handleAddCustomCategory}
+          />
+        ) : activeTab === 'quiz' ? (
+          <QuizView
+            logs={logs}
+            categories={categoriesList}
+            onSelectLog={setSelectedLog}
+            onBackToHome={() => setActiveTab('overview')}
+            onOpenNewLog={handleOpenNewEntry}
           />
         ) : (
           <>

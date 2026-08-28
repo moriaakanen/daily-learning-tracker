@@ -12,11 +12,12 @@ import {
   LogIn,
   LogOut,
   X,
-  BookOpen,
+  Brain,
+  HelpCircle,
 } from 'lucide-react';
 import { User, FilterState } from '@/types';
 
-export type ActiveTab = 'overview' | 'logs' | 'editor';
+export type ActiveTab = 'overview' | 'logs' | 'editor' | 'quiz';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -54,6 +55,7 @@ export function Sidebar({
   const isBerandaActive = activeTab === 'overview';
   const isCatatanTemanActive = activeTab === 'logs' && filter.userScope === 'all';
   const isCatatanSayaActive = activeTab === 'logs' && filter.userScope === 'mine';
+  const isKuisActive = activeTab === 'quiz';
   const isCatatHasilBelajarActive = activeTab === 'editor';
 
   const handleSelectBeranda = () => {
@@ -80,6 +82,12 @@ export function Sidebar({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleSelectKuis = () => {
+    setActiveTab('quiz');
+    onCloseMobile();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSelectCatatHasilBelajar = () => {
     onOpenNewEntry();
     onCloseMobile();
@@ -88,9 +96,9 @@ export function Sidebar({
   const content = (
     <div className="flex flex-col h-full justify-between p-4 sm:p-5 select-none">
       {/* Top: Brand Header */}
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={handleSelectBeranda}>
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center shrink-0">
               <div className="w-full h-full bg-[var(--gh-surface)] rounded-[14px] flex items-center justify-center text-xl">
                 🌱
@@ -230,6 +238,33 @@ export function Sidebar({
                 {myLogsCount}
               </span>
             )}
+          </button>
+
+          {/* 4. Kuis Review & Flashcard (Fitur Baru) */}
+          <button
+            onClick={handleSelectKuis}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+              isKuisActive
+                ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-xs'
+                : 'text-[var(--gh-text-secondary)] hover:text-[var(--gh-text-primary)] hover:bg-[var(--gh-surface-hover)] border border-transparent'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-colors ${
+                  isKuisActive
+                    ? 'bg-gradient-to-tr from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/30'
+                    : 'bg-[var(--gh-bg)] text-[var(--gh-text-secondary)] border border-[var(--gh-border)]'
+                }`}
+              >
+                <Brain className="w-4 h-4" />
+              </div>
+              <span className="text-xs">Kuis Review</span>
+            </div>
+            <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+              <Sparkles className="w-2.5 h-2.5" />
+              <span>Recall</span>
+            </span>
           </button>
         </div>
       </div>
