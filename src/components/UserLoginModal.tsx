@@ -108,9 +108,9 @@ export function UserLoginModal({
         {/* Header with Close */}
         <div className="flex items-center justify-between px-5 pt-4 pb-2">
           <div className="flex items-center gap-2">
-            <BookMarked className="w-5 h-5 text-[var(--gh-accent)]" />
-            <span className="font-semibold text-xs tracking-wide text-[var(--gh-text-primary)]">
-              Remora
+            <img src="./logo.png" alt="Memora Logo" className="w-5 h-5 object-contain rounded-md" />
+            <span className="font-bold text-xs tracking-wide text-[var(--gh-text-primary)]">
+              Memora
             </span>
           </div>
 

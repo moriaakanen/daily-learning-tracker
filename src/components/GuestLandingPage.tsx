@@ -48,16 +48,20 @@ export function GuestLandingPage({
       {/* 1. TOP NAVBAR */}
       <header className="sticky top-0 z-40 backdrop-blur-md bg-[var(--gh-surface)]/80 border-b border-[var(--gh-border)] px-4 sm:px-8 py-3.5 flex items-center justify-between transition-all">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center shrink-0">
-            <div className="w-full h-full bg-[var(--gh-surface)] rounded-[14px] flex items-center justify-center text-xl">
-              🌱
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="w-full h-full bg-[var(--gh-surface)] rounded-[14px] flex items-center justify-center overflow-hidden p-0.5">
+              <img
+                src="./logo.png"
+                alt="Memora Logo"
+                className="w-full h-full object-contain rounded-[12px]"
+              />
             </div>
           </div>
 
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-lg tracking-tight text-[var(--gh-text-primary)]">
-                Remo<span className="text-emerald-500">ra</span>
+                Memo<span className="text-emerald-500">ra</span>
               </span>
               <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                 <Sparkles className="w-2.5 h-2.5 text-amber-400" />
@@ -329,7 +333,8 @@ export function GuestLandingPage({
       {/* 6. FOOTER */}
       <footer className="border-t border-[var(--gh-border)] bg-[var(--gh-surface)] py-6 px-4 sm:px-8 text-center text-xs text-[var(--gh-text-tertiary)] flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span>🌱 <strong>Remora</strong> — Jurnal Belajar Harian &amp; Active Recall</span>
+          <img src="./logo.png" alt="Memora" className="w-4 h-4 object-contain rounded-full" />
+          <span><strong>Memora</strong> — Jurnal Belajar Harian &amp; Active Recall</span>
         </div>
         <div className="flex items-center gap-3 font-semibold">
           <button

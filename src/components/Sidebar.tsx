@@ -92,16 +92,20 @@ export function Sidebar({
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={handleSelectBeranda}>
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center shrink-0">
-              <div className="w-full h-full bg-[var(--gh-surface)] rounded-[14px] flex items-center justify-center text-xl">
-                🌱
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-400 via-teal-500 to-indigo-500 p-0.5 shadow-md shadow-emerald-500/20 flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="w-full h-full bg-[var(--gh-surface)] rounded-[14px] flex items-center justify-center overflow-hidden p-0.5">
+                <img
+                  src="./logo.png"
+                  alt="Memora Logo"
+                  className="w-full h-full object-contain rounded-[12px]"
+                />
               </div>
             </div>
 
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight text-[var(--gh-text-primary)]">
-                  Remo<span className="text-emerald-500">ra</span>
+                  Memo<span className="text-emerald-500">ra</span>
                 </span>
                 <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <Sparkles className="w-2.5 h-2.5 text-amber-400" />

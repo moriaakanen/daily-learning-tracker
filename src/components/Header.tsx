@@ -57,13 +57,17 @@ export function Header({
             )}
 
             <div className="flex md:hidden items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-400 to-indigo-500 p-0.5 shadow-xs flex items-center justify-center shrink-0">
-                <div className="w-full h-full bg-[var(--gh-surface)] rounded-[10px] flex items-center justify-center text-sm">
-                  🌱
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-400 to-indigo-500 p-0.5 shadow-xs flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-full h-full bg-[var(--gh-surface)] rounded-[10px] flex items-center justify-center overflow-hidden p-0.5">
+                  <img
+                    src="./logo.png"
+                    alt="Memora Logo"
+                    className="w-full h-full object-contain rounded-[8px]"
+                  />
                 </div>
               </div>
               <span className="font-extrabold text-sm tracking-tight text-[var(--gh-text-primary)]">
-                Remo<span className="text-emerald-500">ra</span>
+                Memo<span className="text-emerald-500">ra</span>
               </span>
             </div>
 

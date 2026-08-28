@@ -80,7 +80,7 @@ export function SettingsModal({
 
   const handleCopySql = () => {
     const sql = `-- ================================================================
--- Remora - Supabase Database Schema
+-- Memora - Supabase Database Schema
 -- ================================================================
 
 CREATE TABLE IF NOT EXISTS public.categories (
@@ -135,7 +135,7 @@ CREATE POLICY "Allow public all on categories" ON public.categories FOR ALL USIN
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(logs, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', `remora-backup-${new Date().toISOString().split('T')[0]}.json`);
+    downloadAnchor.setAttribute('download', `memora-backup-${new Date().toISOString().split('T')[0]}.json`);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();

@@ -185,7 +185,7 @@ export function QuizView({
             </h1>
 
             <p className="text-xs sm:text-sm text-[var(--gh-text-secondary)] font-medium leading-relaxed max-w-2xl">
-              Sistem pintar Remora secara otomatis mengekstrak gagasan kunci, istilah, dan definisi dari catatan yang pernah kamu tulis menjadi kuis interaktif yang seru!
+              Sistem pintar Memora secara otomatis mengekstrak gagasan kunci, istilah, dan definisi dari catatan yang pernah kamu tulis menjadi kuis interaktif yang seru!
             </p>
           </div>
         </div>

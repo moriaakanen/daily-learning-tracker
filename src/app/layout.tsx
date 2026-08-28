@@ -2,8 +2,13 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Remora · Jurnal Belajar Harian & Active Recall',
+  title: 'Memora · Jurnal Belajar Harian & Active Recall',
   description: 'Platform cerdas untuk mencatat hasil belajar harian, kuis active recall otomatis, dan kolaborasi tim.',
+  icons: {
+    icon: './favicon.png',
+    shortcut: './favicon.ico',
+    apple: './logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -14,6 +19,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="dark">
       <head>
+        <link rel="icon" href="./favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="./logo.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
