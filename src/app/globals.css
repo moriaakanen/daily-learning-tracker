@@ -157,18 +157,31 @@ body {
   }
 }
 
-@keyframes spinJoyful {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.2); }
-  100% { transform: rotate(360deg) scale(1); }
-}
-
-.animate-bubble-drift-1 {
-  animation: bubbleDrift1 3s ease-in-out infinite;
-}
-
-.animate-bubble-drift-2 {
-  animation: bubbleDrift2 2.5s ease-in-out infinite;
+@keyframes bubbleAscendLong {
+  0% {
+    transform: translateY(0px) translateX(0px) scale(0.6);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+    transform: translateY(-40px) translateX(4px) scale(0.8);
+  }
+  35% {
+    transform: translateY(-140px) translateX(-6px) scale(1);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translateY(-260px) translateX(8px) scale(1.1);
+    opacity: 0.75;
+  }
+  85% {
+    transform: translateY(-380px) translateX(-4px) scale(1.18);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translateY(-480px) translateX(6px) scale(1.25);
+    opacity: 0;
+  }
 }
 
 .animate-spin-joyful {
