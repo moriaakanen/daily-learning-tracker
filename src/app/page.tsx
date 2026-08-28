@@ -10,6 +10,7 @@ import {
   User as UserIcon,
   LogIn,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Sidebar, ActiveTab } from '@/components/Sidebar';
@@ -42,6 +43,7 @@ import {
   logoutUser,
   getTeamUsers,
 } from '@/lib/auth';
+import { getTimeBasedGreeting, getRandomMemoraQuote, MemoraQuote } from '@/lib/greetings';
 import { getSupabaseClient } from '@/lib/supabase';
 import { LearningLog, FilterState, ViewMode, User } from '@/types';
 
@@ -315,6 +317,20 @@ export default function Home() {
     return calculateStats(logs);
   }, [logs]);
 
+  // Dynamic Time-based Greeting & Random Motivational Quote State
+  const [currentQuote, setCurrentQuote] = useState<MemoraQuote>(() => getRandomMemoraQuote());
+  const [greetingInfo, setGreetingInfo] = useState<{ greeting: string; iconEmoji: string }>(() =>
+    getTimeBasedGreeting(currentUser?.name || '', 0)
+  );
+
+  useEffect(() => {
+    setGreetingInfo(getTimeBasedGreeting(currentUser?.name || '', stats.currentStreak));
+  }, [currentUser, stats.currentStreak]);
+
+  const handleRefreshQuote = () => {
+    setCurrentQuote((prev) => getRandomMemoraQuote(prev.text));
+  };
+
   const handleOpenNewEntry = () => {
     if (!currentUser) {
       setIsUserModalOpen(true);
@@ -520,20 +536,34 @@ export default function Home() {
           />
         ) : (
           <>
-            {/* Cheerful Greeting & Motivation Banner */}
+            {/* Cheerful Time-Based Greeting & Random Motivational Quote Banner */}
             <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-[var(--gh-border)] bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-indigo-500/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-base sm:text-lg font-extrabold text-[var(--gh-text-primary)]">
-                    ✨ Semangat {new Date().getHours() < 12 ? 'Pagi' : new Date().getHours() < 18 ? 'Siang' : 'Malam'}, {currentUser ? currentUser.name.split(' ')[0] : 'Sahabat Pembelajar'}!
+                    {greetingInfo.greeting}
                   </span>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400">
                     🔥 {stats.currentStreak} Hari Streak
                   </span>
                 </div>
-                <p className="text-xs text-[var(--gh-text-secondary)] font-medium leading-relaxed max-w-xl">
-                  &ldquo;Setiap hal kecil yang kamu pelajari hari ini membuatmu 1% lebih bijak dari kemarin. Terus eksplorasi ya! 🌱&rdquo;
-                </p>
+                <div className="flex items-start gap-2 max-w-xl group">
+                  <p className="text-xs text-[var(--gh-text-secondary)] font-medium leading-relaxed italic animate-in fade-in duration-300">
+                    &ldquo;{currentQuote.text}&rdquo;{' '}
+                    {currentQuote.author && (
+                      <span className="not-italic text-[10px] font-bold text-emerald-600 dark:text-emerald-400 opacity-90">
+                        — {currentQuote.author}
+                      </span>
+                    )}
+                  </p>
+                  <button
+                    onClick={handleRefreshQuote}
+                    className="p-1 rounded-full text-[var(--gh-text-tertiary)] hover:text-emerald-500 hover:bg-[var(--gh-surface)] transition-all cursor-pointer shrink-0"
+                    title="Ganti quote motivasi baru"
+                  >
+                    <RefreshCw className="w-3 h-3 hover:rotate-180 transition-transform duration-300" />
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
