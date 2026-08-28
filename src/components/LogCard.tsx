@@ -56,11 +56,16 @@ export function LogCard({
   const commentCount = log.feedback ? log.feedback.length : 0;
   const imageCount = log.image_urls ? log.image_urls.length : 0;
 
-  // Clean snippet content preview (strips markdown & HTML tags)
+  // Clean snippet content preview (strips all markdown, brackets, asterisks, bullet dashes, & HTML tags)
   const cleanContent = (log.content || '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/^#+\s+/gm, '')
+    .replace(/<[^>]*>/g, ' ') // Strip HTML tags
+    .replace(/!\[.*?\]\(.*?\)/g, '') // Strip markdown images
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Convert markdown links to plain text
+    .replace(/^#+\s+/gm, '') // Strip headings
+    .replace(/^\s*[-*+]\s+/gm, '') // Strip unordered list bullets
+    .replace(/^\s*\d+\.\s+/gm, '') // Strip ordered list numbers
+    .replace(/^\s*>\s+/gm, '') // Strip blockquotes
+    .replace(/[*_~`]{1,3}/g, '') // Strip bold, italic, strikethrough, backticks (**text** -> text)
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -110,29 +115,28 @@ export function LogCard({
   };
 
   // =========================================================================
-  // 1. TAMPILAN VERTIKAL (Modern Motivational Journal Feed)
+  // 1. TAMPILAN VERTIKAL (Option 1: Sleek Linear & Notion Glass)
   // =========================================================================
   if (viewMode === 'vertical') {
     return (
       <>
         <div
-          className="group relative flex flex-col justify-between rounded-2xl border border-[var(--gh-border)] p-5 sm:p-6 transition-all duration-300 shadow-xs hover:shadow-lg hover:-translate-y-0.5 overflow-hidden"
+          onClick={() => onSelect(log)}
+          className="group relative flex flex-col justify-between rounded-2xl border border-[var(--gh-border)] hover:border-emerald-500/50 p-5 sm:p-6 transition-all duration-200 shadow-2xs hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-0.5 overflow-hidden bg-[var(--gh-surface)] cursor-pointer"
           style={{
-            borderLeftWidth: '6px',
-            borderLeftColor: theme.borderLeft,
             backgroundColor: theme.cardBg !== 'transparent' ? theme.cardBg : 'var(--gh-surface)',
           }}
         >
           {/* Subtle Ambient Glow on top right */}
           <div
-            className="absolute -right-12 -top-12 w-32 h-32 rounded-full blur-2xl opacity-15 pointer-events-none transition-opacity group-hover:opacity-30"
-            style={{ background: theme.color }}
+            className="absolute -right-12 -top-12 w-32 h-32 rounded-full blur-3xl opacity-10 pointer-events-none transition-opacity group-hover:opacity-25"
+            style={{ background: theme.color || '#10b981' }}
           />
 
           <div>
-            {/* Header: Topic Badge + Date + Duration + Motivational Chip + Action Toolbar */}
+            {/* Header: Topic Badge + Duration + Motivational Chip + Action Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-2.5 mb-3.5">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                 {/* Topic Pill */}
                 <span
                   className="text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-2xs transition-transform group-hover:scale-102"
@@ -164,8 +168,7 @@ export function LogCard({
                 {/* Image Indicator if any */}
                 {imageCount > 0 && (
                   <span
-                    onClick={() => onSelect(log)}
-                    className="text-[11px] font-bold text-indigo-500 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full flex items-center gap-1 cursor-pointer hover:underline"
+                    className="text-[11px] font-bold text-indigo-500 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-2xs"
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
                     <span>{imageCount} Gambar</span>
@@ -174,7 +177,7 @@ export function LogCard({
               </div>
 
               {/* Action Toolbar */}
-              <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                 {/* Card Color Customizer */}
                 {isAuthor && onUpdateCardColor && (
                   <div className="relative">
@@ -289,69 +292,58 @@ export function LogCard({
               </div>
             </div>
 
-            {/* Judul Catatan */}
-            <h3
-              onClick={() => onSelect(log)}
-              className="text-base sm:text-lg font-extrabold text-[var(--gh-text-primary)] group-hover:text-indigo-500 transition-colors cursor-pointer leading-snug tracking-tight"
-            >
-              {log.title}
-            </h3>
+            {/* Body Section: Content + Optional Media Thumbnail on the right */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                {/* Judul Catatan */}
+                <h3 className="text-base sm:text-lg font-extrabold text-[var(--gh-text-primary)] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-snug tracking-tight">
+                  {log.title}
+                </h3>
 
-            {/* Cuplikan Konten */}
-            <div
-              onClick={() => onSelect(log)}
-              className="mt-2 text-xs sm:text-sm text-[var(--gh-text-secondary)] leading-relaxed cursor-pointer font-normal"
-            >
-              {cleanContent ? (
-                <p className="line-clamp-3">
-                  {cleanContent}
-                </p>
-              ) : (
-                <p className="text-[var(--gh-text-tertiary)] italic">
-                  Tidak ada catatan tambahan.
-                </p>
-              )}
-            </div>
+                {/* Cuplikan Konten Bersih */}
+                <div className="mt-2 text-xs sm:text-sm text-[var(--gh-text-secondary)] leading-relaxed font-normal">
+                  {cleanContent ? (
+                    <p className="line-clamp-2 sm:line-clamp-3">
+                      {cleanContent}
+                    </p>
+                  ) : (
+                    <p className="text-[var(--gh-text-tertiary)] italic">
+                      Tidak ada catatan tambahan.
+                    </p>
+                  )}
+                </div>
 
-            {/* Mini Gallery Strip (if photos attached) */}
-            {log.image_urls && log.image_urls.length > 0 && (
-              <div
-                onClick={() => onSelect(log)}
-                className="mt-3 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none cursor-pointer"
-              >
-                {log.image_urls.slice(0, 3).map((imgUrl, i) => (
-                  <div
-                    key={i}
-                    className="relative w-20 h-14 sm:w-24 sm:h-16 rounded-xl overflow-hidden border border-[var(--gh-border)] shrink-0 bg-black/5 hover:scale-105 transition-transform"
-                  >
-                    <img
-                      src={imgUrl}
-                      alt={`Lampiran ${i + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
-                {log.image_urls.length > 3 && (
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[var(--gh-bg)] border border-[var(--gh-border)] flex items-center justify-center text-xs font-bold text-[var(--gh-text-secondary)] shrink-0">
-                    +{log.image_urls.length - 3}
+                {/* Tags Strip if exists */}
+                {log.tags && log.tags.length > 0 && (
+                  <div className="mt-3 flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                    {log.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--gh-bg)] border border-[var(--gh-border)] text-[var(--gh-text-secondary)]"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Tags Strip if exists */}
-            {log.tags && log.tags.length > 0 && (
-              <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-                {log.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--gh-bg)] border border-[var(--gh-border)] text-[var(--gh-text-secondary)]"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
+              {/* Side Thumbnail (If images attached) */}
+              {log.image_urls && log.image_urls.length > 0 && (
+                <div className="relative w-20 h-20 sm:w-28 sm:h-24 rounded-2xl overflow-hidden border border-[var(--gh-border)] shrink-0 bg-black/5 shadow-xs group-hover:shadow-md transition-all self-start mt-1 sm:mt-0">
+                  <img
+                    src={log.image_urls[0]}
+                    alt={log.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  {log.image_urls.length > 1 && (
+                    <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[10px] font-extrabold text-white">
+                      +{log.image_urls.length - 1}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer: Author Info + Date + Comment count + Action link */}
@@ -378,21 +370,21 @@ export function LogCard({
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
               {/* Discussion Comment Bubble */}
               <button
                 onClick={() => onSelect(log)}
-                className="flex items-center gap-1.5 text-[var(--gh-text-secondary)] hover:text-indigo-500 bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] px-2.5 py-1 rounded-full border border-[var(--gh-border)] font-bold transition-colors cursor-pointer shadow-2xs"
+                className="flex items-center gap-1.5 text-[var(--gh-text-secondary)] hover:text-emerald-600 dark:hover:text-emerald-400 bg-[var(--gh-bg)] hover:bg-[var(--gh-surface-hover)] px-2.5 py-1 rounded-full border border-[var(--gh-border)] font-bold transition-colors cursor-pointer shadow-2xs"
                 title={`${commentCount} Feedback / Diskusi`}
               >
-                <MessageCircle className="w-3.5 h-3.5 text-indigo-500" />
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
                 <span>{commentCount} Diskusi</span>
               </button>
 
               {/* Read Full Button */}
               <button
                 onClick={() => onSelect(log)}
-                className="flex items-center gap-1 text-indigo-500 hover:text-indigo-600 font-bold transition-all hover:translate-x-0.5 cursor-pointer"
+                className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-extrabold transition-all group-hover:translate-x-0.5 cursor-pointer"
               >
                 <span>Buka Catatan</span>
                 <ArrowRight className="w-3.5 h-3.5" />
