@@ -4,40 +4,6 @@ import React, { useState, useEffect } from 'react';
 
 export function MemoraMascot() {
   const [isSpinning, setIsSpinning] = useState(false);
-  const [transparentSrc, setTransparentSrc] = useState<string>('./logo.png');
-
-  // Convert white background in logo image to 100% transparent on client-side canvas
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const img = new Image();
-    img.src = './logo.png';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          // Turn near-white background transparent
-          if (r > 240 && g > 240 && b > 240) {
-            data[i + 3] = 0;
-          }
-        }
-        ctx.putImageData(imgData, 0, 0);
-        setTransparentSrc(canvas.toDataURL('image/png'));
-      } catch {
-        // Fallback to original
-        setTransparentSrc('./logo.png');
-      }
-    };
-  }, []);
 
   // Click interaction on the Memora fish (playful 360 spin)
   const handleFishClick = () => {
@@ -68,7 +34,7 @@ export function MemoraMascot() {
         >
           <div className="w-44 h-36 sm:w-56 sm:h-44 md:w-64 md:h-52 relative flex items-center justify-center">
             <img
-              src={transparentSrc}
+              src="./logo.png"
               alt="Memora Mascot"
               className="w-full h-full object-contain filter drop-shadow-xl group-hover:brightness-110 transition-all"
             />
