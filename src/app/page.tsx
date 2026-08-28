@@ -73,9 +73,14 @@ export default function Home() {
   const [teamUsers, setTeamUsers] = useState<User[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
-  // Navigation tab (persisted in localStorage across page refresh)
+  // Navigation tab (persisted in localStorage and URL query across page refresh & browser history)
   const [activeTab, setActiveTabState] = useState<ActiveTab>(() => {
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTab = urlParams.get('tab') as ActiveTab;
+      if (urlTab && ['overview', 'logs', 'editor', 'quiz'].includes(urlTab)) {
+        return urlTab;
+      }
       const savedTab = localStorage.getItem('daily_learning_active_tab') as ActiveTab;
       if (savedTab && ['overview', 'logs', 'editor', 'quiz'].includes(savedTab)) {
         return savedTab;
@@ -84,12 +89,69 @@ export default function Home() {
     return 'overview';
   });
 
+  // Synchronize navigation with Browser History State API (pushState)
+  const syncBrowserHistory = (tab: ActiveTab, scope?: string, guest?: boolean, logId?: string | null) => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', tab);
+    if (scope) params.set('scope', scope);
+    if (guest !== undefined) {
+      if (guest) params.set('guest', '1');
+      else params.delete('guest');
+    }
+    if (logId) params.set('log', logId);
+    else params.delete('log');
+
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    const stateObj = { tab, scope: scope || filter.userScope, guest: guest ?? isGuestExploring, logId };
+    
+    // Only push state if URL or state has changed
+    if (window.location.search !== `?${params.toString()}`) {
+      window.history.pushState(stateObj, '', newUrl);
+    }
+  };
+
   const setActiveTab = (tab: ActiveTab) => {
     setActiveTabState(tab);
     if (typeof window !== 'undefined') {
       localStorage.setItem('daily_learning_active_tab', tab);
+      syncBrowserHistory(tab, filter.userScope, isGuestExploring, selectedLog?.id);
     }
   };
+
+  // Listen to browser Back (←) and Forward (→) buttons via popstate
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePopState = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlTab = urlParams.get('tab') as ActiveTab;
+      const urlScope = urlParams.get('scope') as 'all' | 'mine';
+      const urlGuest = urlParams.get('guest');
+      const urlLogId = urlParams.get('log');
+
+      if (urlTab && ['overview', 'logs', 'editor', 'quiz'].includes(urlTab)) {
+        setActiveTabState(urlTab);
+      }
+      if (urlScope && ['all', 'mine'].includes(urlScope)) {
+        setFilter((prev) => ({ ...prev, userScope: urlScope }));
+      }
+      if (urlGuest === '1') {
+        setIsGuestExploring(true);
+      } else if (urlGuest === '0' || (!urlGuest && !currentUser)) {
+        setIsGuestExploring(false);
+      }
+      if (urlLogId) {
+        const found = logs.find((l) => l.id === urlLogId);
+        if (found) setSelectedLog(found);
+      } else {
+        setSelectedLog(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentUser, logs]);
 
   // Editing state
   const [editingLog, setEditingLog] = useState<LearningLog | null>(null);
@@ -335,7 +397,13 @@ export default function Home() {
   };
 
   const handleFilterUpdates = (updates: Partial<FilterState>) => {
-    setFilter((prev) => ({ ...prev, ...updates }));
+    setFilter((prev) => {
+      const next = { ...prev, ...updates };
+      if (updates.userScope) {
+        syncBrowserHistory(activeTab, updates.userScope);
+      }
+      return next;
+    });
     setCurrentPage(1);
   };
 
@@ -357,7 +425,10 @@ export default function Home() {
           teamUsers={teamUsers}
           onSelectUserLogin={handleLoginSuccess}
           onOpenCustomLogin={() => setIsUserModalOpen(true)}
-          onExploreAsGuest={() => setIsGuestExploring(true)}
+          onExploreAsGuest={() => {
+            setIsGuestExploring(true);
+            syncBrowserHistory('overview', 'all', true);
+          }}
           totalLogsCount={logs.length}
         />
 
