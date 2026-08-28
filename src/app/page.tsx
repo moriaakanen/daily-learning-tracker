@@ -788,12 +788,7 @@ export default function Home() {
       </div>
 
       {/* Floating Animated Memora Mascot Companion (Right Side) */}
-      <MemoraMascot
-        currentStreak={stats.currentStreak}
-        totalLogsCount={logs.length}
-        onNavigateTab={setActiveTab}
-        onOpenNewEntry={handleOpenNewEntry}
-      />
+      <MemoraMascot />
 
       {/* Reading & Feedback Modal */}
       <LogDetailModal
