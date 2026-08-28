@@ -537,7 +537,11 @@ export default function Home() {
         ) : (
           <>
             {/* Cheerful Time-Based Greeting & Random Motivational Quote Banner */}
-            <div className="mb-6 p-4 sm:p-5 rounded-2xl border border-[var(--gh-border)] bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-indigo-500/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div
+              onClick={handleRefreshQuote}
+              className="mb-6 p-4 sm:p-5 rounded-2xl border border-[var(--gh-border)] hover:border-emerald-400/40 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-indigo-500/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none group transition-all"
+              title="Klik di mana saja untuk ganti quote motivasi baru ✨"
+            >
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-base sm:text-lg font-extrabold text-[var(--gh-text-primary)]">
@@ -547,26 +551,17 @@ export default function Home() {
                     🔥 {stats.currentStreak} Hari Streak
                   </span>
                 </div>
-                <div className="flex items-start gap-2 max-w-xl group">
-                  <p className="text-xs text-[var(--gh-text-secondary)] font-medium leading-relaxed italic animate-in fade-in duration-300">
-                    &ldquo;{currentQuote.text}&rdquo;{' '}
-                    {currentQuote.author && (
-                      <span className="not-italic text-[10px] font-bold text-emerald-600 dark:text-emerald-400 opacity-90">
-                        — {currentQuote.author}
-                      </span>
-                    )}
-                  </p>
-                  <button
-                    onClick={handleRefreshQuote}
-                    className="p-1 rounded-full text-[var(--gh-text-tertiary)] hover:text-emerald-500 hover:bg-[var(--gh-surface)] transition-all cursor-pointer shrink-0"
-                    title="Ganti quote motivasi baru"
-                  >
-                    <RefreshCw className="w-3 h-3 hover:rotate-180 transition-transform duration-300" />
-                  </button>
-                </div>
+                <p className="text-xs text-[var(--gh-text-secondary)] font-medium leading-relaxed italic animate-in fade-in duration-300 max-w-xl">
+                  &ldquo;{currentQuote.text}&rdquo;{' '}
+                  {currentQuote.author && (
+                    <span className="not-italic text-[10px] font-bold text-emerald-600 dark:text-emerald-400 opacity-90">
+                      — {currentQuote.author}
+                    </span>
+                  )}
+                </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={handleOpenNewEntry}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
