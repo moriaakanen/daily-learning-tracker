@@ -511,6 +511,8 @@ export default function Home() {
           }}
           isSupabaseConnected={isSupabaseConnected}
           totalLogsCount={logs.length}
+          activeTab={activeTab}
+          userScope={filter.userScope}
         />
 
         {/* Main Container */}
@@ -768,45 +770,12 @@ export default function Home() {
         )}
       </main>
 
-      {/* GitHub Footer */}
+      {/* Footer */}
       <footer className="border-t border-[var(--gh-border)] py-6 text-xs text-[var(--gh-text-secondary)] mt-auto bg-[var(--gh-surface)]">
-        <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px]">
-          <div className="flex items-center gap-2">
+        <div className="max-w-6xl mx-auto px-4 flex items-center justify-center text-center text-[11px]">
+          <div className="flex items-center gap-2 font-medium">
             <BookOpen className="w-4 h-4 text-[var(--gh-text-tertiary)]" />
-            <span>&copy; {new Date().getFullYear()} Memora • Jurnal Belajar &amp; Active Recall</span>
-          </div>
-          <div className="flex items-center gap-4 text-[var(--gh-accent)]">
-            {currentUser ? (
-              <button
-                onClick={() => setIsUserModalOpen(true)}
-                className="hover:underline"
-              >
-                Akun: {currentUser.name}
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsUserModalOpen(true)}
-                className="hover:underline font-semibold"
-              >
-                Masuk / Login
-              </button>
-            )}
-            <span>•</span>
-            <a
-              href="https://github.com/moriaakanen/daily-learning-tracker"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:underline"
-            >
-              GitHub Repository
-            </a>
-            <span>•</span>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="hover:underline"
-            >
-              Database Settings
-            </button>
+            <span>&copy; {new Date().getFullYear()} Memora • Memori &amp; Jurnal</span>
           </div>
         </div>
       </footer>

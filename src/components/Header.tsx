@@ -12,6 +12,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { ViewMode, User } from '@/types';
+import { ActiveTab } from './Sidebar';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
@@ -26,6 +27,8 @@ interface HeaderProps {
   onSearchChange: (q: string) => void;
   isSupabaseConnected?: boolean;
   totalLogsCount?: number;
+  activeTab?: ActiveTab;
+  userScope?: string;
 }
 
 export function Header({
@@ -37,7 +40,16 @@ export function Header({
   onChangeViewMode,
   searchQuery,
   onSearchChange,
+  activeTab = 'overview',
+  userScope = 'all',
 }: HeaderProps) {
+  const currentMenuName = () => {
+    if (activeTab === 'editor') return 'Catat Hasil Belajar';
+    if (activeTab === 'quiz') return 'Kuis Review';
+    if (activeTab === 'logs' && userScope === 'mine') return 'Catatan Saya';
+    return 'Beranda';
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--gh-border)] bg-[var(--gh-surface)]/90 backdrop-blur-md transition-all">
       {/* Top Navbar */}
@@ -66,16 +78,21 @@ export function Header({
                   />
                 </div>
               </div>
-              <span className="font-extrabold text-sm tracking-tight text-[var(--gh-text-primary)]">
-                Memo<span className="text-emerald-500">ra</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="font-extrabold text-sm tracking-tight text-[var(--gh-text-primary)] leading-tight">
+                  Memo<span className="text-emerald-500">ra</span>
+                </span>
+                <span className="text-[10px] text-[var(--gh-text-secondary)] font-bold leading-none">
+                  {currentMenuName()}
+                </span>
+              </div>
             </div>
 
-            {/* Desktop Brand Greeting */}
+            {/* Desktop Current Menu Name */}
             <div className="hidden md:flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
                 <Sparkles className="w-3 h-3 text-amber-400" />
-                <span>Ruang Belajar Interaktif</span>
+                <span>{currentMenuName()}</span>
               </span>
             </div>
           </div>

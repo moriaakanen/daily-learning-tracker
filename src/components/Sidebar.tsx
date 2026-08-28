@@ -107,13 +107,9 @@ export function Sidebar({
                 <span className="font-extrabold text-base tracking-tight text-[var(--gh-text-primary)]">
                   Memo<span className="text-emerald-500">ra</span>
                 </span>
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-                  <span>v2.0</span>
-                </span>
               </div>
-              <p className="text-[11px] text-[var(--gh-text-secondary)] font-medium">
-                Ruang belajar & journaling ✨
+              <p className="text-[11px] text-[var(--gh-text-secondary)] font-bold tracking-wide">
+                Memori &amp; Jurnal
               </p>
             </div>
           </div>

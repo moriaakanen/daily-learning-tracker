@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Memora · Jurnal Belajar Harian & Active Recall',
-  description: 'Platform cerdas untuk mencatat hasil belajar harian, kuis active recall otomatis, dan kolaborasi tim.',
+  title: 'Memora · Memori & Jurnal',
+  description: 'Platform cerdas untuk mencatat hasil belajar harian, kuis active recall otomatis, dan journaling bermakna.',
   icons: {
     icon: './favicon.png',
     shortcut: './favicon.ico',

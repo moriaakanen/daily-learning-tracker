@@ -63,11 +63,10 @@ export function GuestLandingPage({
               <span className="font-extrabold text-lg tracking-tight text-[var(--gh-text-primary)]">
                 Memo<span className="text-emerald-500">ra</span>
               </span>
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <Sparkles className="w-2.5 h-2.5 text-amber-400" />
-                <span>v2.0</span>
-              </span>
             </div>
+            <p className="text-[11px] text-[var(--gh-text-secondary)] font-bold tracking-wide">
+              Memori &amp; Jurnal
+            </p>
           </div>
         </div>
 
@@ -334,7 +333,7 @@ export function GuestLandingPage({
       <footer className="border-t border-[var(--gh-border)] bg-[var(--gh-surface)] py-6 px-4 sm:px-8 text-center text-xs text-[var(--gh-text-tertiary)] flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <img src="./logo.png" alt="Memora" className="w-4 h-4 object-contain rounded-full" />
-          <span><strong>Memora</strong> — Jurnal Belajar Harian &amp; Active Recall</span>
+          <span><strong>Memora</strong> — Memori &amp; Jurnal</span>
         </div>
         <div className="flex items-center gap-3 font-semibold">
           <button
