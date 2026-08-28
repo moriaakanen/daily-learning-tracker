@@ -123,6 +123,7 @@ export function FullPageEditor({
   const [category, setCategory] = useState('');
   const [topicInput, setTopicInput] = useState('');
   const [isTopicOpen, setIsTopicOpen] = useState(false);
+  const [isTypingSearch, setIsTypingSearch] = useState(false);
   const [highlightedTopicIndex, setHighlightedTopicIndex] = useState<number>(-1);
   const [cardColor, setCardColor] = useState('auto');
 
@@ -158,6 +159,7 @@ export function FullPageEditor({
     const handleClickOutside = (e: MouseEvent) => {
       if (topicContainerRef.current && !topicContainerRef.current.contains(e.target as Node)) {
         setIsTopicOpen(false);
+        setIsTypingSearch(false);
       }
       if (calendarContainerRef.current && !calendarContainerRef.current.contains(e.target as Node)) {
         setIsCalendarOpen(false);
@@ -420,11 +422,10 @@ export function FullPageEditor({
     setCalViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
-  // Show all categories when opening or if input matches current selected category, otherwise filter by search term
-  const isInputMatchingCategory = category && topicInput.trim().toLowerCase() === category.trim().toLowerCase();
-  const filteredCategories = isInputMatchingCategory || !topicInput.trim()
-    ? categories
-    : categories.filter((c) => c.toLowerCase().includes(topicInput.toLowerCase()));
+  // Filter categories when user is typing to search, otherwise show all categories
+  const filteredCategories = isTypingSearch && topicInput.trim()
+    ? categories.filter((c) => c.toLowerCase().includes(topicInput.trim().toLowerCase()))
+    : categories;
 
   const canCreateNewTopic =
     topicInput.trim().length > 0 &&
@@ -1016,11 +1017,13 @@ export function FullPageEditor({
                     onChange={(e) => {
                       setTopicInput(e.target.value);
                       setCategory(e.target.value);
+                      setIsTypingSearch(true);
                       setIsTopicOpen(true);
                       setHighlightedTopicIndex(-1);
                     }}
                     onFocus={(e) => {
                       setIsTopicOpen(true);
+                      setIsTypingSearch(false);
                       setHighlightedTopicIndex(-1);
                       e.target.select();
                     }}
@@ -1031,7 +1034,13 @@ export function FullPageEditor({
                   <button
                     type="button"
                     onClick={() => {
-                      setIsTopicOpen(!isTopicOpen);
+                      if (isTopicOpen) {
+                        setIsTopicOpen(false);
+                        setIsTypingSearch(false);
+                      } else {
+                        setIsTopicOpen(true);
+                        setIsTypingSearch(false);
+                      }
                       setHighlightedTopicIndex(-1);
                     }}
                     className="absolute right-2.5 text-[var(--gh-text-tertiary)] hover:text-[var(--gh-text-primary)] transition-colors p-1 cursor-pointer"
@@ -1064,6 +1073,7 @@ export function FullPageEditor({
                               setCategory(cat);
                               setTopicInput(cat);
                               setIsTopicOpen(false);
+                              setIsTypingSearch(false);
                               setHighlightedTopicIndex(-1);
                             }}
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold transition-all text-left cursor-pointer ${
@@ -1100,6 +1110,7 @@ export function FullPageEditor({
                           setCategory(newCat);
                           setTopicInput(newCat);
                           setIsTopicOpen(false);
+                          setIsTypingSearch(false);
                           setHighlightedTopicIndex(-1);
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer text-left mt-1 ${
